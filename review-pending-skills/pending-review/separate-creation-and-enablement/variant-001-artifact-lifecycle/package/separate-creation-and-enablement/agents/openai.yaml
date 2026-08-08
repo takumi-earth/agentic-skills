@@ -1,0 +1,4 @@
+interface:
+  display_name: "Separate Creation and Enablement"
+  short_description: "Separate artifact creation from enablement"
+  default_prompt: "Use $separate-creation-and-enablement to materialize an inert artifact while preserving promotion and activation as separately authorized effects."

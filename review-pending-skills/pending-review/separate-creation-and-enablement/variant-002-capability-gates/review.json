@@ -1,0 +1,27 @@
+{
+  "activation_effects": [
+    "promotion into an official canonical source",
+    "installation or synchronization into a harness",
+    "hook or configuration registration",
+    "runtime invocation"
+  ],
+  "candidate_name": "separate-creation-and-enablement",
+  "predecessors": [],
+  "provenance": [
+    "Current user correction that artifact creation and enablement are different effects",
+    "Speculative alternative that models multi-system activation as capability edges"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "separate-creation-and-enablement/variant-001-artifact-lifecycle"
+    },
+    {
+      "kind": "overlap",
+      "target": "protect-causal-architecture"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-capability-gates"
+}

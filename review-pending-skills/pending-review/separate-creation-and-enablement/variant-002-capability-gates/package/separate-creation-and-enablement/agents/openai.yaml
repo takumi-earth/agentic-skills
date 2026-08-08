@@ -1,0 +1,4 @@
+interface:
+  display_name: "Separate Creation and Enablement"
+  short_description: "Gate capability promotion and activation"
+  default_prompt: "Use $separate-creation-and-enablement to model creation, promotion, and activation as distinct capability gates with explicit authority at each edge."

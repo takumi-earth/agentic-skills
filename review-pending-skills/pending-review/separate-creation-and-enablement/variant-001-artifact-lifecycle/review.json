@@ -1,0 +1,27 @@
+{
+  "activation_effects": [
+    "promotion into an official canonical source",
+    "installation or synchronization into a harness",
+    "hook or configuration registration",
+    "runtime invocation"
+  ],
+  "candidate_name": "separate-creation-and-enablement",
+  "predecessors": [],
+  "provenance": [
+    "Current user correction that hook artifact creation and hook activation are separate authorities",
+    "Current user correction that pending skill creation must not imply synchronization or enablement"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "always-loaded artifact creation, promotion, and enablement guidance"
+    },
+    {
+      "kind": "overlap",
+      "target": "auto-skill-creator"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-artifact-lifecycle"
+}
