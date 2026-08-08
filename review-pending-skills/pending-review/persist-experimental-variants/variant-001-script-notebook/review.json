@@ -1,0 +1,26 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation into harness skill roots",
+    "use of the packaged variant-creation script"
+  ],
+  "candidate_name": "persist-experimental-variants",
+  "predecessors": [],
+  "provenance": [
+    "Current user description of retaining many copy-edit script variants with documented intent",
+    "Current user correction that one-off and speculative judgments cannot be made safely ahead of time"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "review-pending-skills immutable variant store"
+    },
+    {
+      "kind": "concrete-scope",
+      "target": "single-file script experiments"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-script-notebook"
+}
