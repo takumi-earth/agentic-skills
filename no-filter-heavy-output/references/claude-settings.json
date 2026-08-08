@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cargo clippy:*)",
+      "Bash(cargo +nightly fmt:*)",
+      "Bash(cargo check:*)",
+      "Bash(git status:*)",
+      "Bash(gh repo list:*)",
+      "Bash(gh repo view:*)",
+      "Bash(bun run test:*)",
+      "Bash(AGENT=1 bun run test:*)",
+      "Bash(bun test:*)",
+      "Bash(AGENT=1 bun test:*)",
+      "Bash(bun typecheck:*)",
+      "Bash(AGENT=1 bun typecheck:*)",
+      "Bash(bun lint:*)",
+      "Bash(AGENT=1 bun lint:*)",
+      "Bash(bun pm ls:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/openai/agentic-skills/no-filter-heavy-output/scripts/no_filter_heavy_output.py"
+          }
+        ]
+      }
+    ]
+  }
+}

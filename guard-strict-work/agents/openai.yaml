@@ -1,0 +1,7 @@
+interface:
+  display_name: "Guard Strict Work"
+  short_description: "Preserve strict task authority and ownership"
+  default_prompt: "Use $guard-strict-work to preserve the authority, ownership, and completion contract for this strict-ecosystem task."
+
+policy:
+  allow_implicit_invocation: true

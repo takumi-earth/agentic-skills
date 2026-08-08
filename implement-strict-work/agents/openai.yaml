@@ -1,0 +1,7 @@
+interface:
+  display_name: "Implement Strict Work"
+  short_description: "Apply owner-first structural strict refactors"
+  default_prompt: "Use $implement-strict-work to implement this strict-ecosystem change through its structural owner."
+
+policy:
+  allow_implicit_invocation: true

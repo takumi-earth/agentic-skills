@@ -1,0 +1,7 @@
+interface:
+  display_name: "Document Strict Work"
+  short_description: "Keep strict documentation source-owned"
+  default_prompt: "Use $document-strict-work to create or revise source-owned, durable strict-ecosystem documentation."
+
+policy:
+  allow_implicit_invocation: true

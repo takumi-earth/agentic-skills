@@ -1,0 +1,7 @@
+interface:
+  display_name: "Orchestrate Strict Work"
+  short_description: "Run bounded full-context strict agent waves"
+  default_prompt: "Use $orchestrate-strict-work to coordinate bounded full-context agents for this strict-ecosystem task."
+
+policy:
+  allow_implicit_invocation: true

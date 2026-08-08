@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reconcile Live Steering"
+  short_description: "Classify and apply in-progress user steering"
+  default_prompt: "Use $reconcile-live-steering to classify this mid-work user message and update the active task contract without scope drift."

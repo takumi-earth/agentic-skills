@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Test Parity"
+  short_description: "Audit removed tests and preserve behavior"
+  default_prompt: "Use $verify-test-parity to compare removed tests with their refactored replacements."

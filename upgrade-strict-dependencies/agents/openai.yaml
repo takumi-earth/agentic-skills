@@ -1,0 +1,7 @@
+interface:
+  display_name: "Upgrade Strict Dependencies"
+  short_description: "Migrate strict dependencies without drift"
+  default_prompt: "Use $upgrade-strict-dependencies to migrate strict-ecosystem dependencies while preserving ownership and capability boundaries."
+
+policy:
+  allow_implicit_invocation: true

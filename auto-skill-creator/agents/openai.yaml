@@ -1,0 +1,7 @@
+interface:
+  display_name: "Auto Skill Creator"
+  short_description: "Apply approved skill proposals safely"
+  default_prompt: "Use $auto-skill-creator to apply only the skill proposal I explicitly approved in this conversation."
+
+policy:
+  allow_implicit_invocation: true

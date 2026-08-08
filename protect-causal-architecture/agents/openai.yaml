@@ -1,0 +1,4 @@
+interface:
+  display_name: "Protect Causal Architecture"
+  short_description: "Preserve multi-phase authority and barriers"
+  default_prompt: "Use $protect-causal-architecture to preserve and review the authority, mutation, barrier, and failure sequence in this workflow."

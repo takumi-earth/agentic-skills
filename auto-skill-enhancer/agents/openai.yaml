@@ -1,0 +1,7 @@
+interface:
+  display_name: "Auto Skill Enhancer"
+  short_description: "Propose evidence-backed skill improvements"
+  default_prompt: "Use $auto-skill-enhancer to review the current conversation, a full-history fork, or a completed goal session and propose evidence-backed improvements to the user-level skills that were actually used."
+
+policy:
+  allow_implicit_invocation: true

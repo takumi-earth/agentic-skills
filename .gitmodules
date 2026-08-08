@@ -1,0 +1,3 @@
+[submodule "skill-specs/ext"]
+	path = .skill-specs/ext
+	url = https://github.com/agentskills/agentskills.git

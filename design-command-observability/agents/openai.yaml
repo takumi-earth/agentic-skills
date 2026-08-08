@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Command Observability"
+  short_description: "Design typed progress for blocking commands"
+  default_prompt: "Use $design-command-observability to design owner-derived progress and decision reporting for this command workflow."

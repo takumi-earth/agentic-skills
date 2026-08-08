@@ -1,0 +1,7 @@
+interface:
+  display_name: "Link Agentic Skills"
+  short_description: "Sync relative links across local harnesses"
+  default_prompt: "Use $link-agentic-skills to sync this repository's skills into my configured local harness directories."
+
+policy:
+  allow_implicit_invocation: true

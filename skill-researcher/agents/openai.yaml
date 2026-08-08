@@ -1,0 +1,7 @@
+interface:
+  display_name: "Skill Researcher"
+  short_description: "Research session traces for skill opportunities"
+  default_prompt: "Use $skill-researcher to analyze Codex and Claude session traces for evidence-backed skill opportunities."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Strict Dependency Candidates"
+  short_description: "Review crate candidates before adoption"
+  default_prompt: "Use $review-strict-dependency-candidates to evaluate and present dependency candidates before any strict-ecosystem adoption."

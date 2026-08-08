@@ -1,0 +1,4 @@
+interface:
+  display_name: "Maintain Living Goal"
+  short_description: "Keep living goals minimal and causally complete"
+  default_prompt: "Use $maintain-living-goal to reconcile and prune this living implementation goal without losing protected architecture."

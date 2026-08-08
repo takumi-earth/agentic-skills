@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resume Strict Context"
+  short_description: "Recover strict work safely after compaction"
+  default_prompt: "Use $resume-strict-context to restore the authoritative strict-work state after context compaction before taking task action."
