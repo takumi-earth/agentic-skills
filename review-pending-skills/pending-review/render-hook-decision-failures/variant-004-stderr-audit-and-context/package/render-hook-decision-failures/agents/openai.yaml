@@ -1,0 +1,4 @@
+interface:
+  display_name: "Render Hook Decision Failures"
+  short_description: "Render exact actionable hook failures"
+  default_prompt: "Use $render-hook-decision-failures to apply the variant-004-stderr-audit-and-context pending design with explicit evidence and authority boundaries."

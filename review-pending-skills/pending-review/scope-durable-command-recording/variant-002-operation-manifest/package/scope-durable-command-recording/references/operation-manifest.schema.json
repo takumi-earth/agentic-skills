@@ -1,0 +1,65 @@
+{
+  "$id": "skill://scope-durable-command-recording/operation-manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "argv": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "cwd": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "expected_conditions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "expected": {}
+        },
+        "required": [
+          "condition",
+          "expected"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "inputs": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "outputs": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "timeout_seconds": {
+      "exclusiveMinimum": 0,
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "cwd",
+    "argv",
+    "inputs",
+    "outputs",
+    "expected_conditions",
+    "timeout_seconds"
+  ],
+  "title": "Durable substantive operation manifest",
+  "type": "object"
+}

@@ -1,0 +1,30 @@
+{
+  "activation_effects": [
+    "none during pending creation",
+    "future promotion could change command-recording guidance across projects"
+  ],
+  "candidate_name": "scope-durable-command-recording",
+  "predecessors": [
+    "review-pending-skills/pending-review/scope-durable-command-recording/variant-001-effect-classification"
+  ],
+  "provenance": [
+    "controlling user instruction | retained conversation | Write substantive scripts to files for repeatability and auditability; ad hoc shell procedures are not permitted.",
+    "live user correction | retained visible turn | Do not use a script merely to read a skill.",
+    "durable failure evidence | review-ledger event 005-direct-skill-reads | The wrapper expected a positional path but received an unsupported --path flag; the corrected boundary reserves scripts for substantive effects."
+  ],
+  "relationships": [
+    {
+      "kind": "possible-operational-owner",
+      "mutation_authority": "none",
+      "target": "filesystem-git-observability"
+    },
+    {
+      "kind": "possible-policy-owner",
+      "mutation_authority": "none",
+      "target": "design-command-observability"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-003-record-every-command"
+}

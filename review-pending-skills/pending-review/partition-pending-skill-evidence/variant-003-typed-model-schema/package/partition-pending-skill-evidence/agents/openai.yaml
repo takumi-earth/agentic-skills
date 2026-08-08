@@ -1,0 +1,4 @@
+interface:
+  display_name: "Partition Pending Skill Evidence"
+  short_description: "Separate run evidence from skill resources"
+  default_prompt: "Use $partition-pending-skill-evidence to apply the variant-003-typed-model-schema pending design with explicit evidence and authority boundaries."

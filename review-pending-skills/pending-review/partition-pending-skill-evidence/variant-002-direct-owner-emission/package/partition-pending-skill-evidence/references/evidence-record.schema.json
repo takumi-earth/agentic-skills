@@ -1,0 +1,66 @@
+{
+  "$id": "skill://partition-pending-skill-evidence/direct-owner-evidence-record.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "artifact_class": {
+            "const": "reusable-resource"
+          }
+        },
+        "required": [
+          "artifact_class"
+        ]
+      },
+      "then": {
+        "properties": {
+          "storage_owner": {
+            "const": "pending-variant"
+          }
+        },
+        "required": [
+          "storage_owner"
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "artifact_class": {
+      "enum": [
+        "evidence-instance",
+        "reusable-resource"
+      ]
+    },
+    "event_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "event_type": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "storage_owner": {
+      "enum": [
+        "scratchpad",
+        "pending-variant"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "status"
+  ],
+  "title": "Direct-owner automatic skill evidence record",
+  "type": "object"
+}

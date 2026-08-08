@@ -1,0 +1,35 @@
+{
+  "$id": "skill://validate-symlinked-skill-runtime/runtime-context.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "canonical_skill_repository": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "codex_home": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "package_root": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "scratchpad_root": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "codex_home",
+    "canonical_skill_repository",
+    "scratchpad_root",
+    "package_root"
+  ],
+  "title": "Scripted skill runtime context",
+  "type": "object"
+}

@@ -1,0 +1,41 @@
+{
+  "$id": "skill://partition-pending-skill-evidence/evidence-record.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "condition": {
+      "type": "string"
+    },
+    "event_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "event_type": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "expected": {},
+    "received": {},
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "status"
+  ],
+  "title": "Automatic skill evidence record",
+  "type": "object"
+}

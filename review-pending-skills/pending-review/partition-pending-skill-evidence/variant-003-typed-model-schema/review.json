@@ -1,0 +1,30 @@
+{
+  "activation_effects": [
+    "none during pending creation",
+    "future promotion could change automatic creator storage layout"
+  ],
+  "candidate_name": "partition-pending-skill-evidence",
+  "predecessors": [
+    "review-pending-skills/pending-review/partition-pending-skill-evidence/variant-001-owner-move-manifest"
+  ],
+  "provenance": [
+    "live user correction | retained visible turn after creator instruction fix | Potential-skill resources must be separated into appropriately named pending-review folders and moved after destinations exist.",
+    "newest live user correction | retained visible turn | Investigation evidence and raw, memory, and source contexts stay in scratch; the evidence JSON schema does not.",
+    "pending-store source inspection | ~/agentic-skills/review-pending-skills/scripts/pending_skill_inventory.py | Every top-level pending directory must be a complete candidate and every child must be a complete variant; variant-local extra resources are permitted."
+  ],
+  "relationships": [
+    {
+      "kind": "possible-enhancement-owner",
+      "mutation_authority": "none",
+      "target": "auto-skill-creator"
+    },
+    {
+      "kind": "pending-store-owner",
+      "mutation_authority": "none",
+      "target": "review-pending-skills"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-003-typed-model-schema"
+}

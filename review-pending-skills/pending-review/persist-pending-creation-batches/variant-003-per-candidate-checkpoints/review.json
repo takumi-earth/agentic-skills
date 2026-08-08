@@ -1,0 +1,30 @@
+{
+  "activation_effects": [
+    "none during pending creation",
+    "future promotion could change auto-skill-creator Git persistence semantics"
+  ],
+  "candidate_name": "persist-pending-creation-batches",
+  "predecessors": [
+    "review-pending-skills/pending-review/persist-pending-creation-batches/variant-001-single-invocation-commit"
+  ],
+  "provenance": [
+    "live user correction | retained visible turn | Create all candidates and commit them in that go; do not create roughly twenty commits.",
+    "live user correction | retained visible turn | The commit requirement means persist the initial creation before editing the candidates again.",
+    "authorized canonical maintenance | ~/agentic-skills/auto-skill-creator/SKILL.md | The current worktree now specifies one invocation-batch commit while preserving complete candidate roots as path units."
+  ],
+  "relationships": [
+    {
+      "kind": "canonical-owner",
+      "mutation_authority": "none",
+      "target": "auto-skill-creator"
+    },
+    {
+      "kind": "history-consumer",
+      "mutation_authority": "none",
+      "target": "review-pending-skills"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-003-per-candidate-checkpoints"
+}

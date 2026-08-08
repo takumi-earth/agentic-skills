@@ -1,0 +1,35 @@
+{
+  "activation_effects": [
+    "none during pending creation",
+    "future promotion could change hook diagnostic text and machine event shape"
+  ],
+  "candidate_name": "render-hook-decision-failures",
+  "predecessors": [
+    "review-pending-skills/pending-review/render-hook-decision-failures/variant-001-typed-resolution-result"
+  ],
+  "provenance": [
+    "live user correction | current-session JSONL line 464 | The error must explicitly state the condition checked, what was expected, and what was received.",
+    "direct source inspection | ~/agentic-skills/auto-skill-enhancer/scripts/goal_completion_hook.py:132-140 | All resolution failures use one generic additionalContext message.",
+    "durable RCA | instructions/004-root-cause.json | Expected ~/.codex/attachments with one candidate; received ~/attachments with zero candidates."
+  ],
+  "relationships": [
+    {
+      "kind": "possible-shared-foundation",
+      "mutation_authority": "none",
+      "target": "design-command-observability"
+    },
+    {
+      "kind": "current-hook-consumer",
+      "mutation_authority": "none",
+      "target": "auto-skill-enhancer"
+    },
+    {
+      "kind": "resolution-result-consumer",
+      "mutation_authority": "none",
+      "target": "resolve-managed-goal-artifacts"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-004-stderr-audit-and-context"
+}

@@ -1,0 +1,43 @@
+{
+  "$id": "skill://render-hook-decision-failures/typed-decision-result.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "code": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "condition": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "expected": {},
+    "received": {},
+    "stage": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "success",
+        "failure"
+      ]
+    }
+  },
+  "required": [
+    "status",
+    "stage",
+    "code",
+    "condition",
+    "expected",
+    "received"
+  ],
+  "title": "Typed hook decision result",
+  "type": "object"
+}

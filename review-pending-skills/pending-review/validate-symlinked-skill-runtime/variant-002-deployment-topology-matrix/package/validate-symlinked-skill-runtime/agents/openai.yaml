@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Symlinked Skill Runtime"
+  short_description: "Validate scripted skills across deployments"
+  default_prompt: "Use $validate-symlinked-skill-runtime to apply the variant-002-deployment-topology-matrix pending design with explicit evidence and authority boundaries."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scope Durable Command Recording"
+  short_description: "Scope durable recording to substantive work"
+  default_prompt: "Use $scope-durable-command-recording to apply the variant-001-effect-classification pending design with explicit evidence and authority boundaries."

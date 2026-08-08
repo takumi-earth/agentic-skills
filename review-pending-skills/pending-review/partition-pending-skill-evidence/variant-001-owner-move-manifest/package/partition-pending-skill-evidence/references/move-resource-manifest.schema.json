@@ -1,0 +1,47 @@
+{
+  "$id": "skill://partition-pending-skill-evidence/move-resource-manifest.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "moves": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "classification": {
+            "const": "reusable-resource"
+          },
+          "destination": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "source": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "destination",
+          "sha256",
+          "classification"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "moves"
+  ],
+  "title": "Pending reusable-resource move manifest",
+  "type": "object"
+}

@@ -1,0 +1,35 @@
+{
+  "activation_effects": [
+    "none during pending creation",
+    "future promotion could alter automatic goal-completion handoff resolution"
+  ],
+  "candidate_name": "resolve-managed-goal-artifacts",
+  "predecessors": [
+    "review-pending-skills/pending-review/resolve-managed-goal-artifacts/variant-001-environment-root"
+  ],
+  "provenance": [
+    "raw current-session tool event | completion-window.json: JSONL lines 2398-2400 | The successful update_goal response preserved the exact pasted objective path.",
+    "direct source inspection | ~/agentic-skills/auto-skill-enhancer/scripts/goal_completion_hook.py:26-66,120,130 | The resolver accepts codex_home, but main derives it from the resolved script location.",
+    "durable reproduction | goal-file-resolution-diagnostic.json | The hook-derived root returned null; observed CODEX_HOME returned the exact file."
+  ],
+  "relationships": [
+    {
+      "kind": "possible-enhancement-owner",
+      "mutation_authority": "none",
+      "target": "auto-skill-enhancer"
+    },
+    {
+      "kind": "goal-file-consumer",
+      "mutation_authority": "none",
+      "target": "maintain-living-goal"
+    },
+    {
+      "kind": "typed-contract-alternative",
+      "mutation_authority": "none",
+      "target": "define-codex-goal-artifacts"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-005-installation-relative-root"
+}
