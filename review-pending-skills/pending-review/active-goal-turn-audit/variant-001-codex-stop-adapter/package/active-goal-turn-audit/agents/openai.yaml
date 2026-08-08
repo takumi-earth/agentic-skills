@@ -1,0 +1,4 @@
+interface:
+  display_name: "Active Goal Turn Audit"
+  short_description: "Audit active goals before a turn ends"
+  default_prompt: "Use $active-goal-turn-audit to design and validate a one-pass turn-ending audit for active goals without conflating retries with goal turns."

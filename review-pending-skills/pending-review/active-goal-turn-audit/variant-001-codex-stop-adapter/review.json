@@ -1,0 +1,30 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation into a Codex skill root",
+    "registration of a Stop hook command"
+  ],
+  "candidate_name": "active-goal-turn-audit",
+  "predecessors": [],
+  "provenance": [
+    "Current user request for a turn-ending hook that reiterates active-goal behavior",
+    "Current implemented but unregistered maintain-living-goal Stop adapter"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "maintain-living-goal"
+    },
+    {
+      "kind": "overlap",
+      "target": "design-command-observability"
+    },
+    {
+      "kind": "repository-specific",
+      "target": "Codex Stop hook and goals_1.sqlite"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-codex-stop-adapter"
+}
