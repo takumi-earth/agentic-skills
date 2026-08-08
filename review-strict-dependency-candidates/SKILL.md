@@ -5,7 +5,7 @@ description: "Research and present third-party crate or runtime dependency candi
 
 # Review Strict Dependency Candidates
 
-Separate research authority from adoption authority. Maintain a durable candidate ledger, present a complete comparison, block the goal, and wait for explicit user selection before production manifest or lockfile changes.
+Separate research authority from adoption authority. Maintain a durable candidate ledger, present a complete comparison, stop dependency-adoption effects, and wait for explicit user selection before production manifest or lockfile changes.
 
 ## Define the required capability first
 
@@ -56,8 +56,10 @@ If no candidate satisfies the contract, present the first-party owner and irredu
 When the comparison is ready:
 
 1. Reconcile the living goal with the full ledger, selected requirements, and remaining work.
-2. Mark the goal blocked.
+2. Record the dependency choice as a local stop and do not modify any manifest, patch, lockfile, or production consumer that depends on it.
 3. Present the candidate comparison and recommendation without modifying production authority.
-4. Wait for explicit user review and selection.
+4. Continue every causally independent authorized lane while the selection is pending.
+5. If no meaningful in-scope work remains, use `$maintain-living-goal` to challenge the apparent whole-goal impasse through the harness-owned repeated-blocker audit rather than marking it blocked immediately.
+6. Wait for explicit user review and selection before resuming dependent adoption work.
 
 After approval, hand the exact selected provenance and migration contract to `$upgrade-strict-dependencies`. Do not reopen rejected candidates unless new evidence contradicts the ledger.

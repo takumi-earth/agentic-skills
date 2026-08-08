@@ -1,111 +1,111 @@
 ---
 name: auto-skill-creator
-description: "Apply explicitly approved user-level skill proposals from the retained current conversation or full-history fork. Use after `$auto-skill-enhancer` or `$skill-researcher` produces concrete proposals and the user clearly authorizes specific proposals, or when the user explicitly invokes `$auto-skill-creator` with an approved proposal retained in the conversation. Reuse `$skill-creator`; do not infer approval, research new candidates, edit unapproved skills, or run merely because a goal or session completed."
+description: "Automatically materialize every potentially helpful user-level skill idea as design-preserving variants beneath `$review-pending-skills`, validate them, and commit each complete pending candidate root for collaborative review. Use after each goal ends and whenever invoked directly from a harness or conversation, including when the user already named candidates, packages, paths, or exact edits; no hook, handoff, prior approval, recurrence proof, or preassembled bundle is required. Reuse `$skill-creator` for draft mechanics and validation. Never auto-filter candidates, stage or commit a candidate descendant or unrelated path, mutate official skills, promote drafts, synchronize installations, register hooks, change configuration or memory, publish, or perform unrelated cleanup."
 ---
 
 # Auto Skill Creator
 
-Treat the user's approval as a closed mutation ledger. Recover the exact approved proposal, apply only that proposal through `$skill-creator`, validate the affected packages, and report the resulting scope precisely.
+Persist what may help before deciding whether it should become active guidance. Create complete, design-preserving pending variants and candidate-root commits so the user can inspect, compare, repair, and converge them through `$review-pending-skills`; never collapse candidate creation into promotion or enablement.
 
-## Resolve the approved proposal
+## Activate without a candidate gate
 
-Use the retained visible current-conversation or full-history-fork chronology first. Do not require a goal record, completion hook, transcript path, session ID, or terminal session state when the proposal and approval are present in that history.
+- Run after each goal ends from retained conversation and goal evidence, even when no hook, enhancer handoff, researcher bundle, or preselected candidate exists.
+- Run on every direct `$auto-skill-creator` invocation, whether it comes from the harness or conversation. A user-supplied candidate, target skill, package, source path, or exact edit narrows what to create; it never reroutes the task away from this skill.
+- Treat `$auto-skill-enhancer` and `$skill-researcher` artifacts as optional structured evidence, not activation prerequisites or approval gates.
+- Distinguish a raw mention from an idea the agent thinks may help, but once an idea is identified, materialize it. Do not invent catalog-derived candidates merely to make the run nonempty.
+- Treat direct or post-goal invocation as authority only for bounded pending-artifact creation, validation, and Git persistence in the canonical repository. It authorizes staging and committing only a complete `review-pending-skills/pending-review/<candidate-name>/` root after creation or a same-design correctness repair. It never authorizes a narrower variant, package, script, or file pathspec, and it does not authorize Git operations on pipeline owners, official skills, always-loaded guidance, unrelated work, promotion, installation, synchronization, linking, hook registration, configuration, memory, publication, or external systems.
+- Use direct `$skill-creator` for ordinary user-selected official skill work only when `$auto-skill-creator` was not invoked and the task is not the automatic post-goal path.
 
-Identify:
+## Retain every idea and approach
 
-- the complete proposal version;
-- the affected skill names and user-owned package paths;
-- whether each package is new or existing;
-- the exact approved prose, diff hunks, resources, scripts, and invocation changes;
-- the user message that approves all or a named subset;
-- any later revision, revocation, superseding proposal, or scope correction.
+Use retained visible conversation, the exact living goal, a full-history fork, or supplied enhancer/researcher evidence. Preserve chronology and apply the newest controlling user correction.
 
-A full-history fork preserves an earlier proposal and approval; copied history is not a second approval. Apply chronology once and honor the newest controlling user instruction.
+- Do not reject creation because an idea is speculative, first-occurrence, apparently one-off, repository-specific, use-case-specific, overlapping, redundant, narrow, or not yet proven reusable.
+- Do not require use-case-agnostic architecture. Persisting a concrete script or procedure makes later recurrence and comparison possible.
+- Treat recurrence as evidence available only over time. Never claim ahead of time that the first or second occurrence will remain unique.
+- Materialize every materially distinct implementation or instruction approach as its own variant. Preserve competing approaches even when one seems better or a convergence already looks likely.
+- Treat overlap with an existing skill as relationship metadata. Do not assume the existing owner is complete, reliably trigger-reachable, authoritative at the required scope, or nuance-equivalent.
+- Treat an explicit user-suggested idea as controlling candidate input. Preserve it even when it conflicts with the agent's current architectural preference.
 
-Do not treat any of these as approval by themselves:
+If no potential skill idea is genuinely identifiable after reading the retained evidence, record that factual empty inventory in the scratch ledger and still report that the workflow ran. Do not manufacture an idea, but do not use absence of a preassembled bundle as a substitute for inspecting the evidence.
 
-- a bare `$auto-skill-creator` invocation;
-- vague positive feedback such as “looks good” or “interesting”;
-- approval of one proposal as approval of its siblings;
-- an assistant summary, compaction summary, memory entry, or final answer without the underlying proposal;
-- approval that predates a later proposal revision;
-- goal or session completion.
+## Resolve the canonical repository and pending owner
 
-If the exact proposal is no longer retained, ask the user to paste or identify it. Do not require a session ID as the only recovery path, search for the newest rollout heuristically, or infer the proposal from current files.
+Run `scripts/resolve_agentic_skills_repo.py` and require a checkout whose normalized Git remote identifies:
 
-## Freeze the mutation ledger
+```text
+https://github.com/takumi-earth/agentic-skills.git
+```
 
-Before editing, state a compact ledger containing:
+Use the resolver's `selected.path` as the canonical source root and `scratchpad_root` for automatic-workflow ledgers and command evidence. Never write source packages into a harness installation.
 
-- the proposal identifier or unambiguous title;
-- the approving user message;
-- each target skill and absolute user-owned package path;
-- `create` or `update` for each package;
-- exact allowlisted relative paths;
-- approved semantic changes and required scripts;
-- package and script validation;
-- explicitly excluded proposals, files, and adjacent cleanup.
+Render repository paths relatively and paths beneath the user home as `~/...` in ledgers, metadata, prompts, reports, and command examples. A resolver or filesystem API may expand `~` transiently for I/O, but normalize it before serialization or presentation; never persist the expanded home prefix as candidate evidence.
 
-For partial approval, include only the approved subset. For multiple proposal versions, require approval that unambiguously selects the version to apply.
+Require the canonical package `<selected.path>/review-pending-skills` and its `pending-review/` store. That top-level package owns candidate persistence and review. Do not fall back to placing a candidate directly under the canonical repository or a harness skill root when the pending owner is missing; report the affected local stop and continue any independent candidate analysis.
 
-Stop before mutation when:
+## Freeze an append-only creation ledger
 
-- approval is absent, ambiguous, contradictory, revoked, or stale;
-- an approved hunk overlaps later unapproved source changes;
-- the proposal reaches another skill, system package, plugin cache, repository, hook, configuration, memory, or external system that was not approved;
-- the requested path escapes the user-owned skill root;
-- implementation requires a new design decision rather than a mechanical realization of the approved design.
+Before creating variants, persist a new task ledger beneath `<scratchpad-root>/auto-skill-creator/<run-id>/`. Never overwrite a prior run or variant record. Include:
 
-## Use the existing owners
+- invocation authority and retained evidence scope;
+- every identified candidate idea without selected/rejected classification;
+- every materially distinct proposed variant and its concrete intent;
+- candidate and variant identifiers, predecessors, repository specificity, uncertainties, and relationships to existing skills;
+- the resolved canonical repository and pending-store paths;
+- exact source allowlists and excluded official or external effects;
+- draft resources and validation planned for each variant.
 
-Read `$skill-creator` completely before changing a package and follow its initialization, resource, metadata, validation, and forward-testing workflow.
+Descriptive labels preserve review context; they do not authorize filtering. Before later work, append a ledger entry classifying whether it preserves or changes the variant's declared design identity. A change of intent, approach, authority boundary, or activation effects creates a sibling variant and records its predecessors. A correctness repair that restores the behavior already declared by `intent.md`, `review.json`, and the draft contract updates the same variant and records the defect, repair, validation, and later candidate-root commit without rewriting the earlier ledger.
 
-Reuse the system creator resources:
+## Materialize design-preserving pending variants
 
-- use `init_skill.py` for a new skill package;
-- use `generate_openai_yaml.py` when invocation-facing metadata changes;
-- use `quick_validate.py` for structural validation;
-- test every added or changed executable script directly;
-- use fresh task-relevant agents for proportionate forward tests when the approved skill is behaviorally complex.
+Use this layout for every approach:
 
-Keep each forward-test agent on one semantic assignment. Use follow-ups only to continue or correct that same slice; use a fresh agent for an unrelated scenario or topic.
+```text
+review-pending-skills/pending-review/<candidate-name>/<variant-id>/
+  intent.md
+  review.json
+  package/<candidate-name>/SKILL.md
+  package/<candidate-name>/agents/openai.yaml
+```
 
-Do not reopen the approved design, add adjacent cleanup, create auxiliary documentation, alter unrelated skills, or reinterpret an approved enhancement as broader portfolio authority. Return to `$skill-researcher` only when the user separately requests new candidate research.
+- Choose a short lowercase hyphen-case `<candidate-name>` that describes the concrete capability. Do not rename it merely to sound more generic.
+- Choose the next unused lowercase hyphen-case `<variant-id>`, such as `variant-001-script-notebook`. Never reuse or overwrite an existing variant directory.
+- Use `$skill-creator` initialization beneath the variant's `package/` directory so the nested `<candidate-name>` is a complete validator-ready draft package. Add scripts, references, or assets when that approach needs them, and test every executable path directly.
+- Write `intent.md` with the concrete use, approach, preserved nuance, differences from other variants or official skills, uncertainty, and questions for review. Record externalized design rationale, not private hidden reasoning.
+- Write `review.json` with schema version `1`, matching `candidate_name` and `variant_id`, status `pending`, string-list `predecessors`, string-list `provenance`, relationship objects, and string-list `activation_effects`.
+- A revision, alternative, or convergence that changes declared intent, approach, authority, or activation effects creates a new sibling variant. List predecessor variant paths and keep every predecessor intact. A correctness repair that preserves those declared fields updates the same variant; do not invent a false sibling merely because executable or metadata bytes changed.
+- Never edit an official top-level skill as an automatic candidate outcome. A possible enhancement to an existing skill is represented by a complete pending variant plus relationship metadata for later merge review.
 
-## Guard the approved scope
+## Guard pending source scope
 
-Before mutation, run `scripts/skill_change_guard.py snapshot` for only the affected skill packages. Record absent packages explicitly as new targets.
+Before source creation, run `scripts/skill_change_guard.py snapshot` for the existing `review-pending-skills` package and any pipeline package the current user explicitly authorized for direct maintenance. Write the snapshot below the resolver-selected `.scratchpad/` task directory.
 
-Immediately before live changes, run `scripts/skill_change_guard.py unchanged`. If an affected package drifted after the snapshot, stop and reconcile that drift instead of overwriting it.
+Immediately before live creation, run `scripts/skill_change_guard.py unchanged`. After creation and validation, run `scripts/skill_change_guard.py verify` with every intended pending-variant path explicitly allowlisted. Treat an unexpected official-package change as a failure. Never clean, restore, stage, commit, or rewrite unrelated packages; the only Git mutation owned below is the complete containing pending-candidate root.
 
-After mutation and validation, run `scripts/skill_change_guard.py verify` with every approved relative path allowlisted. Treat any unapproved target-package change as a failure. Ignore unrelated dirty sibling skill packages; never clean, restore, stage, commit, or rewrite them.
+The guard proves filesystem scope only. The evidence ledger proves that every idea and approach was retained; `$skill-creator` proves draft structure; `$review-pending-skills` owns collaborative disposition; and separate user authority owns promotion and enablement.
 
-The guard proves filesystem scope only. It does not decide whether approval exists, parse conversation meaning, apply patches, initialize packages, generate metadata, or replace `$skill-creator` validation.
+## Validate and commit without promoting
 
-## Validate before claiming completion
+For every created variant:
 
-For every affected package:
+1. Run direct tests for every added script.
+2. Run the canonical structural validator on the complete nested draft package.
+3. Run `review-pending-skills/scripts/pending_skill_inventory.py` and confirm the variant appears with its distinct hashes and relationships.
+4. Exercise positive creation and negative activation boundaries locally. Use subagents only when the user separately authorizes delegation.
+5. Verify selected filesystem scope and prove the candidate is not a top-level package or harness projection.
 
-1. Run tests for each added or changed script.
-2. Regenerate `agents/openai.yaml` when the approved trigger or interface changed.
-3. Run the canonical `$skill-creator` structural validator.
-4. Forward-test complex trigger or execution behavior with fresh agents when safe and proportionate.
-5. Run the approved-scope verification.
+After every variant for one candidate passes its creation validation, use the candidate root as the indivisible Git unit:
 
-If an implementation defect causes validation failure, repair it only within the approved ledger and rerun the affected validation. If correction requires a new semantic decision or file, stop and request approval.
+1. Define the repository-relative path as `review-pending-skills/pending-review/<candidate-name>/`. Never substitute `<variant-id>/`, `package/`, `scripts/`, a filename, a glob, `.`, or a repository-wide path.
+2. Inspect the existing index before staging. If it contains any path outside that candidate root, preserve it and stop only this candidate's commit lane; do not unstage, absorb, or bypass unrelated staged work. Continue independent candidate analysis and validation.
+3. Stage the complete root with `git add -- review-pending-skills/pending-review/<candidate-name>/`.
+4. Inspect the staged names and the candidate root's worktree state. Require every staged path to be beneath that one candidate root and require no untracked or unstaged candidate-root change to remain. If either check fails, do not commit or narrow the pathspec to make the check pass.
+5. Commit one candidate root at a time using the repository's commit convention. Use a creation subject for its initial durable snapshot and a correctness subject for a later repair. A commit records candidate persistence, not promotion or enablement.
+6. Record the resulting commit identifier and candidate-root path in a new append-only scratch ledger entry. Do not edit candidate metadata merely to inject the commit identifier after the commit.
 
-Do not claim validation when a validator could not run. Report dependency, permission, and tooling failures separately from package correctness.
+For a later defect, first compare the proposed correction with the variant's declared design fields. If it restores the existing contract, update the same variant, rerun every affected direct and structural test, then repeat the complete candidate-root staging and commit sequence. If it changes the design, create and validate a sibling variant instead, then commit the complete containing candidate root. Git history owns the evolution of a variant's correctness; sibling directories own materially different designs.
 
-## Report the exact result
+## Hand every artifact to review
 
-Report:
-
-- the proposal or approved subset applied;
-- every created or changed skill package and path;
-- every script and validation command run;
-- assertion and process results;
-- the scope-guard result;
-- unapproved or stale state deliberately left untouched;
-- any remaining validation or approval blocker.
-
-Do not mutate repositories, transcripts, memory, hooks, configuration, commits, or external systems unless the user separately authorized those exact surfaces.
+Report every created candidate and variant, its exact pending path, intent, provenance, relationships, validation, complete candidate-root commit identifier, and possible activation effects. Invoke `$review-pending-skills` for comparison only when it is separately installed and enabled; otherwise report its canonical source path and apply no installation or synchronization as a workaround. Do not ask the user to approve ideas before persisting them, and do not promote, merge, delete, synchronize, or enable anything as part of automatic creation.

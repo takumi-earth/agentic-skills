@@ -20,6 +20,8 @@ Record every load-bearing invariant as one packet containing:
 
 Mark the packet as user-selected or source-derived. Keep it separate from mutable implementation status.
 
+After implementation or verification, update only the packet's mutable status or tense. Passing tests, a favorable audit, reduced process count, and verified repository state do not erase the authority source, causal explanation, ordering, barrier, counterfactual, forbidden shortcut, or positive/negative evidence that make the packet reconstructable.
+
 ## Apply the authority hierarchy
 
 Use this order:
@@ -41,8 +43,11 @@ Before an edit that changes an authority read, mutator, causal edge, barrier cou
 - enumerate every altered edge and artifact state;
 - explain each counterfactual and affected positive/negative test;
 - reconcile the living goal;
-- mark it blocked;
+- stop every production or generated effect that depends on the disputed edge;
+- continue every authorized lane that is causally independent of that edge;
 - obtain explicit user approval before production edits.
+
+Record the pending decision as a local causal stop, not an automatic whole-goal blocker. Only when no meaningful in-scope work remains may `$maintain-living-goal` apply the harness-owned repeated-impasse protocol to the whole goal.
 
 Do not use a passing test, fewer processes, static preplanning, performance, naming symmetry, or reduced writes as implicit approval.
 

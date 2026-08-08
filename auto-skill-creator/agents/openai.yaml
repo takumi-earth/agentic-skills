@@ -1,7 +1,7 @@
 interface:
   display_name: "Auto Skill Creator"
-  short_description: "Apply approved skill proposals safely"
-  default_prompt: "Use $auto-skill-creator to apply only the skill proposal I explicitly approved in this conversation."
+  short_description: "Persist and commit every skill idea for review"
+  default_prompt: "Use $auto-skill-creator to materialize every potentially helpful idea and competing approach as design-preserving pending variants, then validate and commit each complete candidate root without promoting, synchronizing, or enabling it."
 
 policy:
   allow_implicit_invocation: true

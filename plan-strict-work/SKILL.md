@@ -83,7 +83,7 @@ Ask only when all of these are true:
 
 Present complete alternatives and consequences. Do not hide consequential subchoices behind a selected top-level option. Do not cite assistant-authored “Decision N” labels as user authorization.
 
-If a proposal changes a protected causal edge, first record the current and proposed chains, altered artifact states, counterfactuals, and affected tests. Mark the living goal blocked and obtain explicit user approval before implementation.
+If a proposal changes a protected causal edge, first record the current and proposed chains, altered artifact states, counterfactuals, and affected tests. Stop planning or implementation effects that depend on that edge and obtain explicit user approval before changing it, while continuing every causally independent authorized lane. Use `$maintain-living-goal` for whole-goal status; a pending edge review does not establish `blocked` while meaningful work remains.
 
 ## Plan for convergence, not passes
 

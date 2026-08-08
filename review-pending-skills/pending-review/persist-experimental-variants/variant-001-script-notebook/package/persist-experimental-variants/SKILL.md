@@ -20,13 +20,13 @@ For a single script file, use the packaged helper:
 
 ```bash
 python3 scripts/create_script_variant.py \
-  --source /absolute/path/to/experiment.py \
-  --notebook-root /absolute/path/to/variant-notebook \
+  --source ~/scratch/experiment.py \
+  --notebook-root ~/scratch/variant-notebook \
   --variant-id variant-001-first-approach \
   --intent "Test the direct SQLite query before introducing an adapter"
 ```
 
-Add `--predecessor <variant-id>` when the approach evolves another variant. The helper refuses symlink sources and existing variant identifiers, copies the source bytes, records a SHA-256 digest, and writes `intent.md` plus `variant.json` atomically inside a new directory. It never edits a prior variant.
+Add `--predecessor <variant-id>` when the approach evolves another variant. The helper refuses symlink sources and existing variant identifiers, copies the source bytes, records a SHA-256 digest, and writes `intent.md` plus `variant.json` atomically inside a new directory. It never edits a prior variant. It renders output beneath the user home as `~/...`; it expands `~` only internally for filesystem I/O.
 
 For multi-file or non-script experiments, preserve the same structure manually or add a new helper variant rather than silently broadening this file-oriented script.
 

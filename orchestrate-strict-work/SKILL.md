@@ -13,7 +13,7 @@ Do not spawn merely because work is large, difficult, or parallelizable. Confirm
 
 - total agent budget and concurrency limit;
 - model or effort requirements;
-- full-history versus isolated context;
+- whether the user explicitly requires context isolation; otherwise use a full-history fork;
 - worker, researcher, implementer, reviewer, verifier, or adversarial roles;
 - current wave, owned scopes, shared surfaces, and dependency order;
 - allowed writes, commands, commits, and external actions;
@@ -21,14 +21,15 @@ Do not spawn merely because work is large, difficult, or parallelizable. Confirm
 
 Current explicit instructions override historical defaults. A user may require fresh agents in one task and explicit resume in another.
 
-## Use full-history forks correctly
+## Use full-history forks by default
 
-When the user requests a full-history fork:
+When the user requests agents, delegation, waves, orchestration, or parallel work, give each worker the full available conversation history unless the user explicitly requests an isolated context for that worker. Do not require a second request for full history.
 
-- Use the harness's full-history option, such as `fork_context: true`, `fork_turns: "all"`, or its exact equivalent.
+- Use the harness's current full-history option, such as `fork_context: true`, `fork_turns: "all"`, or its exact equivalent; these names are examples, not durable field requirements.
 - Do not override model, reasoning effort, service tier, or agent type unless the user explicitly requests a different value.
 - Treat the worker as a worker, not a recursive orchestrator.
 - Do not rely on inherited history to establish role or scope.
+- If a spawn attempt rejects explicit overrides that conflict with full-history inheritance, retry with the full-history setting and the self-contained assignment only; do not silently fall back to isolation.
 
 ## Write a self-contained assignment packet
 

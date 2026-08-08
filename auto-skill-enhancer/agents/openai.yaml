@@ -1,7 +1,7 @@
 interface:
   display_name: "Auto Skill Enhancer"
-  short_description: "Propose evidence-backed skill improvements"
-  default_prompt: "Use $auto-skill-enhancer to review the current conversation, a full-history fork, or a completed goal session and propose evidence-backed improvements to the user-level skills that were actually used."
+  short_description: "Inventory every skill idea without filtering"
+  default_prompt: "Use $auto-skill-enhancer to inventory every potentially helpful idea and competing approach, preserve its evidence and uncertainty, and hand it to $auto-skill-creator for validated pending creation and complete candidate-root commits without enabling anything."
 
 policy:
   allow_implicit_invocation: true

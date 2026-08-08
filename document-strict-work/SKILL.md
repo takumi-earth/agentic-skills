@@ -24,7 +24,7 @@ Do not turn raw research into policy, synthesis into verbatim evidence, a plan i
 
 ## Resolve the canonical source
 
-- When the user refers to a goal, plan, or specification file without an exact path, resolve the authoritative artifact from explicit attachments, the active goal objective, and the most recent user designation before editing. Do not prefer a similarly named repository file or ledger merely because it exists. Ask only if those sources still leave more than one candidate.
+- When the active harness supplies an exact living-goal path, that path is the sole mutable goal authority. Read it directly; do not enumerate, compare, or select sibling attachments, and consult another attachment only when the user or harness explicitly designates it as historical input. When no active goal path exists and the user refers to a goal, plan, or specification without an exact path, resolve it from the latest explicit designation and current goal metadata; do not prefer a similarly named repository file merely because it exists, and ask only if more than one source is explicitly active.
 - Put detailed API behavior in inline rustdoc when it is the canonical API source.
 - Keep `AGENTS.md` and `CLAUDE.md` focused on durable facts that change agent behavior.
 - Keep product-specific guidance in the product owner, not a reusable fragment package.

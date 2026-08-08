@@ -21,9 +21,9 @@ Before editing:
 - Separate implementation commands from verification commands.
 - Treat a dirty worktree as a merge-safety condition only.
 
-Do not implement if load-bearing ownership, public API, compatibility, or end-state choices remain unresolved. Surface the missing choice rather than deciding it silently.
+Do not implement the work that depends on unresolved load-bearing ownership, public API, compatibility, or end-state choices. Surface the missing choice rather than deciding it silently, and continue every authorized owner-level slice that is causally independent of it.
 
-Work one complete slice at a time: investigate the full owner boundary, reconcile the goal, implement every required behavior and polarity, close the authorized diagnostic batch, format, repeat affected symbol scans after formatting, prune to current fact, then investigate the next slice. If this loop repeats without closing a slice or producing a new owner-level decision, mark the goal blocked.
+Work one complete slice at a time: investigate the full owner boundary, reconcile the goal, implement every required behavior and polarity, close the authorized diagnostic batch, format, repeat affected symbol scans after formatting, prune to current fact, then investigate the next slice. If this loop repeats without closing a slice or producing a new owner-level decision, stop that loop, record the repeated condition, and challenge whether another authorized slice can progress. Use `$maintain-living-goal` for a whole-goal blocker only when every remaining lane shares the same genuine impasse.
 
 ## Trace every symptom upstream
 
@@ -51,6 +51,8 @@ Do not rationalize:
 - filler calls, filler tests, defensive unreachable branches, or underscored discards;
 - test-only, generated, pre-existing, stage-local, or non-gating exceptions;
 - non-idiomatic checked-in fixtures when parser data, tokens, IR, snapshots, or temporary crates test the contract more narrowly.
+
+Treat checked-in compile-diagnostic Rust source as justified only when full `rustc` integration is itself the behavior under test. Even in that narrow case, normalize or delete incidental non-idiomatic syntax that is not required to produce the diagnostic; a compile-fail label is not an exemption from the repository's structural constraints.
 
 Use a narrow exception only when the current repository contract or the user explicitly authorizes the exact lint or site category with semantic criteria. Apply it only at qualifying sites, include every required contextual justification, and do not infer adjacent exemptions.
 
@@ -82,7 +84,7 @@ Public API additions, removals, re-exports, compatibility surfaces, and ownershi
 ## Protect concurrent work
 
 - Read and integrate current contents of touched files.
-- Treat current files and live callers as correctness authority unless the user explicitly names a diff or historical revision as the task target. Use Git state otherwise only for preservation or provenance; never let it shrink implementation scope.
+- Treat current files and live callers as authority for factual current state unless the user explicitly names a diff or historical revision as the task target. They do not silently supersede user-selected protected target architecture. Use Git state otherwise only for preservation or provenance; never let it shrink implementation scope.
 - Ignore unrelated dirty files.
 - Do not attribute changes to yourself without causal evidence.
 - Never restore, reset, checkout, clean, stage, unstage, or overwrite unexpected changes.

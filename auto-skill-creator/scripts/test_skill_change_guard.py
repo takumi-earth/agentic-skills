@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Behavior tests for the approved skill filesystem scope guard."""
+"""Behavior tests for the selected skill filesystem scope guard."""
 
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ class SkillChangeGuardTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.skills = self.root / "skills"
         self.skills.mkdir()
-        self.snapshot = self.root / "scope.json"
+        self.snapshot = self.skills / ".scratchpad" / "guard-tests" / "scope.json"
 
     def tearDown(self) -> None:
         """Remove the isolated test tree."""
@@ -52,8 +52,8 @@ class SkillChangeGuardTests(unittest.TestCase):
         self.write(f"skills/{name}/SKILL.md", "---\nname: sample\n---\n")
         return self.skills / name
 
-    def test_allows_approved_existing_file_modification(self) -> None:
-        """An exact approved file modification passes verification."""
+    def test_allows_allowlisted_existing_file_modification(self) -> None:
+        """An exact allowlisted file modification passes verification."""
 
         package = self.create_existing_skill()
         create_snapshot(self.skills, [package.name], [], self.snapshot)
@@ -188,8 +188,8 @@ class SkillChangeGuardTests(unittest.TestCase):
         self.assertTrue(unchanged)
         self.assertEqual(report["changes"], [])
 
-    def test_rejects_snapshot_inside_skills_root(self) -> None:
-        """The baseline manifest cannot become part of the guarded skill tree."""
+    def test_rejects_snapshot_outside_repository_scratchpad(self) -> None:
+        """The baseline manifest must not escape the repository scratchpad."""
 
         package = self.create_existing_skill()
 
@@ -198,7 +198,20 @@ class SkillChangeGuardTests(unittest.TestCase):
                 self.skills,
                 [package.name],
                 [],
-                self.skills / "scope.json",
+                self.root / "scope.json",
+            )
+
+    def test_rejects_snapshot_inside_skill_package(self) -> None:
+        """The baseline manifest cannot become deployable package content."""
+
+        package = self.create_existing_skill()
+
+        with self.assertRaises(GuardError):
+            create_snapshot(
+                self.skills,
+                [package.name],
+                [],
+                package / "scope.json",
             )
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Snapshot and verify the filesystem scope of approved skill changes."""
+"""Snapshot and verify selected skill changes with ledgers in `.scratchpad/`."""
 
 from __future__ import annotations
 
@@ -162,12 +162,24 @@ def target_snapshot(root: Path, name: str, mode: str) -> dict[str, Any]:
     raise GuardError(f"unsupported target mode: {mode!r}")
 
 
-def write_manifest(path: Path, manifest: dict[str, Any], skills_root: Path) -> None:
-    """Atomically write one deterministic manifest outside the skills root."""
+def resolve_scratchpad_output(path: Path, skills_root: Path) -> Path:
+    """Require task output beneath the canonical repository `.scratchpad/`."""
 
     output = path.expanduser().resolve(strict=False)
-    if is_within(output, skills_root):
-        raise GuardError(f"snapshot output must be outside the skills root: {output}")
+    scratchpad = (skills_root / ".scratchpad").resolve(strict=False)
+    if output == scratchpad or not is_within(output, scratchpad):
+        raise GuardError(
+            "snapshot output location check failed; "
+            "condition=output must be a file below canonical repository scratchpad; "
+            f"expected_parent={scratchpad}; received={output}"
+        )
+    return output
+
+
+def write_manifest(path: Path, manifest: dict[str, Any], skills_root: Path) -> None:
+    """Atomically write one deterministic manifest beneath `.scratchpad/`."""
+
+    output = resolve_scratchpad_output(path, skills_root)
     output.parent.mkdir(parents=True, exist_ok=True)
     temporary_name: str | None = None
     try:
@@ -201,7 +213,7 @@ def create_snapshot(
     new: list[str],
     output: Path,
 ) -> dict[str, Any]:
-    """Create and write one approved-target baseline manifest."""
+    """Create and write one selected-target baseline manifest."""
 
     root = resolve_skills_root(skills_root)
     duplicates = sorted(set(existing) & set(new))
@@ -407,11 +419,11 @@ def parse_args() -> argparse.Namespace:
     """Parse the scope-guard command line."""
 
     parser = argparse.ArgumentParser(
-        description="Snapshot and verify approved user-level skill filesystem scope."
+        description="Snapshot and verify selected user-level skill filesystem scope."
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
-    snapshot = commands.add_parser("snapshot", help="record approved target baselines")
+    snapshot = commands.add_parser("snapshot", help="record selected target baselines")
     snapshot.add_argument("--skills-root", type=Path, required=True)
     snapshot.add_argument("--existing", action="append", default=[])
     snapshot.add_argument("--new", action="append", default=[])

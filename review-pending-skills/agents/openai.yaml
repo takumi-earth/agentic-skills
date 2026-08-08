@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Pending Skills"
+  short_description: "Review candidate variants and their history"
+  default_prompt: "Use $review-pending-skills to compare every pending design variant and its complete candidate-root Git evolution, preserving same-design correctness commits separately from new design variants without promoting or enabling anything."

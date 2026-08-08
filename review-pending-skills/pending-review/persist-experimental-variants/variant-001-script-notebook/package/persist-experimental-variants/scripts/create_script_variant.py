@@ -19,6 +19,20 @@ class VariantError(RuntimeError):
     """The requested source or variant destination is unsafe or invalid."""
 
 
+def render_path(path: Path, home: Path | None = None) -> str:
+    """Render paths beneath home with a portable tilde prefix."""
+
+    resolved_path = path.expanduser().resolve(strict=False)
+    resolved_home = (home or Path.home()).expanduser().resolve(strict=False)
+    try:
+        relative = resolved_path.relative_to(resolved_home)
+    except ValueError:
+        return str(resolved_path)
+    if relative == Path("."):
+        return "~"
+    return f"~/{relative.as_posix()}"
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -39,7 +53,9 @@ def create_variant(
 
     raw_source = source.expanduser()
     if raw_source.is_symlink() or not raw_source.is_file():
-        raise VariantError(f"source must be a regular non-symlink file: {source}")
+        raise VariantError(
+            f"source must be a regular non-symlink file: {render_path(source)}"
+        )
     source_path = raw_source.resolve()
     if VARIANT_RE.fullmatch(variant_id) is None:
         raise VariantError(f"invalid variant id: {variant_id!r}")
@@ -50,14 +66,21 @@ def create_variant(
 
     raw_root = notebook_root.expanduser()
     if raw_root.is_symlink():
-        raise VariantError(f"notebook root must be a real directory: {raw_root}")
+        raise VariantError(
+            f"notebook root must be a real directory: {render_path(raw_root)}"
+        )
     raw_root.mkdir(parents=True, exist_ok=True)
     if raw_root.is_symlink() or not raw_root.is_dir():
-        raise VariantError(f"notebook root must be a real directory: {raw_root}")
+        raise VariantError(
+            f"notebook root must be a real directory: {render_path(raw_root)}"
+        )
     root = raw_root.resolve()
     target = root / variant_id
     if target.exists() or target.is_symlink():
-        raise VariantError(f"variant already exists and will not be overwritten: {target}")
+        raise VariantError(
+            "variant already exists and will not be overwritten: "
+            f"{render_path(target)}"
+        )
 
     temporary = Path(tempfile.mkdtemp(prefix=f".{variant_id}.", dir=root))
     try:
@@ -111,7 +134,7 @@ def main() -> int:
     except VariantError as error:
         print(f"VARIANT_ERROR: {error}")
         return 2
-    print(output)
+    print(render_path(output))
     return 0
 
 

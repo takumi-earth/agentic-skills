@@ -59,6 +59,16 @@ Walk outward from the symptom:
 
 Do not infer destination architecture from an incomplete starting snapshot. Do not use physical location as proof of semantic ownership. Read [the ownership model](references/ownership-model.md) when the task crosses repository, generator, or adapter boundaries.
 
+## Use strict-owned evidence before substitutes
+
+- For work in or affecting the strict ecosystem, use the current local checkout beneath `~/strict-rs/*` as the first source for ownership, implementation, behavior tests, manifests, features, patches, license, Rust edition and toolchain policy, and repository-specific guidance.
+- Treat Cargo caches, generated metadata, web documentation, and neighboring consumers as secondary evidence when the owning checkout is available. Resolve contradictions at the owner instead of selecting the source that makes the smallest edit easier.
+- Read access to a neighboring checkout does not grant write, dependency-revision, verification, commit, push, or publication authority there.
+
+## Challenge apparent blockers
+
+Before reporting that a user decision, external constraint, or another owner blocks progress, inspect the applicable guidance, manifests, comments, source, lockfile, feature and patch tables, generators, consumers, and canonical command surfaces; trace the symptom to its upstream owner; distinguish repository policy from an actual external limitation; and exhaust safe alternatives inside the current authority. Record a decision that stops one dependent lane as a local boundary and continue independent authorized work. For an active living goal, use `$maintain-living-goal` before any whole-goal `blocked` transition; do not turn a review request or incomplete slice into an early exit.
+
 ## Route by task type
 
 Use the specialized skill whose trigger matches the active phase:
@@ -88,3 +98,5 @@ Keep these states separate:
 - External publication, push, or deployment completed.
 
 Never collapse them into “done,” “green,” “verified,” or “clean.” If the user owns verification, report implementation state and wait for their evidence. If a blocker belongs to another owner or requires new authority, report the exact boundary rather than working around it.
+
+These evidence states do not establish achievement of an active harness goal. Route an apparently favorable end state through `$maintain-living-goal` as a candidate requirement-by-requirement audit, and never perform the final `complete` transition without explicit user acceptance.

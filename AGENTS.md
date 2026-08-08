@@ -16,7 +16,9 @@
 - `.skill-specs/` is external, reference-only material. It is not a skill package and must never be copied, linked, enumerated, or installed into a harness as one.
   - `.skill-specs/ext/` is the pinned upstream `agentskills/agentskills` submodule. Do not edit its contents as local source; update the submodule pointer deliberately when an upstream refresh is requested.
   - `.skill-specs/references/` contains local reference material used to interpret skill format and design guidance. Changes there are reference maintenance, not skill deployment.
-- `.scratchpad/` contains research evidence and working artifacts. It is not deployable content, and historical evidence must not be rewritten merely to make current output look cleaner.
+- `.scratchpad/` is the repository-wide scratch and output root for every skill instruction and packaged script. Resolve the canonical repository first, then place transient work, generated reports, decision ledgers, disposable fixtures, captured command output, and validation artifacts beneath `.scratchpad/<skill-or-task>/`; never put those artifacts in a skill package or assume a checkout-specific absolute path.
+- Preserve task deliverables at an explicitly user-selected external destination when that destination is part of the task contract. This is distinct from skill scratch output: diagnostics, fixtures, and workflow bookkeeping still belong under the canonical repository's `.scratchpad/`.
+- `.scratchpad/` is not deployable content. Keep its artifacts out of skill-package allowlists and harness synchronization, refuse to overwrite audit artifacts unless the workflow explicitly defines replacement semantics, and do not rewrite historical evidence merely to make current output look cleaner.
 - `CLAUDE.md` is a compatibility pointer to this file. Keep durable repository guidance in `AGENTS.md` rather than duplicating it by harness.
 
 ## Distribution boundary
@@ -36,7 +38,7 @@
 4. Keep `SKILL.md` focused on information an agent would not reliably infer. Move conditional detail into a named resource and state exactly when to load it.
 5. Preserve explicit authorization boundaries. A review or proposal does not authorize implementation, and a skill edit does not authorize adjacent hooks, configuration, memory, installed copies, staging, commits, or external changes.
 6. Update `agents/openai.yaml` when the skill name, invocation-facing description, default prompt, implicit-invocation policy, or other OpenAI interface behavior changes. Do not regenerate it for a body-only change that leaves the interface contract intact.
-7. Treat scripts as product code. Keep deterministic logic in scripts when it is more reliable than prose, and test every added or changed executable path directly.
+7. Treat scripts as product code. Keep deterministic logic in scripts when it is more reliable than prose, route their scratch and generated output through the resolved repository `.scratchpad/`, and test every added or changed executable path directly.
 8. Make surgical edits. Preserve unrelated user changes and do not normalize neighboring packages merely because they are present.
 
 ## Skill design conventions

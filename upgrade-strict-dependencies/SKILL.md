@@ -37,7 +37,7 @@ Do not infer scope from whichever manifest currently fails.
 - For Rust, distinguish Cargo's `rust-version` from `rustup` toolchain selectors: a two-component selector tracks the newest patch in that release line, while a three-component selector pins one patch. Preserve the selected policy in CI, documentation, and verification commands instead of normalizing between them.
 - Inspect consumers before changing public features or removing compatibility surfaces.
 
-Before adding a new third-party crate, require the candidate review to cover release and maintenance health, license, edition, MSRV, platform support, default and selected feature footprint, transitive dependencies, unsafe implementation policy, advisories, supersession, and API/lifecycle ownership fit. Reconcile the living goal, mark it blocked, present the comparison, and wait for explicit selection before editing a production manifest or lockfile.
+Before adding a new third-party crate, require the candidate review to cover release and maintenance health, license, edition, MSRV, platform support, default and selected feature footprint, transitive dependencies, unsafe implementation policy, advisories, supersession, and API/lifecycle ownership fit. Reconcile the living goal, record a local stop on every dependent manifest and lockfile edit, present the comparison, continue independent authorized work, and wait for explicit selection. Use `$maintain-living-goal` for a whole-goal `blocked` transition only when the same genuine impasse leaves no meaningful in-scope work and survives the harness audit.
 
 ## Centralize workspace dependencies structurally
 

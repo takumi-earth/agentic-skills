@@ -50,6 +50,6 @@ Update the active plan or living goal before source edits when the message chang
 - State what changed, what remains active, and what work was discarded or retained.
 - Resolve the entire supplied diagnostic batch before rerunning its gate when that policy is active.
 - Continue from the unfinished owner-level slice rather than starting a parallel interpretation.
-- Keep the goal blocked when the new message requests review or leaves a material architecture decision unresolved.
+- When the new message requests review or leaves a material architecture decision unresolved, record the affected local stop and continue every causally independent authorized lane. Use `$maintain-living-goal` and the harness's repeated-impasse audit before treating the whole goal as `blocked`.
 
 Do not praise the correction or merely defer. Lead with the concrete contract change and the evidence that determines the next action.

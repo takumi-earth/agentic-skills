@@ -1,0 +1,7 @@
+interface:
+  display_name: "Filesystem Git Observability"
+  short_description: "Audit Git and filesystem mutation evidence"
+  default_prompt: "Use $filesystem-git-observability to run this Git or filesystem mutation through durable scripts, production-faithful fixtures, persisted pre/post evidence, and explicit condition/expected/received diagnostics."
+
+policy:
+  allow_implicit_invocation: true

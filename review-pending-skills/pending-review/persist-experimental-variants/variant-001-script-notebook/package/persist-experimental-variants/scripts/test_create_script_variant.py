@@ -101,6 +101,16 @@ class CreateVariantTests(unittest.TestCase):
                     predecessors=[],
                 )
 
+    def test_home_paths_render_with_a_tilde_prefix(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary) / "home"
+            nested = home / "notebooks" / "variant-001"
+
+            self.assertEqual(
+                create_script_variant.render_path(nested, home),
+                "~/notebooks/variant-001",
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
