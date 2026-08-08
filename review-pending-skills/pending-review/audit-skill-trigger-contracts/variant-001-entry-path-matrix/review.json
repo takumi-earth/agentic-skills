@@ -1,0 +1,30 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation into harness skill roots",
+    "use during invocation-facing metadata maintenance"
+  ],
+  "candidate_name": "audit-skill-trigger-contracts",
+  "predecessors": [],
+  "provenance": [
+    "Current user correction that auto-skill-creator must never exclude manual invocation of itself",
+    "Current ambiguity between activation prerequisites, evidence inputs, and effect boundaries"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "skill-creator"
+    },
+    {
+      "kind": "overlap",
+      "target": "auto-skill-enhancer"
+    },
+    {
+      "kind": "overlap",
+      "target": "auto-skill-creator"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-entry-path-matrix"
+}

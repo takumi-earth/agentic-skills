@@ -1,0 +1,4 @@
+interface:
+  display_name: "Audit Skill Trigger Contracts"
+  short_description: "Audit explicit and automatic skill triggers"
+  default_prompt: "Use $audit-skill-trigger-contracts to compare manual, implicit, hook, and handoff entry paths and identify exclusions that suppress valid skill invocation."
