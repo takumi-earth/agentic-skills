@@ -1,7 +1,7 @@
 interface:
   display_name: "Auto Skill Creator"
   short_description: "Persist and commit every skill idea for review"
-  default_prompt: "Use $auto-skill-creator to materialize every potentially helpful idea and competing approach as design-preserving pending variants, then validate and commit each complete candidate root without promoting, synchronizing, or enabling it."
+  default_prompt: "Use $auto-skill-creator to materialize every potentially helpful idea and competing approach as design-preserving pending variants, validate the complete invocation, and commit all complete candidate roots together once before any later edit without promoting, synchronizing, or enabling them."
 
 policy:
   allow_implicit_invocation: true

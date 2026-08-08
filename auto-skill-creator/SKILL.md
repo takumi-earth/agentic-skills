@@ -1,11 +1,11 @@
 ---
 name: auto-skill-creator
-description: "Automatically materialize every potentially helpful user-level skill idea as design-preserving variants beneath `$review-pending-skills`, validate them, and commit each complete pending candidate root for collaborative review. Use after each goal ends and whenever invoked directly from a harness or conversation, including when the user already named candidates, packages, paths, or exact edits; no hook, handoff, prior approval, recurrence proof, or preassembled bundle is required. Reuse `$skill-creator` for draft mechanics and validation. Never auto-filter candidates, stage or commit a candidate descendant or unrelated path, mutate official skills, promote drafts, synchronize installations, register hooks, change configuration or memory, publish, or perform unrelated cleanup."
+description: "Automatically materialize every potentially helpful user-level skill idea as design-preserving variants beneath `$review-pending-skills`, validate the complete invocation batch, and persist all complete candidate roots together in one creation-batch commit for collaborative review. Use after each goal ends and whenever invoked directly from a harness or conversation, including when the user already named candidates, packages, paths, or exact edits; no hook, handoff, prior approval, recurrence proof, or preassembled bundle is required. Reuse `$skill-creator` for draft mechanics and validation. Never auto-filter candidates, split one creation batch across commits, stage or commit a candidate descendant or unrelated path, mutate official skills, promote drafts, synchronize installations, register hooks, change configuration or memory, publish, or perform unrelated cleanup."
 ---
 
 # Auto Skill Creator
 
-Persist what may help before deciding whether it should become active guidance. Create complete, design-preserving pending variants and candidate-root commits so the user can inspect, compare, repair, and converge them through `$review-pending-skills`; never collapse candidate creation into promotion or enablement.
+Persist what may help before deciding whether it should become active guidance. Create complete, design-preserving pending variants and one creation-batch commit containing every complete candidate root from the invocation so the user can inspect, compare, repair, and converge them through `$review-pending-skills`; never collapse candidate creation into promotion or enablement.
 
 ## Activate without a candidate gate
 
@@ -13,7 +13,7 @@ Persist what may help before deciding whether it should become active guidance. 
 - Run on every direct `$auto-skill-creator` invocation, whether it comes from the harness or conversation. A user-supplied candidate, target skill, package, source path, or exact edit narrows what to create; it never reroutes the task away from this skill.
 - Treat `$auto-skill-enhancer` and `$skill-researcher` artifacts as optional structured evidence, not activation prerequisites or approval gates.
 - Distinguish a raw mention from an idea the agent thinks may help, but once an idea is identified, materialize it. Do not invent catalog-derived candidates merely to make the run nonempty.
-- Treat direct or post-goal invocation as authority only for bounded pending-artifact creation, validation, and Git persistence in the canonical repository. It authorizes staging and committing only a complete `review-pending-skills/pending-review/<candidate-name>/` root after creation or a same-design correctness repair. It never authorizes a narrower variant, package, script, or file pathspec, and it does not authorize Git operations on pipeline owners, official skills, always-loaded guidance, unrelated work, promotion, installation, synchronization, linking, hook registration, configuration, memory, publication, or external systems.
+- Treat direct or post-goal invocation as authority only for bounded pending-artifact creation, validation, and Git persistence in the canonical repository. It authorizes one commit containing the complete `review-pending-skills/pending-review/<candidate-name>/` root for every candidate created or changed in that invocation. It never authorizes a narrower variant, package, script, or file pathspec, a partial invocation batch, or Git operations on pipeline owners, official skills, always-loaded guidance, unrelated work, promotion, installation, synchronization, linking, hook registration, configuration, memory, publication, or external systems.
 - Use direct `$skill-creator` for ordinary user-selected official skill work only when `$auto-skill-creator` was not invoked and the task is not the automatic post-goal path.
 
 ## Retain every idea and approach
@@ -55,7 +55,14 @@ Before creating variants, persist a new task ledger beneath `<scratchpad-root>/a
 - exact source allowlists and excluded official or external effects;
 - draft resources and validation planned for each variant.
 
-Descriptive labels preserve review context; they do not authorize filtering. Before later work, append a ledger entry classifying whether it preserves or changes the variant's declared design identity. A change of intent, approach, authority boundary, or activation effects creates a sibling variant and records its predecessors. A correctness repair that restores the behavior already declared by `intent.md`, `review.json`, and the draft contract updates the same variant and records the defect, repair, validation, and later candidate-root commit without rewriting the earlier ledger.
+Descriptive labels preserve review context; they do not authorize filtering. Persist the complete initial invocation in one creation-batch commit before beginning any later edit. Before that later work, append a ledger entry classifying whether it preserves or changes the variant's declared design identity. A change of intent, approach, authority boundary, or activation effects creates a sibling variant and records its predecessors. A correctness repair that restores the behavior already declared by `intent.md`, `review.json`, and the draft contract updates the same variant and records the defect, repair, validation, and later invocation-batch commit without rewriting the earlier ledger.
+
+Keep run evidence separate from reusable candidate resources:
+
+- Leave concrete investigation evidence, raw conversation context, memory context, source context, diagnostic output, and append-only run records beneath the resolver-selected `.scratchpad/` run. Those are evidence instances, not draft package resources.
+- Put reusable JSON schemas, schema-producing or schema-consuming product scripts, reusable instructions, and references inside the variant that owns them. Do not use a multi-candidate scratch directory as their long-term source location.
+- When a handoff already placed a reusable schema or product resource in scratch, declare one source-to-destination move manifest, create every owning pending variant directory first, then move each declared resource exactly once. Do not copy the whole run tree, leave a duplicate original, or move the run-specific evidence instances merely because a candidate owns their schema.
+- Give a resource shared by several candidates one canonical owning variant and record explicit relationships from the consumers. Do not create a non-candidate shared directory directly beneath `pending-review/` or duplicate the resource to evade ownership.
 
 ## Materialize design-preserving pending variants
 
@@ -81,7 +88,7 @@ review-pending-skills/pending-review/<candidate-name>/<variant-id>/
 
 Before source creation, run `scripts/skill_change_guard.py snapshot` for the existing `review-pending-skills` package and any pipeline package the current user explicitly authorized for direct maintenance. Write the snapshot below the resolver-selected `.scratchpad/` task directory.
 
-Immediately before live creation, run `scripts/skill_change_guard.py unchanged`. After creation and validation, run `scripts/skill_change_guard.py verify` with every intended pending-variant path explicitly allowlisted. Treat an unexpected official-package change as a failure. Never clean, restore, stage, commit, or rewrite unrelated packages; the only Git mutation owned below is the complete containing pending-candidate root.
+Immediately before live creation, run `scripts/skill_change_guard.py unchanged`. After creation and validation, run `scripts/skill_change_guard.py verify` with every intended pending-variant path explicitly allowlisted. Treat an unexpected official-package change as a failure. Never clean, restore, stage, commit, or rewrite unrelated packages; the only Git mutation owned below is one invocation-batch commit containing every complete pending-candidate root created or changed by that invocation.
 
 The guard proves filesystem scope only. The evidence ledger proves that every idea and approach was retained; `$skill-creator` proves draft structure; `$review-pending-skills` owns collaborative disposition; and separate user authority owns promotion and enablement.
 
@@ -95,17 +102,17 @@ For every created variant:
 4. Exercise positive creation and negative activation boundaries locally. Use subagents only when the user separately authorizes delegation.
 5. Verify selected filesystem scope and prove the candidate is not a top-level package or harness projection.
 
-After every variant for one candidate passes its creation validation, use the candidate root as the indivisible Git unit:
+After every variant for every candidate in the invocation passes creation validation, persist the whole invocation as one Git batch while keeping each candidate root indivisible:
 
-1. Define the repository-relative path as `review-pending-skills/pending-review/<candidate-name>/`. Never substitute `<variant-id>/`, `package/`, `scripts/`, a filename, a glob, `.`, or a repository-wide path.
-2. Inspect the existing index before staging. If it contains any path outside that candidate root, preserve it and stop only this candidate's commit lane; do not unstage, absorb, or bypass unrelated staged work. Continue independent candidate analysis and validation.
-3. Stage the complete root with `git add -- review-pending-skills/pending-review/<candidate-name>/`.
-4. Inspect the staged names and the candidate root's worktree state. Require every staged path to be beneath that one candidate root and require no untracked or unstaged candidate-root change to remain. If either check fails, do not commit or narrow the pathspec to make the check pass.
-5. Commit one candidate root at a time using the repository's commit convention. Use a creation subject for its initial durable snapshot and a correctness subject for a later repair. A commit records candidate persistence, not promotion or enablement.
-6. Record the resulting commit identifier and candidate-root path in a new append-only scratch ledger entry. Do not edit candidate metadata merely to inject the commit identifier after the commit.
+1. Build the repository-relative path set from every complete `review-pending-skills/pending-review/<candidate-name>/` root created or changed in the invocation. Never substitute a `<variant-id>/`, `package/`, `scripts/`, filename, glob, `.`, repository-wide path, or only a subset of the invocation's candidates.
+2. Inspect the existing index before staging. If it contains any path outside that complete candidate-root set, preserve it and stop the invocation's commit lane; do not unstage, absorb, bypass, or split the batch around unrelated staged work. Continue independent candidate analysis and validation.
+3. Stage every complete candidate root together with one path-bounded `git add -- <candidate-root>...` invocation.
+4. Inspect the staged names and every candidate root's worktree state. Require every staged path to be beneath the declared root set, require every declared root to be represented, and require no untracked or unstaged change to remain in any root. If a check fails, do not commit, narrow the pathspec, or fragment the batch to make it pass.
+5. Commit the complete invocation batch once using the repository's commit convention. Use a creation subject for the initial durable snapshot and a correctness or revision subject for a later batch. The initial creation-batch commit must exist before any later edit to its candidates begins. A commit records candidate persistence, not promotion or enablement.
+6. Record the resulting commit identifier and every included candidate-root path in one new append-only scratch ledger entry. Do not edit candidate metadata merely to inject the commit identifier after the commit.
 
-For a later defect, first compare the proposed correction with the variant's declared design fields. If it restores the existing contract, update the same variant, rerun every affected direct and structural test, then repeat the complete candidate-root staging and commit sequence. If it changes the design, create and validate a sibling variant instead, then commit the complete containing candidate root. Git history owns the evolution of a variant's correctness; sibling directories own materially different designs.
+For later work, first require the initial creation-batch commit, then compare every proposed change with each affected variant's declared design fields. If a correction restores an existing contract, update that variant and rerun every affected direct and structural test. If it changes the design, create and validate a sibling variant. Group every complete candidate root touched by that follow-up invocation into one later commit rather than producing per-candidate or per-variant commits. Git history owns the evolution of a variant's correctness; sibling directories own materially different designs.
 
 ## Hand every artifact to review
 
-Report every created candidate and variant, its exact pending path, intent, provenance, relationships, validation, complete candidate-root commit identifier, and possible activation effects. Invoke `$review-pending-skills` for comparison only when it is separately installed and enabled; otherwise report its canonical source path and apply no installation or synchronization as a workaround. Do not ask the user to approve ideas before persisting them, and do not promote, merge, delete, synchronize, or enable anything as part of automatic creation.
+Report every created candidate and variant, its exact pending path, intent, provenance, relationships, validation, the single invocation-batch commit identifier and all complete candidate roots it contains, and possible activation effects. Invoke `$review-pending-skills` for comparison only when it is separately installed and enabled; otherwise report its canonical source path and apply no installation or synchronization as a workaround. Do not ask the user to approve ideas before persisting them, and do not promote, merge, delete, synchronize, or enable anything as part of automatic creation.
