@@ -10,7 +10,7 @@
 
 Require harness-state roots as explicit arguments or environment variables and reserve __file__ for package resources only.
 
-Classify every path dependency as package, harness state, repository, or task output; reject scripts that derive a harness-state root from a resolved package parent; prefer env-selected executables and home-relative persisted paths.
+Classify every path dependency as package, harness state, repository, or task output; reject scripts that derive a harness-state root from a resolved package parent; prefer environment-selected executables and home-relative persisted paths. Execute the target's real entry point and verify its observed runtime root, normalized result, process status, and contained side effects.
 
 ## Planned resources
 
@@ -34,6 +34,8 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 - absolute symlink
 - canonical-direct execution
 - custom CODEX_HOME
+- missing runtime authority and resolved-parent regression
+- real entry-point output and side-effect containment
 - no hard-coded /usr/bin interpreter
 
 ## Git and activation boundary

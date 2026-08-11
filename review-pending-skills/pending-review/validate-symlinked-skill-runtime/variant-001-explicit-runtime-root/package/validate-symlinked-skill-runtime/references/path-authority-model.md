@@ -4,7 +4,7 @@ Use this reference only for `validate-symlinked-skill-runtime/variant-001-explic
 
 ## Contract
 
-Classify every path dependency as package, harness state, repository, or task output; reject scripts that derive a harness-state root from a resolved package parent; prefer env-selected executables and home-relative persisted paths.
+Classify every path dependency as package, harness state, repository, or task output. Require harness state explicitly, reserve `__file__` for package resources, and run the target's real entry point to prove that it observes the same runtime state across topologies. Require all task output beneath a disposable selected root.
 
 ## Required evidence
 
@@ -21,6 +21,8 @@ Classify every path dependency as package, harness state, repository, or task ou
 - absolute symlink
 - canonical-direct execution
 - custom CODEX_HOME
+- missing runtime authority and resolved-parent regression
+- real entry-point output and side-effect containment
 - no hard-coded /usr/bin interpreter
 
 ## Scope

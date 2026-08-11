@@ -8,7 +8,7 @@ Separate package-resource location from harness-runtime state and validate copie
 
 Treat deployment parity as a required smoke-test matrix for every stateful packaged script.
 
-Build disposable copied and symlinked package fixtures, run the same entry point and arguments in every topology, compare normalized outputs and side-effect paths, and fail with exact expected and received topology facts.
+Build disposable copied, relative-symlink, and absolute-symlink package fixtures around the canonical package. Run the target's real entry point with identical runtime authority in every topology; compare exit status and normalized output; validate declared side-effect paths; and prove the canonical package and runtime state remain unchanged.
 
 ## Difference from sibling variants
 
@@ -27,6 +27,8 @@ Resolving __file__ is correct for package resources but not for harness configur
 - positive parity fixture
 - deliberate __file__ parent regression
 - relative versus absolute symlink parity
+- real target output and declared side-effect parity
+- unchanged canonical package and runtime state
 - no mutation outside disposable fixtures
 
 ## Uncertainty and risk

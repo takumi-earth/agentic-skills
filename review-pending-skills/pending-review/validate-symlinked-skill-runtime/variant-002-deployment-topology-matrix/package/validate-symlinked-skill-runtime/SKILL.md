@@ -16,7 +16,9 @@ Apply the `variant-002-deployment-topology-matrix` design without silently mergi
 
 ## Apply this design
 
-Build disposable copied and symlinked package fixtures, run the same entry point and arguments in every topology, compare normalized outputs and side-effect paths, and fail with exact expected and received topology facts.
+Build disposable copied, relative-symlink, and absolute-symlink fixtures around the canonical package. Run the target's real package-relative entry point with the same environment-selected interpreter and explicit runtime root in every topology. Compare exit status and normalized output, require every target-declared side effect beneath its disposable output root, and prove canonical package and runtime state remain unchanged.
+
+Do not accept lexical/resolved path reports as runtime parity. The target process must actually read its package resource and selected runtime state and create its declared fixture output.
 
 Use this sequence:
 
@@ -31,6 +33,8 @@ Use this sequence:
 - Prove positive parity fixture.
 - Prove deliberate __file__ parent regression.
 - Prove relative versus absolute symlink parity.
+- Prove real entry-point output and declared side-effect parity.
+- Prove canonical package and runtime trees remain unchanged.
 - Prove no mutation outside disposable fixtures.
 
 Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.

@@ -1,4 +1,4 @@
 interface:
   display_name: "Validate Symlinked Skill Runtime"
   short_description: "Validate scripted skills across deployments"
-  default_prompt: "Use $validate-symlinked-skill-runtime to apply the variant-001-explicit-runtime-root pending design with explicit evidence and authority boundaries."
+  default_prompt: "Use $validate-symlinked-skill-runtime to run this stateful target entry point with explicit runtime authority across direct, copied, and linked packages."

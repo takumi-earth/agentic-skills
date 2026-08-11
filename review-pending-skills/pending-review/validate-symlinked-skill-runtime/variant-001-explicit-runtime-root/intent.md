@@ -8,7 +8,7 @@ Separate package-resource location from harness-runtime state and validate copie
 
 Require harness-state roots as explicit arguments or environment variables and reserve __file__ for package resources only.
 
-Classify every path dependency as package, harness state, repository, or task output; reject scripts that derive a harness-state root from a resolved package parent; prefer env-selected executables and home-relative persisted paths.
+Classify every path dependency as package, harness state, repository, or task output; reject scripts that derive a harness-state root from a resolved package parent; prefer environment-selected executables and home-relative persisted paths. Execute the target's real entry point in canonical-direct, copied, relative-link, and absolute-link packages, and verify its observed runtime root, normalized output, and contained side effects.
 
 ## Difference from sibling variants
 
@@ -29,6 +29,9 @@ Resolving __file__ is correct for package resources but not for harness configur
 - absolute symlink
 - canonical-direct execution
 - custom CODEX_HOME
+- missing runtime-authority failure
+- deliberate resolved-parent regression
+- real entry-point output and side-effect containment
 - no hard-coded /usr/bin interpreter
 
 ## Uncertainty and risk

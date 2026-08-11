@@ -16,7 +16,9 @@ Apply the `variant-001-explicit-runtime-root` design without silently merging it
 
 ## Apply this design
 
-Classify every path dependency as package, harness state, repository, or task output; reject scripts that derive a harness-state root from a resolved package parent; prefer env-selected executables and home-relative persisted paths.
+Classify every path dependency as package, harness state, repository, or task output. Require the harness-state root as an explicit argument or inherited environment value; reject missing authority rather than walking resolved package parents.
+
+Run the target's real package-relative entry point with the same runtime authority in canonical-direct, copied, relative-link, and absolute-link packages. Compare process status and normalized target output, and require every declared side effect to remain beneath the selected task-output root. Do not treat lexical and resolved path reports as proof of runtime behavior.
 
 Use this sequence:
 
@@ -33,6 +35,9 @@ Use this sequence:
 - Prove absolute symlink.
 - Prove canonical-direct execution.
 - Prove custom CODEX_HOME.
+- Prove missing runtime authority fails without package-parent inference.
+- Prove the real target entry point reads the selected state and writes only beneath its task output.
+- Prove a deliberate resolved-parent target regression fails.
 - Prove no hard-coded /usr/bin interpreter.
 
 Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.

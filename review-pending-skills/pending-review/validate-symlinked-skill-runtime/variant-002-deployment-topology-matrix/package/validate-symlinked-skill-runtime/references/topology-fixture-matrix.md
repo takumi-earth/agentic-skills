@@ -4,7 +4,7 @@ Use this reference only for `validate-symlinked-skill-runtime/variant-002-deploy
 
 ## Contract
 
-Build disposable copied and symlinked package fixtures, run the same entry point and arguments in every topology, compare normalized outputs and side-effect paths, and fail with exact expected and received topology facts.
+Build disposable copied, relative-symlink, and absolute-symlink fixtures around the canonical package. Run the target's real entry point and arguments in every topology, compare exit status and normalized output, validate declared side-effect containment, and prove the canonical package and runtime state remain unchanged.
 
 ## Required evidence
 
@@ -19,6 +19,8 @@ Build disposable copied and symlinked package fixtures, run the same entry point
 - positive parity fixture
 - deliberate __file__ parent regression
 - relative versus absolute symlink parity
+- real entry-point output and declared side-effect parity
+- unchanged canonical package and runtime state
 - no mutation outside disposable fixtures
 
 ## Scope
