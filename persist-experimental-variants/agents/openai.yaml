@@ -1,0 +1,4 @@
+interface:
+  display_name: "Persist Experimental Variants"
+  short_description: "Preserve script experiments with intent"
+  default_prompt: "Use $persist-experimental-variants to create an immutable script or design variant with documented intent instead of overwriting earlier approaches."

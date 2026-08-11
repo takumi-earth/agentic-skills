@@ -107,9 +107,32 @@ After every variant for every candidate in the invocation passes creation valida
 1. Build the repository-relative path set from every complete `review-pending-skills/pending-review/<candidate-name>/` root created or changed in the invocation. Never substitute a `<variant-id>/`, `package/`, `scripts/`, filename, glob, `.`, repository-wide path, or only a subset of the invocation's candidates.
 2. Inspect the existing index before staging. If it contains any path outside that complete candidate-root set, preserve it and stop the invocation's commit lane; do not unstage, absorb, bypass, or split the batch around unrelated staged work. Continue independent candidate analysis and validation.
 3. Stage every complete candidate root together with one path-bounded `git add -- <candidate-root>...` invocation.
-4. Inspect the staged names and every candidate root's worktree state. Require every staged path to be beneath the declared root set, require every declared root to be represented, and require no untracked or unstaged change to remain in any root. If a check fails, do not commit, narrow the pathspec, or fragment the batch to make it pass.
-5. Commit the complete invocation batch once using the repository's commit convention. Use a creation subject for the initial durable snapshot and a correctness or revision subject for a later batch. The initial creation-batch commit must exist before any later edit to its candidates begins. A commit records candidate persistence, not promotion or enablement.
-6. Record the resulting commit identifier and every included candidate-root path in one new append-only scratch ledger entry. Do not edit candidate metadata merely to inject the commit identifier after the commit.
+4. Read [the staged-object contract](references/staged-object-contract.md), then run `scripts/manage_creation_batch.py create` with the persisted inventory, every complete candidate root, every validation report, and a new immutable manifest path beneath this run's `.scratchpad/auto-skill-creator/<run-id>/`. This snapshots exact staged pathnames, blob bytes, executable modes, symlink targets, evidence hashes, and the precommit OID. Refuse an unrelated staged path, a root without staged transition coverage, or any untracked or unstaged candidate remainder.
+5. Immediately before the commit, run `scripts/manage_creation_batch.py verify-precommit` against that immutable manifest. Require status `success`; do not commit, narrow the pathspec, rewrite the manifest, or fragment the batch when `HEAD`, evidence, index objects, or candidate remainder differs.
+6. Commit the complete invocation batch once using the repository's commit convention. Staging and committing remain explicit caller-owned effects; `manage_creation_batch.py` only inspects state and persists evidence. Use a creation subject for the initial durable snapshot and a correctness or revision subject for a later batch. The initial creation-batch commit must exist before any later edit to its candidates begins. A commit records candidate persistence, not promotion or enablement.
+7. Run `scripts/manage_creation_batch.py record-postcommit` with the same manifest and an append-only result JSONL path. Require exactly one commit transition, every declared root and no unrelated transition path, and committed tree parity with the staged-object snapshot. Record the precommit and resulting commit OIDs without editing candidate metadata.
+
+The helper exposes exactly these subcommands:
+
+```bash
+python3 scripts/manage_creation_batch.py create \
+  --repo <resolved-repo> \
+  --inventory <inventory.json> \
+  --candidate-root review-pending-skills/pending-review/<candidate-name> \
+  --validation-report <validation-report.json> \
+  --output <immutable-manifest.json>
+
+python3 scripts/manage_creation_batch.py verify-precommit \
+  --repo <resolved-repo> \
+  --manifest <immutable-manifest.json>
+
+python3 scripts/manage_creation_batch.py record-postcommit \
+  --repo <resolved-repo> \
+  --manifest <immutable-manifest.json> \
+  --result <append-only-result.jsonl>
+```
+
+Run `python3 scripts/manage_creation_batch.py --self-test` after changing the helper. The packaged `references/creation-batch.schema.json` and `references/creation-batch-result.schema.json` document its manifest and result shapes; the helper's internal validation remains authoritative at runtime.
 
 For later work, first require the initial creation-batch commit, then compare every proposed change with each affected variant's declared design fields. If a correction restores an existing contract, update that variant and rerun every affected direct and structural test. If it changes the design, create and validate a sibling variant. Group every complete candidate root touched by that follow-up invocation into one later commit rather than producing per-candidate or per-variant commits. Git history owns the evolution of a variant's correctness; sibling directories own materially different designs.
 

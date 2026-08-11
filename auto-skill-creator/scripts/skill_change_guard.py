@@ -22,6 +22,39 @@ class GuardError(Exception):
     """A typed input, scope, snapshot, or filesystem validation failure."""
 
 
+def normalize_home_text(value: str) -> str:
+    """Normalize every expanded current-home occurrence for serialization."""
+
+    home = str(Path.home().resolve(strict=False))
+    return value.replace(home, "~")
+
+
+def display_path(path: Path) -> str:
+    """Render one path beneath the current home directory as `~/...`."""
+
+    absolute = path.expanduser().absolute()
+    home = Path.home().resolve(strict=False)
+    try:
+        relative = absolute.relative_to(home)
+    except ValueError:
+        return str(absolute)
+    return "~" if relative == Path(".") else f"~/{relative.as_posix()}"
+
+
+def normalize_serialized(value: Any) -> Any:
+    """Recursively normalize home paths in machine-readable values."""
+
+    if isinstance(value, str):
+        return normalize_home_text(value)
+    if isinstance(value, list):
+        return [normalize_serialized(item) for item in value]
+    if isinstance(value, tuple):
+        return [normalize_serialized(item) for item in value]
+    if isinstance(value, dict):
+        return {key: normalize_serialized(item) for key, item in value.items()}
+    return value
+
+
 def path_exists(path: Path) -> bool:
     """Return whether a path exists without following a final symlink."""
 
@@ -191,7 +224,13 @@ def write_manifest(path: Path, manifest: dict[str, Any], skills_root: Path) -> N
             delete=False,
         ) as handle:
             temporary_name = handle.name
-            json.dump(manifest, handle, ensure_ascii=False, indent=2, sort_keys=True)
+            json.dump(
+                normalize_serialized(manifest),
+                handle,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
             handle.write("\n")
             handle.flush()
             os.fsync(handle.fileno())
@@ -229,7 +268,7 @@ def create_snapshot(
     targets.sort(key=lambda target: target["name"])
     manifest = {
         "schema_version": SCHEMA_VERSION,
-        "skills_root": str(root),
+        "skills_root": display_path(root),
         "targets": targets,
     }
     write_manifest(output, manifest, root)
@@ -277,7 +316,7 @@ def load_manifest(path: Path) -> dict[str, Any]:
                 or entry.get("kind") not in {"directory", "file", "symlink"}
             ):
                 raise GuardError(f"snapshot target has malformed entries: {name}")
-    manifest["skills_root"] = str(root)
+    manifest["skills_root"] = display_path(root)
     return manifest
 
 
@@ -319,7 +358,7 @@ def check_unchanged(snapshot: Path) -> tuple[bool, dict[str, Any]]:
     """Check that all targeted package baselines remain unchanged."""
 
     manifest = load_manifest(snapshot)
-    root = Path(manifest["skills_root"])
+    root = resolve_skills_root(Path(manifest["skills_root"]))
     changes: list[dict[str, Any]] = []
     for target in manifest["targets"]:
         current = scan_target_state(root, target)
@@ -364,7 +403,7 @@ def verify_snapshot(snapshot: Path, allow: list[str]) -> tuple[bool, dict[str, A
     """Verify that only allowlisted paths changed in targeted packages."""
 
     manifest = load_manifest(snapshot)
-    root = Path(manifest["skills_root"])
+    root = resolve_skills_root(Path(manifest["skills_root"]))
     target_names = {target["name"] for target in manifest["targets"]}
     allowed = {validate_allowed_path(value, target_names) for value in allow}
     changed: dict[str, list[str]] = {"added": [], "modified": [], "removed": []}
@@ -411,7 +450,13 @@ def verify_snapshot(snapshot: Path, allow: list[str]) -> tuple[bool, dict[str, A
 def render_json(value: dict[str, Any]) -> None:
     """Render one deterministic JSON report to standard output."""
 
-    json.dump(value, sys.stdout, ensure_ascii=False, indent=2, sort_keys=True)
+    json.dump(
+        normalize_serialized(value),
+        sys.stdout,
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+    )
     sys.stdout.write("\n")
 
 
@@ -461,7 +506,7 @@ def main() -> int:
         render_json(report)
         return 0 if verified else 1
     except GuardError as error:
-        print(f"error: {error}", file=sys.stderr)
+        print(f"error: {normalize_home_text(str(error))}", file=sys.stderr)
         return 2
 
 

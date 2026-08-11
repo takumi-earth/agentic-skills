@@ -1,0 +1,6 @@
+interface:
+  display_name: "Validate Symlinked Skill Runtime"
+  short_description: "Prove stateful skill deployment parity"
+  default_prompt: "Use $validate-symlinked-skill-runtime to run this stateful skill's real entry point across direct, copied, and linked deployments."
+policy:
+  allow_implicit_invocation: true

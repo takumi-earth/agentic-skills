@@ -18,19 +18,17 @@ Treat a completed goal or explicitly selected conversation as a source of candid
 - Let `$auto-skill-creator` materialize every identified idea and materially distinct approach beneath `$review-pending-skills` and reuse `$skill-creator` internally for draft package mechanics. Reserve direct `$skill-creator` use for user-selected official-skill work that does not invoke the automatic path.
 - Keep corpus inventory, JSONL schema research, conversation-family grouping, cross-harness sampling, and new-skill portfolio design in `$skill-researcher`.
 
-## Preserve the automatic goal-completion handoff
+## Require the external goal-completion handoff
 
-For an automatic review, obey the completion hook's write-ahead protocol before reading this skill, extracting evidence, or performing review analysis. The write-ahead append is part of completing the goal, not part of the read-only review, and is the only automatic write this workflow permits.
+For an automatic review, treat the completion handoff as an external lifecycle prerequisite owned by `$maintain-living-goal`. The two hook handlers may execute concurrently, so this workflow depends on the exact delimited block being durably confirmed by the model, not on another handler's process completion or mutable inter-handler state.
 
-- Use only the exact harness goal-file path validated and supplied by the hook.
-- Draft the complete final-ready goal result that the user would receive if no post-goal hook had run. Preserve all material outcome, change, evidence, caveat, deferred-work, cleanup, and required goal-accounting details; exclude the skill review itself.
-- Append that result exactly once between the hook-supplied delimiters without changing earlier goal content. Re-read the saved block and confirm it before beginning the review.
-- If the block already exists for this goal, reuse it instead of appending another copy.
-- If the exact file cannot be written and re-read, skip the automatic review and immediately deliver the ordinary goal-completion response from retained evidence.
-- After analysis and the automatic-creator handoff, begin the final response with only the saved content between the delimiters, copied verbatim with its Markdown, whitespace, ordering, and nuance intact. Then add the automatic skill-maintenance result as a separate section; do not summarize, rewrite, or merge the preserved result into it.
-- After any context compaction, re-read the saved block from the harness goal file instead of reconstructing it from memory or the review evidence.
+- Use only the exact managed goal-file path and delimiters independently resolved and supplied by the hook contexts.
+- Confirm that the ordinary final-ready goal result already exists exactly once between those delimiters and has been re-read before reading this skill, running the extractor, or performing review analysis.
+- Do not create, repair, reconstruct, or modify the completion handoff as part of this read-only analysis. If the ordered handoff context is absent, the exact block cannot be confirmed, or the handoff otherwise failed, skip the automatic review and immediately deliver the ordinary goal-completion response from retained evidence.
+- After analysis and the automatic-creator handoff, begin the final response with only the confirmed saved content between the delimiters, copied verbatim with its Markdown, whitespace, ordering, and nuance intact. Then add the automatic skill-maintenance result as a separate section; do not summarize, rewrite, or merge the preserved result into it.
+- After any context compaction, re-read the confirmed block from the exact managed goal file instead of reconstructing it from memory or review evidence.
 
-Do not create or modify a completion handoff during manual invocation.
+Manual `$auto-skill-enhancer` invocation neither requires nor creates a completion handoff.
 
 ## Build a bounded evidence bundle
 

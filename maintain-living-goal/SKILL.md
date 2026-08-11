@@ -99,6 +99,18 @@ The contradiction sweep must also compare every historical/parity baseline and e
 - Do not use low remaining context, elapsed time, a passing partial source, an unchallenged final answer, or absence of newly discovered work as a blocked or completion criterion.
 - Update cross-project memory only when the user explicitly authorizes it, and never substitute memory notes for complete repository-specific goal state.
 
+## Use the packaged completion-handoff adapter
+
+`scripts/goal_artifact_resolution.py` is the pure shared resolver for managed goal artifacts. It reads inherited `CODEX_HOME`, falls back to `~/.codex` only when that variable is absent, and returns a deterministic typed result without writing state or emitting a hook envelope. It resolves exactly one regular non-symlink `attachments/<uuid>/<filename>` artifact named by objective prose after canonical containment checks. Package-resource lookup is distinct from harness-state authority; never derive `CODEX_HOME` from this package's resolved location.
+
+`scripts/goal_completion_handoff_hook.py` is the independent Codex `PostToolUse` adapter for successful `update_goal(status="complete")` events. It does not require a transcript. On resolution success, it injects goal-specific delimiters, structured completion accounting, and the model-owned write-and-re-read barrier for preserving the ordinary final-ready result exactly once. It does not write the artifact itself or name, invoke, or own any later automatic review. On typed resolution failure, it preserves the successful completion result, renders the condition, expected value, received value, stage, code, and candidate count, and directs the ordinary completion response while withholding downstream post-completion work whose durable prerequisite is missing.
+
+- Keep success code `resolved-exact-artifact` and failure codes `invalid-runtime-root`, `objective-not-text`, `no-managed-artifact-reference`, `ambiguous-managed-artifacts`, `attachments-root-mismatch`, `managed-path-shape`, and `artifact-not-file` stable.
+- Keep every emitted hook response to one valid `PostToolUse` `hookSpecificOutput` envelope, process status `0`, and empty stderr. Non-completion and malformed events are silent no-ops.
+- Keep automatic post-completion skill review under `$auto-skill-enhancer`; it may independently consume the pure resolver as a declared sibling-package resource but cannot own or reconstruct this lifecycle handoff.
+- Keep artifact creation, hook registration, and hook trust as separate authorities. Creating, maintaining, or testing these scripts does not authorize adding or trusting them in a harness configuration.
+- After changing either resource, run `python3 scripts/test_goal_completion_handoff_hook.py` from this package and then validate the complete skill package.
+
 ## Use the packaged Codex Stop adapter
 
 `scripts/active_goal_stop_hook.py` is an optional Codex-specific adapter that requests one same-turn anti-punting continuation while the thread goal is `active`. It reads `goals_1.sqlite` by the hook input's `session_id`, uses a parameterized read-only query, and emits only schema-valid `Stop` JSON. It does not parse the transcript, edit the goal, count a continuation as another goal turn, or decide goal status.

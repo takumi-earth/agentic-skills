@@ -17,8 +17,13 @@ sys.path.insert(0, str(SCRIPT_DIRECTORY))
 from skill_change_guard import GuardError  # noqa: E402
 from skill_change_guard import check_unchanged  # noqa: E402
 from skill_change_guard import create_snapshot  # noqa: E402
+from skill_change_guard import load_manifest  # noqa: E402
+from skill_change_guard import normalize_serialized  # noqa: E402
 from skill_change_guard import scan_package  # noqa: E402
 from skill_change_guard import verify_snapshot  # noqa: E402
+
+
+REPOSITORY_ROOT = SCRIPT_DIRECTORY.parents[1]
 
 
 class SkillChangeGuardTests(unittest.TestCase):
@@ -162,6 +167,45 @@ class SkillChangeGuardTests(unittest.TestCase):
         self.assertEqual(
             [entry["path"] for entry in z_entries], ["a.txt", "z.txt"]
         )
+
+    def test_persisted_skills_root_uses_home_relative_serialization(self) -> None:
+        """A manifest beneath the home directory never stores its expanded prefix."""
+
+        with tempfile.TemporaryDirectory(
+            dir=REPOSITORY_ROOT / ".scratchpad"
+        ) as temporary:
+            root = Path(temporary)
+            skills = root / "skills"
+            package = skills / "sample-skill"
+            package.mkdir(parents=True)
+            (package / "SKILL.md").write_text("skill\n", encoding="utf-8")
+            snapshot = skills / ".scratchpad" / "guard" / "scope.json"
+
+            manifest = create_snapshot(skills, [package.name], [], snapshot)
+            persisted = json.loads(snapshot.read_text(encoding="utf-8"))
+            loaded = load_manifest(snapshot)
+
+            self.assertTrue(manifest["skills_root"].startswith("~/"))
+            self.assertEqual(persisted["skills_root"], manifest["skills_root"])
+            self.assertEqual(loaded["skills_root"], manifest["skills_root"])
+            unchanged, report = check_unchanged(snapshot)
+            self.assertTrue(unchanged)
+            self.assertEqual(report["status"], "unchanged")
+
+    def test_nested_machine_values_normalize_every_home_occurrence(self) -> None:
+        """Diagnostics normalize home paths recursively without changing field names."""
+
+        expanded = str(Path.home().resolve())
+        value = {
+            "path": f"{expanded}/agentic-skills",
+            "nested": [f"before {expanded}/.codex after", {"count": 1}],
+        }
+
+        normalized = normalize_serialized(value)
+
+        self.assertEqual(normalized["path"], "~/agentic-skills")
+        self.assertEqual(normalized["nested"][0], "before ~/.codex after")
+        self.assertEqual(normalized["nested"][1], {"count": 1})
 
     def test_detects_preapplication_baseline_drift(self) -> None:
         """The unchanged phase detects target edits after the snapshot."""

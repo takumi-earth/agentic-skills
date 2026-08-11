@@ -19,6 +19,15 @@ Never promote an observed attribute into an acceptance invariant merely because 
 
 State every invariant before the first production mutation. For each one, record its source: explicit user instruction, repository contract, or accepted test. If no source authorizes a check, do not gate on it.
 
+## Scope durable command recording to evidence-producing work
+
+- Read governing instructions and narrowly inspect source directly when the read is not itself an audit artifact. Those passive reads do not require a task-local wrapper merely because they inform later reasoning.
+- Use the durable driver and report workflow whenever computed selection, mutation, or collected command output will be relied on as filesystem or Git evidence. Persist the operation, inputs, outputs, status, and interpretation boundary before treating the result as authoritative.
+- Convert an ambiguous multi-step shell procedure into durable machinery before execution when its intermediate choices, mutation order, or collected output affect the evidence chain.
+- Treat a packaged inspection helper as authoritative when its output participates in preserved evidence. Do not reimplement its selection or parsing ad hoc and then claim equivalent audit provenance.
+
+This boundary does not weaken `$design-command-observability`: add that skill when a command blocks, fans out, needs progress signals, or must preserve a stdout protocol.
+
 ## Put all workflow output in `.scratchpad/`
 
 Resolve the canonical `agentic-skills` checkout by its Git remote identity before creating workflow artifacts. Use `<resolved-repo>/.scratchpad/<skill-or-task>/` for scripts written specifically for the task, decision ledgers, command captures, pre/post manifests, fixtures, context excerpts, evidence searches, and validation reports.
