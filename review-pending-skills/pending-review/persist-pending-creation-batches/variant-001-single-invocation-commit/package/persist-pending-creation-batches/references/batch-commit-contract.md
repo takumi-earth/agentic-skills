@@ -4,7 +4,7 @@ Use this reference only for `persist-pending-creation-batches/variant-001-single
 
 ## Contract
 
-Validate all variants first, reject unrelated staged paths, stage the full root set in one path-bounded command, require no candidate-root remainder, commit once, and prohibit later edits until the initial batch commit exists.
+Validate all variants first, record the precommit OID, reject unrelated staged paths, stage every exact candidate root in one path-bounded command, require no candidate-root remainder, commit once, and require a one-commit transition before later edits.
 
 ## Required evidence
 
@@ -20,7 +20,10 @@ Validate all variants first, reject unrelated staged paths, stage the full root 
 - unrelated staged path
 - missing declared root
 - unstaged candidate remainder
+- rename and copy status parsing
+- index and worktree divergence
 - single resulting commit
+- multi-commit transition rejection
 
 ## Scope
 

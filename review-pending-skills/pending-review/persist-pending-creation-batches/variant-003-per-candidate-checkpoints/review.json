@@ -1,7 +1,7 @@
 {
   "activation_effects": [
     "none during pending creation",
-    "future promotion could change auto-skill-creator Git persistence semantics"
+    "comparison-only review; no operational promotion or activation is recommended"
   ],
   "candidate_name": "persist-pending-creation-batches",
   "predecessors": [
@@ -22,6 +22,11 @@
       "kind": "history-consumer",
       "mutation_authority": "none",
       "target": "review-pending-skills"
+    },
+    {
+      "kind": "rejected-comparison",
+      "mutation_authority": "none",
+      "target": "per-candidate commit strategy"
     }
   ],
   "schema_version": 1,

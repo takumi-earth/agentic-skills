@@ -16,7 +16,9 @@ Apply the `variant-001-single-invocation-commit` design without silently merging
 
 ## Apply this design
 
-Validate all variants first, reject unrelated staged paths, stage the full root set in one path-bounded command, require no candidate-root remainder, commit once, and prohibit later edits until the initial batch commit exists.
+Validate all variants first, record the precommit OID, reject unrelated staged paths, stage the full root set in one path-bounded command, require no candidate-root remainder, commit once, and require exactly one commit across that boundary before later edits begin.
+
+The manifest must contain only `candidate_roots` and `precommit_oid`. Every root must exactly match `review-pending-skills/pending-review/<candidate-name>`; descendant, parent, absolute, escaping, and noncanonical spellings are invalid.
 
 Use this sequence:
 
@@ -26,13 +28,18 @@ Use this sequence:
 4. Keep machine-readable output valid and separate from explanatory prose when a harness schema controls stdout.
 5. Stop before any activation, synchronization, external mutation, or scope expansion not explicitly authorized by the user.
 
+Run the verifier at `prestage`, `poststage`, and `postcommit`. It parses NUL-delimited rename and copy records, requires every physical root and its staged coverage, rejects unrelated index entries and candidate remainder, and proves the final transition contains one commit. It inspects evidence only; the calling workflow retains staging and commit authority.
+
 ## Validate proportionately
 
 - Prove multiple complete candidate roots.
 - Prove unrelated staged path.
 - Prove missing declared root.
 - Prove unstaged candidate remainder.
+- Prove rename and copy status parsing.
+- Prove index and worktree divergence.
 - Prove single resulting commit.
+- Prove a multi-commit transition fails.
 
 Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.
 

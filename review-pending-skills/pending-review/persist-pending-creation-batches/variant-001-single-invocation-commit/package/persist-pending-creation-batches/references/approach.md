@@ -10,7 +10,7 @@
 
 Stage every complete candidate root created or changed by one invocation and commit the set once.
 
-Validate all variants first, reject unrelated staged paths, stage the full root set in one path-bounded command, require no candidate-root remainder, commit once, and prohibit later edits until the initial batch commit exists.
+Validate all variants first, record the precommit OID, reject unrelated staged paths, stage the full exact root set in one path-bounded command, require no candidate-root remainder, commit once, and prove one commit crossed that boundary before later edits begin.
 
 ## Planned resources
 
@@ -32,7 +32,10 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 - unrelated staged path
 - missing declared root
 - unstaged candidate remainder
+- rename and copy status records
+- index and worktree divergence
 - single resulting commit
+- rejected multi-commit transition
 
 ## Git and activation boundary
 

@@ -6,6 +6,8 @@ Use this reference only for `persist-pending-creation-batches/variant-003-per-ca
 
 Retain the superseded per-candidate checkpoint design for comparison, explicitly record the user's rejection and the fragmentation cost, and never execute it during the controlling grouped-commit workflow.
 
+This is a comparison contract only. Do not stage, commit, or mutate a live batch through it.
+
 ## Required evidence
 
 - Record the exact condition being evaluated.

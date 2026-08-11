@@ -16,7 +16,15 @@ Apply the `variant-002-write-ahead-batch-manifest` design without silently mergi
 
 ## Apply this design
 
-Hash every candidate root, persist the intended commit set, require staged names and current hashes to match the manifest, commit once, and append the resulting hash without editing candidate metadata.
+Hash every candidate root plus its inventory and validation reports, persist the intended commit set and precommit OID in an immutable manifest, require staged names and current hashes to match, commit once, and append the resulting hash to a separate result record without editing candidate metadata or the manifest.
+
+Use the helper lifecycle:
+
+1. Run `create` after validation and before staging. It requires exact `review-pending-skills/pending-review/<candidate-name>` roots and creates, but never overwrites, the version-two manifest.
+2. Stage the declared complete roots through the calling workflow.
+3. Run `verify` to reject missing roots, unrelated staged paths, stale evidence, tree drift, and index or worktree remainder.
+4. Commit once through the calling workflow.
+5. Run `record-commit` to require a one-commit transition and append a version-one record to the selected JSONL result. The helper never stages or commits.
 
 Use this sequence:
 
@@ -31,7 +39,10 @@ Use this sequence:
 - Prove manifest determinism.
 - Prove post-manifest file drift.
 - Prove extra or missing staged path.
+- Prove malformed schema and stale validation evidence.
+- Prove index and worktree divergence.
 - Prove commit hash append after success.
+- Prove a multi-commit transition fails.
 
 Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.
 
@@ -46,4 +57,6 @@ Report assertions and process exit status separately. A nonzero command is diagn
 ## Load resources
 
 - Read `references/approach.md` before applying this variant's design.
+- Read `references/creation-batch.schema.json` before producing or consuming a manifest.
+- Read `references/creation-batch-result.schema.json` before consuming the append-only result.
 - Run `scripts/verify_creation_batch.py` for the deterministic operation it owns; use its `--self-test` before relying on it.

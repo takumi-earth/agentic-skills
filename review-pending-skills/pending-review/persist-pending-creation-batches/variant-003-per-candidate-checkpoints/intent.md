@@ -1,12 +1,12 @@
 # Intent: variant-003-per-candidate-checkpoints
 
-## Concrete use
+## Concrete comparison use
 
-Persist one automatic-creation invocation as one Git commit containing every complete candidate root, before any later edit begins.
+Retain the rejected per-candidate checkpoint strategy as comparison evidence for reviews of commit fragmentation and recovery granularity. Never route an active creation batch through this variant.
 
 ## Preserved approach
 
-Persist each complete candidate root separately as soon as it validates.
+The rejected strategy would persist each complete candidate root separately as soon as it validates.
 
 Retain the superseded per-candidate checkpoint design for comparison, explicitly record the user's rejection and the fragmentation cost, and never execute it during the controlling grouped-commit workflow.
 
@@ -48,4 +48,4 @@ The candidate remains pending because structural validity does not decide whethe
 ## Possible activation effects
 
 - none during pending creation
-- future promotion could change auto-skill-creator Git persistence semantics
+- comparison-only review; no operational promotion or activation is recommended

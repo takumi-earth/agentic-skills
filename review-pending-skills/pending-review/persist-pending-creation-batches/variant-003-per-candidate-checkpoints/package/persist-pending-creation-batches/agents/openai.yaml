@@ -1,4 +1,6 @@
 interface:
   display_name: "Persist Pending Creation Batches"
-  short_description: "Persist complete candidate batches once"
-  default_prompt: "Use $persist-pending-creation-batches to apply the variant-003-per-candidate-checkpoints pending design with explicit evidence and authority boundaries."
+  short_description: "Compare a rejected checkpoint strategy"
+  default_prompt: "Use $persist-pending-creation-batches only to compare the rejected per-candidate checkpoint strategy; do not execute it for an active creation batch."
+policy:
+  allow_implicit_invocation: false

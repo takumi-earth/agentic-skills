@@ -5,41 +5,77 @@
   "properties": {
     "candidate_roots": {
       "items": {
-        "minLength": 1,
+        "pattern": "^review-pending-skills/pending-review/[a-z0-9]+(?:-[a-z0-9]+)*$",
         "type": "string"
       },
       "minItems": 1,
       "type": "array",
       "uniqueItems": true
     },
-    "inventory_sha256": {
-      "pattern": "^[0-9a-f]{64}$",
-      "type": "string"
+    "inventory": {
+      "$ref": "#/$defs/evidenceFile"
+    },
+    "precommit_oid": {
+      "oneOf": [
+        {
+          "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "tree_hashes": {
       "additionalProperties": {
         "pattern": "^[0-9a-f]{64}$",
         "type": "string"
       },
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^review-pending-skills/pending-review/[a-z0-9]+(?:-[a-z0-9]+)*$"
+      },
       "type": "object"
     },
     "validation_reports": {
       "items": {
-        "type": "string"
+        "$ref": "#/$defs/evidenceFile"
       },
+      "minItems": 1,
       "type": "array"
     }
   },
   "required": [
     "schema_version",
-    "inventory_sha256",
+    "inventory",
     "candidate_roots",
     "tree_hashes",
-    "validation_reports"
+    "validation_reports",
+    "precommit_oid"
   ],
   "title": "Pending skill creation batch",
-  "type": "object"
+  "type": "object",
+  "$defs": {
+    "evidenceFile": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "type": "object"
+    }
+  }
 }

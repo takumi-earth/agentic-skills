@@ -8,7 +8,7 @@ Persist one automatic-creation invocation as one Git commit containing every com
 
 Freeze the complete root set and validation state in a write-ahead manifest before staging the one batch commit.
 
-Hash every candidate root, persist the intended commit set, require staged names and current hashes to match the manifest, commit once, and append the resulting hash without editing candidate metadata.
+Hash every candidate root plus its inventory and validation evidence, persist the immutable intended commit set with its precommit OID, require staged names and current hashes to match, commit once, and append the resulting commit hash to a separate result record without editing the manifest or candidate metadata.
 
 ## Difference from sibling variants
 
@@ -27,7 +27,10 @@ The prior creator contract treated each candidate root as a separate commit lane
 - manifest determinism
 - post-manifest file drift
 - extra or missing staged path
+- malformed manifest schema
+- index and worktree divergence
 - commit hash append after success
+- rejection of multi-commit transitions
 
 ## Uncertainty and risk
 

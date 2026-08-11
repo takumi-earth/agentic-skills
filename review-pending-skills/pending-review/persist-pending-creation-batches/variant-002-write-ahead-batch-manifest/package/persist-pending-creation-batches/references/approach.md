@@ -10,7 +10,7 @@
 
 Freeze the complete root set and validation state in a write-ahead manifest before staging the one batch commit.
 
-Hash every candidate root, persist the intended commit set, require staged names and current hashes to match the manifest, commit once, and append the resulting hash without editing candidate metadata.
+Hash every candidate root plus inventory and validation evidence, persist the immutable intended commit set and precommit OID, require staged names and current hashes to match, commit once, and append the resulting hash to a separate result record without editing candidate metadata or the manifest.
 
 ## Planned resources
 
@@ -18,6 +18,7 @@ Hash every candidate root, persist the intended commit set, require staged names
 - `agents/openai.yaml`
 - `scripts/verify_creation_batch.py`
 - `references/creation-batch.schema.json`
+- `references/creation-batch-result.schema.json`
 
 ## Relationships
 
@@ -31,7 +32,10 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 - manifest determinism
 - post-manifest file drift
 - extra or missing staged path
+- malformed manifest schema
+- stale validation evidence and index/worktree divergence
 - commit hash append after success
+- rejected multi-commit transition
 
 ## Git and activation boundary
 

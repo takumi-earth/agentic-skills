@@ -8,7 +8,7 @@ Persist one automatic-creation invocation as one Git commit containing every com
 
 Stage every complete candidate root created or changed by one invocation and commit the set once.
 
-Validate all variants first, reject unrelated staged paths, stage the full root set in one path-bounded command, require no candidate-root remainder, commit once, and prohibit later edits until the initial batch commit exists.
+Validate all variants first, record the precommit OID, reject unrelated staged paths, stage the full exact root set in one path-bounded command, require no candidate-root remainder, commit once, and prove the resulting transition contains exactly one commit before later edits begin.
 
 ## Difference from sibling variants
 
@@ -28,7 +28,10 @@ The prior creator contract treated each candidate root as a separate commit lane
 - unrelated staged path
 - missing declared root
 - unstaged candidate remainder
+- rename and copy status records
+- index and worktree divergence
 - single resulting commit
+- rejection of multi-commit transitions
 
 ## Uncertainty and risk
 
