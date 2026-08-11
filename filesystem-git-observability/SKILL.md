@@ -21,8 +21,9 @@ State every invariant before the first production mutation. For each one, record
 
 ## Scope durable command recording to evidence-producing work
 
+- This skill governs how to preserve a filesystem or Git evidence chain after the current task already requires one. Triggering the skill does not authorize a new audit, report, manifest, wrapper, baseline, fixture, or command.
 - Read governing instructions and narrowly inspect source directly when the read is not itself an audit artifact. Those passive reads do not require a task-local wrapper merely because they inform later reasoning.
-- Use the durable driver and report workflow whenever computed selection, mutation, or collected command output will be relied on as filesystem or Git evidence. Persist the operation, inputs, outputs, status, and interpretation boundary before treating the result as authoritative.
+- Use the durable driver and report workflow when an explicitly authorized mutation needs a recoverable baseline or when the user-requested deliverable is itself a durable filesystem or Git audit. Do not wrap ordinary status checks, narrow diagnosis, validation, completion reasoning, or unchanged-state rechecks merely because their output may be cited.
 - Convert an ambiguous multi-step shell procedure into durable machinery before execution when its intermediate choices, mutation order, or collected output affect the evidence chain.
 - Treat a packaged inspection helper as authoritative when its output participates in preserved evidence. Do not reimplement its selection or parsing ad hoc and then claim equivalent audit provenance.
 
@@ -30,7 +31,7 @@ This boundary does not weaken `$design-command-observability`: add that skill wh
 
 ## Put all workflow output in `.scratchpad/`
 
-Resolve the canonical `agentic-skills` checkout by its Git remote identity before creating workflow artifacts. Use `<resolved-repo>/.scratchpad/<skill-or-task>/` for scripts written specifically for the task, decision ledgers, command captures, pre/post manifests, fixtures, context excerpts, evidence searches, and validation reports.
+After the task passes the artifact-authority boundary above, resolve the canonical `agentic-skills` checkout by its Git remote identity and use `<resolved-repo>/.scratchpad/<skill-or-task>/` for the required workflow artifacts. Prefer no artifact for transient reads and checks. Prefer one current report per required gate; do not create numbered revisions to reinterpret unchanged evidence unless the user explicitly requires an audit history.
 
 Keep reusable packaged scripts under this skill's `scripts/`. Preserve a final task deliverable at an external destination only when that destination is part of the user's task contract; its supporting scratch evidence still belongs in `.scratchpad/`.
 
@@ -120,4 +121,4 @@ Distinguish historical preservation from current integrity. A clean current `fsc
 - `scripts/analyze_rollout_evidence.py` extracts task-specific runtime markers from one JSONL rollout without copying unrelated conversation content.
 - `scripts/investigate_git_config_metadata.py` observes Git-config lock-and-rename metadata behavior in `.scratchpad/` fixtures, compares behavior-relevant parameters, and explicitly keeps metadata out of the acceptance gate.
 
-Run each script from the resolver-selected canonical package and place its generated output under the resolved `.scratchpad/`. Read a script before modifying it, test every changed path directly, and preserve historical reports instead of overwriting them.
+Run an authorized script from the resolver-selected canonical package and place any task-required generated output under the resolved `.scratchpad/`. Read a script before modifying it and test every changed path directly. Preserve historical reports only when history is part of the task contract; otherwise keep one current artifact or no artifact at all.

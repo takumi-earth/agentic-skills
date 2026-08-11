@@ -77,16 +77,32 @@ class StopDecisionTests(unittest.TestCase):
             },
         )
         for required_text in (
-            "causally independent",
-            "not a whole-goal blocker",
-            "Do not invent work",
-            "same-turn Stop retry",
-            "three-turn blocked audit",
-            "leave the goal active",
+            "explicitly required",
+            "current user-specified explicit objective",
+            "literal user instruction",
+            "provenance that traces to the actual user instruction",
+            "an assistant-authored provenance label is not sufficient",
+            "Agent-authored goal objectives",
+            "derived work grant no authority",
+            "already authorized",
+            "grants no authority",
+            "Do not create or strengthen evidence",
+            "are not independent lanes",
+            "make no tool call",
+            "state that boundary once",
+            "same-turn retry",
+            "goal active",
             "The user alone decides achievement",
             '`update_goal(status: "complete")`',
         ):
             self.assertIn(required_text, output["reason"])
+        for forbidden_text in (
+            "perform one substantive anti-punting audit",
+            "Continue every meaningful",
+            "produce or strengthen a self-contained",
+            "required by the current objective",
+        ):
+            self.assertNotIn(forbidden_text, output["reason"])
 
     def test_recursive_stop_pass_is_a_noop(self) -> None:
         output = active_goal_stop_hook.stop_hook_output(

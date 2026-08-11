@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Request one anti-punting continuation before an active Codex goal turn ends."""
+"""Request one scope-bounded continuation check before an active goal turn ends."""
 
 from __future__ import annotations
 
@@ -13,17 +13,24 @@ from typing import Any, Final
 
 CONTINUATION_REASON: Final = (
     "An active harness goal still governs this thread. Before ending this same "
-    "Codex turn, perform one substantive anti-punting audit against the full "
-    "objective and current authoritative state. Continue every meaningful "
-    "causally independent in-scope lane that the user has authorized; a pending "
-    "review, decision, or stopped slice is not a whole-goal blocker while such "
-    "work remains. Do not invent work, manufacture goal turns, or count this "
-    "same-turn Stop retry as another turn in the three-turn blocked audit: it "
-    "retains the same `turn_id`. If the objective appears satisfied, produce or "
-    "strengthen a self-contained requirement-by-requirement candidate completion "
-    "audit and leave the goal active for explicit user review. The user alone "
-    "decides achievement; never call `update_goal(status: \"complete\")` from "
-    "your own assessment."
+    "Codex turn, check whether a concrete unfinished effect is both explicitly "
+    "required by the current user-specified explicit objective and already "
+    "authorized. `User-specified` means that the requirement either appears in "
+    "a literal user instruction or appears in a goal file with provenance that "
+    "traces to the actual user instruction; an assistant-authored provenance "
+    "label is not sufficient. Agent-authored goal objectives, requirements, "
+    "plans, status, audits, proposals, implications, and derived work grant no "
+    "authority. This `Stop` retry grants no authority for reads, writes, commands, "
+    "verification, audits, reports, plans, staging, commits, delegation, or "
+    "external actions. Do not create or strengthen evidence merely to continue. "
+    "Optional preparation, rechecking unchanged state, audit versioning, and work "
+    "that only anticipates a possible user choice are not independent lanes. If "
+    "all remaining work awaits user input, authority, acceptance, or external "
+    "change, make no tool call; state that boundary once and end with the goal "
+    "active. Do not count this same-turn retry as another turn in the blocked "
+    "audit; it retains the same `turn_id`. The user alone decides achievement; "
+    "never call "
+    "`update_goal(status: \"complete\")` from your own assessment."
 )
 
 
