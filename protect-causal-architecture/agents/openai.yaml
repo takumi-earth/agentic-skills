@@ -1,4 +1,4 @@
 interface:
   display_name: "Protect Causal Architecture"
-  short_description: "Preserve multi-phase authority and barriers"
-  default_prompt: "Use $protect-causal-architecture to preserve and review the authority, mutation, barrier, and failure sequence in this workflow."
+  short_description: "Preserve authority epochs and causal barriers"
+  default_prompt: "Use $protect-causal-architecture to preserve user-selected authority and causal barriers, routing source-transform details to $design-semantic-source-transforms."

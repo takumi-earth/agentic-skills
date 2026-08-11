@@ -1,4 +1,4 @@
 interface:
   display_name: "Audit Architectural Regressions"
-  short_description: "Build decision-ready source-history verdict packets"
-  default_prompt: "Use $audit-architectural-regressions to compare source checkpoints and produce a self-contained remediation verdict packet."
+  short_description: "Compare architecture across source checkpoints"
+  default_prompt: "Use $audit-architectural-regressions to compare architecture across source checkpoints and produce authorized inline or persisted dispositions."

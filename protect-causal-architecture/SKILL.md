@@ -1,6 +1,6 @@
 ---
 name: protect-causal-architecture
-description: "Preserve causal architecture across multi-phase workflows and refactors. Use when a design has multiple authority epochs, mutations, refresh or validation barriers, checkpoints, child attempts, generation passes, cleanup or persistence order; when changing that order; or when current code is being used to call protecting tests stale."
+description: "Preserve causal architecture across multi-phase workflows, refactors, and protected adaptive source transformations. Use when a design has multiple authority epochs, mutations, refresh or validation barriers, checkpoints, child attempts, generation passes, cleanup or persistence order; when parser or AST use is being mistaken for a user-selected semantic identity; when legacy implementation or test precedent conflicts with a protected invariant; when changing the causal chain; or when current code is being used to call protecting tests stale. Do not use solely to design or review one source transformation when no protected decision, authority chain, or causal barrier is at risk; use `$design-semantic-source-transforms` instead."
 ---
 
 # Protect Causal Architecture
@@ -38,6 +38,22 @@ Assistant-authored goal text has no independent rank in this hierarchy. Before u
 
 Keep mutable implementation status one-way: primary authority and evidence may update status, but status may never flow back into architecture, baseline selection, capability retirement, or test obligations. Do not implement a proposal and then cite the resulting partial source plus a rewritten goal as mutually supporting evidence.
 
+## Reject architectural lookalikes
+
+When the protected requirement is semantic, adaptive, structural, or location-independent, record target identity, discovery scope, local syntax anchoring, load-bearing drift, mutation, and postcondition as separate fields. Do not let one easy-to-compare representation stand in for all of them.
+
+- A parseable input or AST-bounded write proves only a syntax boundary. It does not prove the intended entity was discovered semantically.
+- A normalized token stream, complete subtree fingerprint, body hash, regex, or encoded snapshot remains exact source ownership when unrelated non-trivia changes invalidate it.
+- A path, marker, package version, or expected module may be a non-authoritative hint. If its miss can suppress the complete semantic query, it is acting as prohibited correctness authority. A lawful hint miss always continues with the authoritative full-scope query.
+- A name such as `semantic_owner` is diagnostic unless the mechanism actually resolves or discovers that owner.
+- Parsing source and rendering the selected node back to text does not make substring, snapshot, or equality assertions structural.
+
+Treat nearby legacy helpers and passing local precedent as implementation evidence at most. They cannot supersede an explicit user invariant or create a test-only loophole. The user need not enumerate every string API, hash representation, or wrapper that could violate a semantic requirement; apply the requirement end to end through discovery, mutation, postconditions, and tests.
+
+Before adopting a local mechanism, run its counterfactuals against the protected packet: move the target to another permitted file, add unrelated syntax, add an equal-looking decoy, create two genuine candidates, and change one load-bearing predicate. If the mechanism cannot distinguish those states with typed outcomes and zero partial edits, it is not equivalent to the protected architecture.
+
+Use `$design-semantic-source-transforms` for the production contract and `$test-adaptive-source-transforms` for its evidence when parsed-source transformation is in scope.
+
 ## Gate architecture changes
 
 Before an edit that changes an authority read, mutator, causal edge, barrier count, child attempt, migration/generation pass, checkpoint, cleanup, or persistence order:
@@ -74,6 +90,7 @@ A correction to one paragraph is insufficient when another paragraph still encod
 - Decompose aggregate removed tests by observable assertion. Map still-live behavior to equal-or-stronger evidence and retire only assertions whose sole production capability was explicitly removed.
 - Never invent replacement behavior that recreates a removed architecture merely to give a ledger row a replacement test. Retirement evidence and replacement evidence are distinct dispositions.
 - For each edge, test both the required path and the forbidden shortcut, including failure ordering and canonical reruns where relevant.
+- Require evidence to observe the load-bearing relationship and semantic owner. A green rendered-source assertion, copied body, marker call, aggregate count, or test-source presence cannot prove that the required edge ran or the forbidden shortcut did not.
 - Use `$verify-test-parity` before broad test deletion, moves, consolidation, or replacement.
 
 Load [the goal-authority regression](references/goal-authority-regression.md) when an assistant goal edit, baseline correction, or replacement-versus-retirement decision may have changed protecting evidence.

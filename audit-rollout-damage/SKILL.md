@@ -1,6 +1,6 @@
 ---
 name: audit-rollout-damage
-description: "Build deterministic, non-applying damage assessments from agent or harness rollout JSONL, normalized tool-use evidence, and current artifact facts. Use when a user asks what unauthorized, tainted, mistaken, or superseded agent edits landed; wants qualitative and quantitative examples such as smallest, largest, mean-nearest, and median changes; needs inert remediation candidates distinguished from live effects; or wants aggressive, conservative, and recommended remediation options without applying them. Do not use this skill to infer user authority, apply reversals, modify protected goals, stage changes, or treat current source as proof that an edit was authorized."
+description: "Build deterministic, non-applying damage and reasoning-failure assessments from agent or harness rollout JSONL, normalized tool-use evidence, and current artifact facts. Use when a user asks what unauthorized, tainted, mistaken, brittle, or superseded agent edits landed; why an agent adopted a shortcut despite explicit architecture; when parser or AST façades, copied precedent, circular tests, or unexecuted evidence may have hidden the failure; when quantitative representatives are needed; or when remediation options must remain inert. Do not use this skill to infer user authority, apply reversals, modify protected goals, stage changes, or treat current source as proof that an edit was authorized."
 ---
 
 # Audit Rollout Damage
@@ -16,15 +16,46 @@ Build a reproducible forensic report by separating trace extraction, evidence, a
 
 ## Build normalized evidence
 
+Artifact persistence and helper execution require current authority separate from review authority. For a read-only inline review, inspect the exact selected rollout and current source in place, return the causal verdict inline, and do not create `.scratchpad/` artifacts or run output-producing helpers. When a deterministic persisted assessment is explicitly requested or otherwise authorized:
+
 1. Resolve the exact rollout files, repository root, authority boundary, and output root from current user authority. Do not enumerate unrelated sessions merely because they are nearby.
 2. Run `scripts/index_rollout_tools.py` for the explicitly selected rollout JSONL. The index preserves ordinals, call IDs, raw inputs, correlated outputs, and session hashes while recursively normalizing expanded current-home paths in serialized inputs and outputs.
 3. Run `scripts/discover_edit_candidates.py` against that index and the selected repository. It recognizes direct calls and strict JSON-object `tools.exec_command(...)` calls nested inside an outer `exec` JavaScript wrapper. It records mutation-shaped wrappers it cannot parse as unsupported evidence, and reports success or failure only from explicit structured exit or result semantics; absent or contradictory semantics remain unknown. Treat all results as candidates, not a complete or authoritative mutation inventory. Manually classify unsupported or ambiguous tool shapes rather than silently excluding them.
 4. Create a small incident selection document and run `scripts/extract_rollout_context.py` for every edit or operation selected as a statistical representative. Select by stable ordinal or call ID and retain enough preceding and following semantic events to show the user request, assistant explanation, tool call, and result. The extractor records observable origin hints such as `direct_user_message` and `harness_internal_goal_context`; those hints are trace facts, not authority decisions.
 5. Preserve additional normalized evidence—goal edits, test-ledger rows, index objects, file hashes, or non-patch effects—in separate JSON or JSONL artifacts. Never bury those observations in renderer source.
 
-## Adjudicate through a manifest
+## Reconstruct reasoning failure causally
 
-Create one incident manifest conforming to `references/assessment-manifest.schema.json`.
+When the user asks why the agent chose a brittle or prohibited mechanism, reconstruct the decision sequence from the trace rather than relying on a later apology or current source shape.
+
+1. Locate the earliest user-selected or protected architecture statement.
+2. Record separately what the agent read or accurately restated and what its plan, helper API, first artifact, and landed implementation actually did. Restatement proves awareness, not compliance; a later apology or diagnosis is corroboration, not the causal source of truth.
+3. Locate the first nearby precedent, helper API, plan wording, or convenience pressure that the agent treated as implementation authority.
+4. Locate the first concrete artifact that locks in the shortcut, not merely the largest later example.
+5. Track the reinforcing signal: passing circular tests, copied fixtures, checklists closed from test-source presence, or implementation status rewritten as architecture.
+6. Name the primary abstraction failure separately from enabling precedent, API incentives, reinforcing evidence, visibility or accounting failures, and later accelerants.
+7. Separate later pressure, batching, compaction, or verification deferral from the original cause by comparing timestamps and ordinals. Do not name one as root cause when the defective abstraction predates it.
+8. Use contemporaneous rollout calls, outputs, and captured after-state to establish historical actions and lock-in. Treat current source only as evidence of the current residual state; later source cannot prove what existed, landed, or was understood at an earlier ordinal. Compare that residual state with the protected invariant to determine whether cleanup removed only visible tests or also repaired the production mechanism.
+
+Classify category substitutions explicitly, including:
+
+- **parser or AST façade:** writes are syntax-bounded, but discovery or eligibility still depends on fixed paths, rendered fragments, complete token snapshots, or exact spellings;
+- **snapshot laundering:** a full source body becomes a normalized token list, fingerprint, hash, regex, or other equivalent exact representation;
+- **semantic-label laundering:** a diagnostic string or field name implies semantic ownership without resolution or workspace discovery;
+- **test-oracle laundering:** parsed syntax is rendered back to text and asserted through substrings, equality, regexes, or snapshots;
+- **legacy-precedent laundering:** a nearby brittle helper is copied despite a higher-authority semantic requirement;
+- **circular green evidence:** the implementation emits the same strings the test searches for without proving which owner or node changed;
+- **unexecuted-evidence closure:** the presence of test source or ledger text is reported as behavioral proof after execution was deferred or failed.
+
+Test the claimed oracle counterfactually. Ask whether the same test could pass if an equal-looking node in the wrong owner changed, if the target moved files, or if unrelated syntax changed. Record a concrete false-positive construction when possible.
+
+Count defective tests and mechanisms by semantic oracle class, not only by obvious method names. Include wrapper helpers, exact equality, snapshots, parse-then-text conversions, and copied bodies so a second search style cannot hide residual cases.
+
+Use `$design-semantic-source-transforms` to describe the durable production replacement and `$test-adaptive-source-transforms` to describe equal-or-stronger evidence. When the current production mechanism or every caller needs a checkpointed, source-complete disposition packet, hand that source-adjudication slice to `$audit-architectural-regressions`; keep rollout ordinals and trace evidence authoritative for causal history. Keep every replacement as remediation analysis unless the user separately authorizes implementation.
+
+## Adjudicate an authorized persisted assessment
+
+When persistence is authorized, create one incident manifest conforming to `references/assessment-manifest.schema.json`.
 
 - Put incident names, paths, ordinals, classifications, qualitative explanations, limits, and remediation options only in the manifest.
 - Hash every evidence input and give each one a stable identifier. The renderer refuses a stale or missing input.
@@ -41,7 +72,7 @@ Create one incident manifest conforming to `references/assessment-manifest.schem
 
 Read `references/qualification-model.md` before defining qualification levels or using “inert.”
 
-## Render and reproduce
+## Render and reproduce an authorized assessment
 
 Run:
 
@@ -79,5 +110,7 @@ Confirm that the generated report:
 - gives every remediation decision unit an editable `User Verdict` and `User Question/Comment` review surface only after its decision evidence and verdict meanings;
 - names unknowns and unsupported trace shapes rather than converting them into certainty;
 - records the manifest and evidence hashes needed to reproduce the report.
+
+For an inline read-only review, report the same authority distinctions, causal ranking, representative evidence, current residual state, unknowns, and remediation boundaries directly. State that no persisted report, generated evidence, or executable probe was created.
 
 Stop after the report and evidence are reviewable. Applying any remediation is a separate user-authorized phase.

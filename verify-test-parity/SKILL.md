@@ -1,6 +1,6 @@
 ---
 name: verify-test-parity
-description: Close every removed-test disposition against a Git baseline and preserve equal-or-stronger behavioral coverage. Use when tests were deleted, renamed, moved, consolidated, or broadly rewritten; when a large diff may have lost assertions; or when Codex must prove that every removed Rust `#[test]` has a refactored replacement unless a production capability was intentionally removed and made the test obsolete.
+description: Close every removed-test disposition against a Git baseline and preserve equal-or-stronger behavioral coverage. Use when tests were deleted, renamed, moved, consolidated, or broadly rewritten; when brittle source-string, snapshot, copied-body, or marker tests are being replaced; when a large diff may have lost assertions; or when Codex must prove that every removed Rust `#[test]` has a behavioral replacement unless a production capability was intentionally removed and made the test obsolete.
 ---
 
 # Verify Test Parity
@@ -52,6 +52,27 @@ Never invent a substitute test merely to make the ledger validate. Add a test on
 
 Do not use retirement for a refactor, rename, changed implementation strategy, currently failing behavior, or difficult fixture. Those still require replacement coverage. Treat a passing ledger script as structural validation only; it cannot prove that a claimed replacement is semantically equivalent.
 
+## Require behavioral replacement evidence
+
+Judge replacement strength by the observed contract and owner, not by assertion count, fixture size, or similarity of expected text.
+
+This skill owns the immutable baseline, contract decomposition, disposition ledger, and closure decision. `$test-adaptive-source-transforms` owns the structural oracle and adaptive replacement design. For a broad parsed-source rewrite, load both once: fix the parity baseline and ledger before deletion, design the replacement evidence, then close each ledger row from executed owner-level evidence.
+
+A replacement does not close a live structural contract when it proves only that:
+
+- a rendered substring, prefix, suffix, regular expression, snapshot, or complete source expectation appears;
+- an upstream production body was copied into a fixture or expected value;
+- source was parsed and the selected node was converted back to text before assertion;
+- a marker function or comment whose name claims a product behavior survived rendering;
+- global old/new occurrence counts have the expected multiset without identifying which owner changed;
+- the test file contains an assertion that has not been executed.
+
+Require the ledger evidence to identify the semantic or product owner and map the old observable contract to typed structure, semantic delta, typed outcome, effect, failure order, or actual product behavior in the replacement. For an adaptive transformation, include the relevant movement, unrelated-extension, decoy, ambiguity, drift, post-state, and replay polarity rather than preserving the old textual oracle mechanically.
+
+Exact string evidence remains valid when the text or bytes are themselves the live external contract. Record that rendering, wire, CLI, diagnostic-wording, or generation contract explicitly so it cannot be mistaken for structural coverage.
+
+When removing a brittle test, remove its invalid assertion mechanism only after every live behavior it purported to protect has equal-or-stronger evidence at the real owner. Do not record the mechanism itself as an `intentionally-retired` production contract, and do not claim that a source-string oracle had no value merely because its oracle was weak; first decompose the behavior it attempted to cover.
+
 ## Audit one old test at a time
 
 For each `removed` identity:
@@ -66,6 +87,7 @@ For each `removed` identity:
    - assertions that preserve each old contract;
    - strengthened polarities or invariants;
    - deliberately retired behavior and the removed production capability that makes it obsolete.
+   - inside `evidence`, the assertion kind, semantic or product owner, and whether execution evidence exists for the replacement.
 5. Add a focused replacement only when a live assertion lacks coverage. Never create coverage for a retired mechanism to satisfy the ledger. Rewrite test by test; do not replace a whole file when individual edits can retain attribution.
 6. Re-run the inventory after edits and reconcile every remaining `removed` and `globally-missing` row.
 7. Run the ledger gate:

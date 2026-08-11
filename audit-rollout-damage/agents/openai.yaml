@@ -1,4 +1,4 @@
 interface:
   display_name: "Audit Rollout Damage"
-  short_description: "Build reproducible agent-change damage reports"
-  default_prompt: "Use $audit-rollout-damage to produce a deterministic, non-applying damage assessment from rollout evidence."
+  short_description: "Trace agent damage and reasoning failures"
+  default_prompt: "Use $audit-rollout-damage to trace landed agent damage, causal reasoning failures, and inert remediation options."
