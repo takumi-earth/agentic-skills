@@ -178,6 +178,13 @@ class HandoffHookTests(unittest.TestCase):
             self.assertIn("Candidate count: 0", context)
             self.assertIn("ordinary goal-completion response", context)
             self.assertIn("downstream post-completion work", context)
+            self.assertIn("`goal.tokensUsed=41`", context)
+            self.assertIn("`goal.tokenBudget=100`", context)
+            self.assertIn("`goal.timeUsedSeconds=9`", context)
+            self.assertIn(
+                "completion requirement: Final token usage: 41 of 100.",
+                context,
+            )
             self.assertNotIn("auto-skill-enhancer", context)
 
     def test_noncompletion_and_malformed_input_are_silent_noops(self) -> None:
