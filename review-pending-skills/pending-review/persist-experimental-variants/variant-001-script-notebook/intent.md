@@ -6,7 +6,7 @@ Persist the user's observed copy-edit-copy workflow for scratch scripts so twent
 
 ## Approach
 
-Provide a file-oriented helper that creates an immutable directory for each script version, copies exact bytes, stores a digest, records intent and predecessors, and refuses overwrite. Keep the procedure concrete instead of generalizing prematurely to every artifact type.
+Provide a file-oriented helper that resolves the canonical repository, defaults notebooks beneath its scratchpad, exclusively claims an immutable directory for each script version, stores exact bytes under `artifact/`, records a digest, intent, and validated predecessors, and refuses overwrite. Keep the procedure concrete instead of generalizing prematurely to every artifact type.
 
 ## Preserved nuance
 

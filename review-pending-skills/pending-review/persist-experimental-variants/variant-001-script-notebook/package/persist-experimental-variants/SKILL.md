@@ -21,14 +21,20 @@ For a single script file, use the packaged helper:
 ```bash
 python3 scripts/create_script_variant.py \
   --source ~/scratch/experiment.py \
-  --notebook-root ~/scratch/variant-notebook \
+  --notebook-id sqlite-query-approaches \
   --variant-id variant-001-first-approach \
   --intent "Test the direct SQLite query before introducing an adapter"
 ```
 
-Add `--predecessor <variant-id>` when the approach evolves another variant. The helper refuses symlink sources and existing variant identifiers, copies the source bytes, records a SHA-256 digest, and writes `intent.md` plus `variant.json` atomically inside a new directory. It never edits a prior variant. It renders output beneath the user home as `~/...`; it expands `~` only internally for filesystem I/O.
+The helper resolves the canonical Agentic Skills repository and defaults the notebook to `.scratchpad/persist-experimental-variants/<notebook-id>/`. Add `--predecessor <variant-id>` when the approach evolves another variant. Every predecessor must be unique, exist in that notebook, contain valid identity-matching metadata, and retain payload bytes matching its recorded digest; self-predecessors are forbidden.
 
-For multi-file or non-script experiments, preserve the same structure manually or add a new helper variant rather than silently broadening this file-oriented script.
+The helper refuses symlink sources and existing variant identifiers, uses an exclusive claim so concurrent creators cannot replace one another or a pre-existing empty target, copies exact source bytes beneath `artifact/<source-name>`, and records the payload-relative path and SHA-256 digest in `variant.json`. This keeps sources named `intent.md` or `variant.json` separate from notebook metadata. It never edits a prior variant.
+
+Use `--notebook-root <path> --external-deliverable` instead of `--notebook-id` only when the user explicitly selected that external directory as a task deliverable. The flag is an authority assertion, not a convenience override. Without it, external destinations fail closed. Diagnostic fixtures and workflow bookkeeping still belong beneath the canonical repository scratchpad.
+
+On success, stdout remains one human-readable path and renders destinations beneath the user home as `~/...`; `~` expands only internally for filesystem I/O. Expected validation and filesystem failures emit `VARIANT_ERROR[<stable-code>]: ...` and exit with status `3` rather than a traceback.
+
+For multi-file or non-script experiments, preserve the same design manually or add a sibling helper variant rather than silently broadening this single-file script.
 
 ## Document useful intent
 
