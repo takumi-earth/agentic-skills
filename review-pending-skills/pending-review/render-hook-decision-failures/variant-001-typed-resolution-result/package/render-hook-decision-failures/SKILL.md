@@ -1,6 +1,6 @@
 ---
 name: render-hook-decision-failures
-description: "Render every hook policy or resolution failure with the exact checked condition, expected value, received value, failure stage, and stable machine-readable code. Use when designing or repairing hooks and commands that make policy decisions or convert structured failures into user-visible context."
+description: "Render typed hook policy or resolution results with the exact checked condition, expected value, received value, stage, and stable code. Use when a Codex PostToolUse boundary must convert a validated success-or-failure result into safe user-visible context; do not use custom top-level hook fields or stderr diagnostics."
 ---
 
 # Render Hook Decision Failures
@@ -16,7 +16,20 @@ Apply the `variant-001-typed-resolution-result` design without silently merging 
 
 ## Apply this design
 
-Model stage, code, condition, expected, received, and evidence as explicit fields; keep success and failure mutually exclusive; serialize one valid hook response without losing the typed diagnostic.
+Model success and failure with explicit `status`, `stage`, `code`, `condition`, `expected`, `received`, `candidate_count`, and optional `artifact` fields. Require nonempty `stage`, `code`, and `condition`; accept only bounded domain-selected diagnostic values; normalize paths beneath the home directory.
+
+Render only this Codex envelope:
+
+```json
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolUse",
+    "additionalContext": "..."
+  }
+}
+```
+
+Do not emit custom top-level `decision`, `mode`, or diagnostic objects. Keep stderr empty and return process status `0` for both a typed decision failure and a safe invalid-input diagnostic.
 
 Use this sequence:
 
@@ -30,8 +43,9 @@ Use this sequence:
 
 - Prove one exact fixture for every failure code.
 - Prove success path contains no failure language.
-- Prove stdout remains one valid hook JSON object.
-- Prove condition, expected, and received are never omitted.
+- Prove stdout remains one valid `PostToolUse` JSON object and stderr remains empty.
+- Prove condition, expected, received, stage, and code are never omitted or empty.
+- Prove malformed or unsafe values render a safe envelope without exposing the rejected input.
 
 Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.
 
@@ -40,9 +54,10 @@ Report assertions and process exit status separately. A nonzero command is diagn
 - Guard against Exposing sensitive received values without redaction.
 - Guard against Making human messages too verbose for hook context.
 - Guard against Allowing unstable exception strings to become machine codes.
-- Guard against Assuming stderr is surfaced when the hook exits successfully.
+- Guard against Emitting custom top-level fields that Codex ignores.
 
 ## Load resources
 
 - Read `references/approach.md` before applying this variant's design.
+- Read `references/decision-result-schema.json` before accepting a typed result from another owner.
 - Run `scripts/render_hook_decision.py` for the deterministic operation it owns; use its `--self-test` before relying on it.

@@ -7,15 +7,28 @@
       "minLength": 1,
       "type": "string"
     },
+    "candidate_count": {
+      "minimum": 0,
+      "type": "integer"
+    },
     "condition": {
       "minLength": 1,
       "type": "string"
     },
-    "evidence": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
+    "artifact": {
+      "oneOf": [
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "approach": {
+      "minLength": 1,
+      "type": "string"
     },
     "expected": {},
     "received": {},
@@ -36,7 +49,9 @@
     "code",
     "condition",
     "expected",
-    "received"
+    "received",
+    "candidate_count",
+    "artifact"
   ],
   "title": "Typed hook decision result",
   "type": "object"

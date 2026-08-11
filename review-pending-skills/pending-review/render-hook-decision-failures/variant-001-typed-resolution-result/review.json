@@ -1,7 +1,7 @@
 {
   "activation_effects": [
     "none during pending creation",
-    "future promotion could change hook diagnostic text and machine event shape"
+    "future merge into maintain-living-goal could change completion-handoff diagnostic text"
   ],
   "candidate_name": "render-hook-decision-failures",
   "predecessors": [],
@@ -17,12 +17,12 @@
       "target": "design-command-observability"
     },
     {
-      "kind": "current-hook-consumer",
+      "kind": "canonical-owner",
       "mutation_authority": "none",
-      "target": "auto-skill-enhancer"
+      "target": "maintain-living-goal"
     },
     {
-      "kind": "resolution-result-consumer",
+      "kind": "upstream-result-source",
       "mutation_authority": "none",
       "target": "resolve-managed-goal-artifacts"
     }

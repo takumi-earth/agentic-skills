@@ -8,7 +8,7 @@ Render every hook policy or resolution failure with the exact checked condition,
 
 Return a typed success-or-failure result from each policy decision and render it once at the hook boundary.
 
-Model stage, code, condition, expected, received, and evidence as explicit fields; keep success and failure mutually exclusive; serialize one valid hook response without losing the typed diagnostic.
+Model `status`, `stage`, `code`, `condition`, `expected`, `received`, `candidate_count`, and optional `artifact` as explicit fields. Require nonempty diagnostic text, accept only bounded domain-selected values, normalize home paths, keep success and failure mutually exclusive, and serialize only a valid Codex `PostToolUse` envelope without losing the typed diagnostic.
 
 ## Difference from sibling variants
 
@@ -26,8 +26,9 @@ The hook collapsed distinct resolver failures into the false-sounding statement 
 
 - one exact fixture for every failure code
 - success path contains no failure language
-- stdout remains one valid hook JSON object
-- condition, expected, and received are never omitted
+- stdout remains one valid `PostToolUse` hook JSON object and stderr remains empty
+- condition, expected, received, stage, and code are never omitted or empty
+- unsafe, unbounded, or malformed decision values become a safe typed renderer diagnostic
 
 ## Uncertainty and risk
 
@@ -48,4 +49,4 @@ The candidate remains pending because structural validity does not decide whethe
 ## Possible activation effects
 
 - none during pending creation
-- future promotion could change hook diagnostic text and machine event shape
+- future merge into maintain-living-goal could change completion-handoff diagnostic text

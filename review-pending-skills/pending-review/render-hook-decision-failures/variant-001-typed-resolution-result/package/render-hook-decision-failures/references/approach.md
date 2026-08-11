@@ -10,7 +10,7 @@
 
 Return a typed success-or-failure result from each policy decision and render it once at the hook boundary.
 
-Model stage, code, condition, expected, received, and evidence as explicit fields; keep success and failure mutually exclusive; serialize one valid hook response without losing the typed diagnostic.
+Model `status`, `stage`, `code`, `condition`, `expected`, `received`, `candidate_count`, and optional `artifact` as explicit fields. Keep success and failure mutually exclusive. Require nonempty diagnostic text, accept only bounded domain-selected values, normalize home paths, and serialize only a valid Codex `PostToolUse` envelope.
 
 ## Planned resources
 
@@ -22,8 +22,8 @@ Model stage, code, condition, expected, received, and evidence as explicit field
 ## Relationships
 
 - `design-command-observability`: `possible-shared-foundation`
-- `auto-skill-enhancer`: `current-hook-consumer`
-- `resolve-managed-goal-artifacts`: `resolution-result-consumer`
+- `maintain-living-goal`: `canonical-owner`
+- `resolve-managed-goal-artifacts`: `upstream-result-source`
 
 Relationships preserve overlap for review. They do not authorize mutation of the named owner.
 
@@ -31,8 +31,9 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 
 - one exact fixture for every failure code
 - success path contains no failure language
-- stdout remains one valid hook JSON object
-- condition, expected, and received are never omitted
+- stdout remains one valid `PostToolUse` JSON object and stderr remains empty
+- condition, expected, received, stage, and code are nonempty
+- malformed and unsafe input renders a bounded generic diagnostic
 
 ## Git and activation boundary
 
