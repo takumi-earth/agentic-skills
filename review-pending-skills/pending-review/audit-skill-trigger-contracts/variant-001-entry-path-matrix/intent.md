@@ -6,11 +6,11 @@ Persist a reusable audit derived from the current `$auto-skill-creator` failure,
 
 ## Approach
 
-Enumerate conversational, harness, implicit, lifecycle, and handoff entry paths separately, then distinguish activation, evidence availability, and effect authority for each.
+Enumerate conversational, harness, implicit, lifecycle, and handoff entry paths separately, then issue independent verdicts for package availability, higher-authority disablement, activation, evidence prerequisites, effect authority, and execution outcome.
 
 ## Preserved nuance
 
-The word `manual` is insufficient because manual ordinary work and manual invocation of an automatic skill have opposite routing outcomes. A bundle can be useful evidence without being an activation prerequisite, and explicit invocation does not expand external-effect authority.
+The word `manual` is insufficient because manual ordinary work and manual invocation of an automatic skill have opposite routing outcomes. A bundle can be useful evidence without being an activation prerequisite, and explicit invocation does not expand external-effect authority. Package absence, higher-authority disablement, lawful no-op behavior, missing evidence, and successful side effects are different states rather than alternate names for activation failure.
 
 ## Relationships and uncertainty
 
@@ -19,4 +19,4 @@ This candidate overlaps system `$skill-creator`, `$auto-skill-enhancer`, `$auto-
 ## Review questions
 
 - Should the matrix also cover named plugin skills and connector-triggered skills?
-- Is direct invocation truly unconditional when a skill package is present but deliberately disabled by harness policy?
+- Which additional harness-specific package-disable signals should a later variant normalize without weakening the authority hierarchy?

@@ -1,4 +1,6 @@
 interface:
   display_name: "Audit Skill Trigger Contracts"
   short_description: "Audit explicit and automatic skill triggers"
-  default_prompt: "Use $audit-skill-trigger-contracts to compare manual, implicit, hook, and handoff entry paths and identify exclusions that suppress valid skill invocation."
+  default_prompt: "Use $audit-skill-trigger-contracts to issue separate activation, evidence-prerequisite, and effect-authority verdicts for explicit, implicit, lifecycle, and handoff entry paths."
+policy:
+  allow_implicit_invocation: true
