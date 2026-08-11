@@ -8,7 +8,15 @@ import json
 from pathlib import Path
 from typing import Any
 
-from damage_common import AssessmentInputError, atomic_write_text, canonical_json, display_path, load_jsonl, sha256_file
+from damage_common import (
+    AssessmentInputError,
+    atomic_write_text,
+    canonical_json,
+    display_path,
+    load_jsonl,
+    normalize_home_value,
+    sha256_file,
+)
 
 
 TOOL_PAYLOAD_TYPES = {
@@ -29,7 +37,8 @@ def parse_args() -> argparse.Namespace:
 
 def compact(value: Any, limit: int = 2_000) -> str:
     """Serialize one value and cap only the convenience excerpt."""
-    text = value if isinstance(value, str) else json.dumps(value, sort_keys=True, ensure_ascii=False)
+    normalized = normalize_home_value(value)
+    text = normalized if isinstance(normalized, str) else json.dumps(normalized, sort_keys=True, ensure_ascii=False)
     return text if len(text) <= limit else f"{text[:limit]}…"
 
 
@@ -68,9 +77,10 @@ def index_session(path: Path, session_index: int) -> dict[str, Any]:
             "payload_type": payload.get("type"),
             "call_id": identifier,
             "name": payload.get("name"),
-            "status": payload.get("status"),
-            "input": payload.get("input", payload.get("arguments")),
-            "output": payload.get("output"),
+            "status": normalize_home_value(payload.get("status")),
+            "is_error": payload.get("isError", payload.get("is_error")),
+            "input": normalize_home_value(payload.get("input", payload.get("arguments"))),
+            "output": normalize_home_value(payload.get("output")),
             "payload_keys": sorted(payload),
             "payload_excerpt": compact(payload),
         }

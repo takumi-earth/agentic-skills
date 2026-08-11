@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -15,10 +16,32 @@ class AssessmentInputError(ValueError):
     """Report malformed, missing, or stale assessment input."""
 
 
+HOME_PATH = str(Path.home().resolve(strict=False))
+HOME_PATH_PATTERN = re.compile(rf"{re.escape(HOME_PATH)}(?![A-Za-z0-9._-])")
+
+
+def normalize_home_text(value: str) -> str:
+    """Replace an exact current-home path prefix anywhere in one string."""
+    return HOME_PATH_PATTERN.sub("~", value)
+
+
+def normalize_home_value(value: Any) -> Any:
+    """Recursively normalize current-home paths in serializable values."""
+    if isinstance(value, str):
+        return normalize_home_text(value)
+    if isinstance(value, list):
+        return [normalize_home_value(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(normalize_home_value(item) for item in value)
+    if isinstance(value, dict):
+        return {key: normalize_home_value(item) for key, item in value.items()}
+    return value
+
+
 def display_path(path: Path) -> str:
     """Render a path below the current home with a `~/` prefix."""
     resolved = path.expanduser().resolve(strict=False)
-    home = Path.home().resolve(strict=False)
+    home = Path(HOME_PATH)
     try:
         return f"~/{resolved.relative_to(home)}"
     except ValueError:
@@ -78,8 +101,8 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
 
 
 def canonical_json(value: Any) -> str:
-    """Serialize deterministic, human-readable JSON."""
-    return json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    """Serialize deterministic JSON after recursively normalizing home paths."""
+    return json.dumps(normalize_home_value(value), indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
 
 def atomic_write_text(path: Path, text: str) -> None:

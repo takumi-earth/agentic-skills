@@ -15,6 +15,7 @@ from damage_common import (
     display_path,
     load_json,
     load_jsonl,
+    normalize_home_text,
     require_exact_keys,
     require_list,
     require_object,
@@ -40,8 +41,7 @@ def parse_args() -> argparse.Namespace:
 
 def normalized_text(value: str) -> str:
     """Normalize current-home paths without otherwise rewriting trace text."""
-    home = str(Path.home().resolve(strict=False))
-    return value.replace(home, "~")
+    return normalize_home_text(value)
 
 
 def content_text(value: Any) -> str | None:

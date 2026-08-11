@@ -9,7 +9,15 @@ import re
 from pathlib import Path
 from typing import Any
 
-from damage_common import AssessmentInputError, atomic_write_text, canonical_json, display_path, load_json
+from damage_common import (
+    AssessmentInputError,
+    atomic_write_text,
+    canonical_json,
+    display_path,
+    load_json,
+    normalize_home_text,
+    normalize_home_value,
+)
 
 
 PATCH_FILE = re.compile(r"^\*\*\* (Add|Update|Delete) File: (.+)$")
@@ -19,6 +27,24 @@ WRITE_COMMAND = re.compile(
     r"mv\s+|cp\s+|rm\s+|install\s+|touch\s+|truncate\s+)",
     re.MULTILINE,
 )
+NESTED_EXEC_COMMAND = re.compile(r"\btools\.exec_command\s*\(")
+EMBEDDED_WRITE_COMMAND = re.compile(
+    r"\b(?:git\s+(?:add|rm|mv)|cargo\s+fmt|just\s+(?:fmt|gen-md)|"
+    r"sed\s+-i|perl\s+-i|mv|cp|rm|install|touch|truncate)\b|"
+    r"\bpython\S*\b[^\n]*(?:write_text|write_bytes|open\()",
+    re.MULTILINE,
+)
+SUCCESS_STATUSES = {"ok", "success", "succeeded"}
+FAILURE_STATUSES = {"cancelled", "error", "failed", "failure", "timed_out", "timeout"}
+TRANSPORT_COMPLETION_STATUSES = {"completed"}
+RESULT_CONTAINER_KEYS = {
+    "content",
+    "data",
+    "output",
+    "result",
+    "structuredContent",
+    "structured_content",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -66,31 +92,179 @@ def normalize_patch_input(value: Any) -> str | None:
 
 
 def output_text(events: list[dict[str, Any]]) -> str:
-    """Join complete correlated output values for conservative classification."""
+    """Join complete correlated output values for review evidence."""
     parts: list[str] = []
     for event in events:
         value = event.get("output")
         if value is None:
             value = event.get("payload_excerpt")
-        parts.append(value if isinstance(value, str) else json.dumps(value, sort_keys=True))
+        normalized = normalize_home_value(value)
+        parts.append(
+            normalized
+            if isinstance(normalized, str)
+            else json.dumps(normalized, sort_keys=True, ensure_ascii=False)
+        )
     return "\n".join(parts)
 
 
+def result_signals(value: Any) -> tuple[list[bool], list[bool]]:
+    """Collect decisive result signals separately from transport completion."""
+    decoded = decode_tool_input(value)
+    if decoded is not value:
+        return result_signals(decoded)
+    if isinstance(decoded, list):
+        decisive: list[bool] = []
+        transport: list[bool] = []
+        for item in decoded:
+            item_decisive, item_transport = result_signals(item)
+            decisive.extend(item_decisive)
+            transport.extend(item_transport)
+        return decisive, transport
+    if not isinstance(decoded, dict):
+        return [], []
+
+    decisive: list[bool] = []
+    transport: list[bool] = []
+    for key in ("isError", "is_error"):
+        marker = decoded.get(key)
+        if isinstance(marker, bool):
+            decisive.append(not marker)
+    for key in ("success", "ok"):
+        marker = decoded.get(key)
+        if isinstance(marker, bool):
+            decisive.append(marker)
+    for key in ("exit_code", "exitCode", "return_code", "returncode"):
+        status = decoded.get(key)
+        if isinstance(status, int) and not isinstance(status, bool):
+            decisive.append(status == 0)
+    status = decoded.get("status")
+    if isinstance(status, str):
+        normalized_status = status.strip().lower().replace("-", "_").replace(" ", "_")
+        if normalized_status in SUCCESS_STATUSES:
+            decisive.append(True)
+        elif normalized_status in FAILURE_STATUSES:
+            decisive.append(False)
+        elif normalized_status in TRANSPORT_COMPLETION_STATUSES:
+            transport.append(True)
+
+    for key in RESULT_CONTAINER_KEYS:
+        if key in decoded:
+            nested_decisive, nested_transport = result_signals(decoded[key])
+            decisive.extend(nested_decisive)
+            transport.extend(nested_transport)
+    return decisive, transport
+
+
 def reported_success(events: list[dict[str, Any]]) -> bool | None:
-    """Return conservative success, failure, or unknown from correlated outputs."""
+    """Return success or failure only when structured result semantics agree."""
     if not events:
         return None
-    text = output_text(events).lower()
-    failure_markers = (
-        '"iserror":true',
-        '"is_error":true',
-        "traceback",
-        "error:",
-        "exit code: 1",
-        '"exit_code":1',
-        "patch failed",
+    decisive: list[bool] = []
+    transport: list[bool] = []
+    for event in events:
+        event_decisive, event_transport = result_signals(event)
+        decisive.extend(event_decisive)
+        transport.extend(event_transport)
+    signals = decisive or transport
+    if not signals or len(set(signals)) != 1:
+        return None
+    return signals[0]
+
+
+def wrapper_source(value: Any) -> str | None:
+    """Return JavaScript source from a raw or object-wrapped `exec` input."""
+    decoded = decode_tool_input(value)
+    if isinstance(decoded, str):
+        return decoded
+    if isinstance(decoded, dict):
+        for key in ("code", "source", "input"):
+            source = decoded.get(key)
+            if isinstance(source, str):
+                return source
+    return None
+
+
+def nested_exec_command_inputs(source: str) -> tuple[list[dict[str, Any]], int]:
+    """Decode strict JSON object arguments from nested `tools.exec_command` calls."""
+    decoder = json.JSONDecoder()
+    invocations: list[dict[str, Any]] = []
+    failures = 0
+    for match in NESTED_EXEC_COMMAND.finditer(source):
+        position = match.end()
+        while position < len(source) and source[position].isspace():
+            position += 1
+        try:
+            value, end = decoder.raw_decode(source, position)
+        except json.JSONDecodeError:
+            failures += 1
+            continue
+        while end < len(source) and source[end].isspace():
+            end += 1
+        if not isinstance(value, dict) or end >= len(source) or source[end] != ")":
+            failures += 1
+            continue
+        invocations.append(value)
+    return invocations, failures
+
+
+def mutation_shaped(command: str) -> bool:
+    """Return whether visible command text has a repository-mutation shape."""
+    return bool(WRITE_COMMAND.search(command) or EMBEDDED_WRITE_COMMAND.search(command)) or any(
+        token in command for token in (">", "tee ", "xargs", "-exec")
     )
-    return not any(marker in text for marker in failure_markers)
+
+
+def classify_exec_command(
+    value: dict[str, Any],
+    common: dict[str, Any],
+    repository: Path,
+    candidates: list[dict[str, Any]],
+    unsupported: list[dict[str, Any]],
+    *,
+    nested_index: int | None = None,
+) -> None:
+    """Classify one direct or exactly decoded nested `exec_command` input."""
+    workdir = value.get("workdir")
+    command = value.get("cmd")
+    nested = (
+        {"nested_tool": "exec_command", "nested_index": nested_index}
+        if nested_index is not None
+        else {}
+    )
+    if not isinstance(command, str):
+        return
+    command = normalize_home_text(command)
+    if not isinstance(workdir, str):
+        if mutation_shaped(command):
+            unsupported.append(
+                {
+                    **common,
+                    **nested,
+                    "reason": "mutation-shaped exec_command lacks an explicit workdir",
+                    "command": command,
+                }
+            )
+        return
+    under_repository = within_repository(Path(workdir).expanduser(), repository)
+    if under_repository and WRITE_COMMAND.search(command):
+        candidates.append(
+            {
+                **common,
+                **nested,
+                "kind": "shell_mutation_candidate",
+                "workdir": display_path(Path(workdir)),
+                "command": command,
+            }
+        )
+    elif under_repository and mutation_shaped(command):
+        unsupported.append(
+            {
+                **common,
+                **nested,
+                "reason": "unclassified repository command may mutate",
+                "command": command,
+            }
+        )
 
 
 def within_repository(candidate: Path, repository: Path) -> bool:
@@ -161,6 +335,7 @@ def main() -> int:
                     continue
                 decoded = decode_tool_input(call.get("input"))
                 patch = normalize_patch_input(decoded)
+                output_events = [event for event in outputs if isinstance(event, dict)]
                 common = {
                     "session_index": session.get("session_index", 0),
                     "rollout_id": session.get("rollout_id"),
@@ -168,9 +343,9 @@ def main() -> int:
                     "ordinal": call.get("ordinal"),
                     "timestamp": call.get("timestamp"),
                     "tool": call.get("name"),
-                    "reported_success": reported_success([event for event in outputs if isinstance(event, dict)]),
+                    "reported_success": reported_success(output_events),
                     "output_ordinals": [event.get("ordinal") for event in outputs if isinstance(event, dict)],
-                    "output_excerpt": output_text([event for event in outputs if isinstance(event, dict)])[:2_000],
+                    "output_excerpt": output_text(output_events)[:2_000],
                 }
                 if call.get("name") == "apply_patch" or patch is not None:
                     if patch is None:
@@ -183,20 +358,35 @@ def main() -> int:
                         )
                     elif rejected:
                         unsupported.append({**common, "reason": "patch targets fall outside selected repository", "targets": rejected})
+                    if call.get("name") == "apply_patch":
+                        continue
+                if call.get("name") == "exec_command" and isinstance(decoded, dict):
+                    classify_exec_command(decoded, common, repository, candidates, unsupported)
                     continue
-                if call.get("name") != "exec_command" or not isinstance(decoded, dict):
+                if call.get("name") != "exec":
                     continue
-                workdir = decoded.get("workdir")
-                command = decoded.get("cmd")
-                if not isinstance(workdir, str) or not isinstance(command, str):
+                source = wrapper_source(decoded)
+                if source is None:
                     continue
-                under_repository = within_repository(Path(workdir).expanduser(), repository)
-                if under_repository and WRITE_COMMAND.search(command):
-                    candidates.append(
-                        {**common, "kind": "shell_mutation_candidate", "workdir": display_path(Path(workdir)), "command": command}
+                nested_inputs, parse_failures = nested_exec_command_inputs(source)
+                for nested_index, nested_input in enumerate(nested_inputs):
+                    classify_exec_command(
+                        nested_input,
+                        common,
+                        repository,
+                        candidates,
+                        unsupported,
+                        nested_index=nested_index,
                     )
-                elif under_repository and any(token in command for token in (">", "tee ", "xargs", "-exec")):
-                    unsupported.append({**common, "reason": "unclassified repository command may mutate", "command": command})
+                if parse_failures and mutation_shaped(source):
+                    unsupported.append(
+                        {
+                            **common,
+                            "reason": "mutation-shaped exec wrapper contains unparsed tools.exec_command input",
+                            "unparsed_nested_calls": parse_failures,
+                            "wrapper_excerpt": normalize_home_text(source)[:2_000],
+                        }
+                    )
 
         ordering = lambda item: (int(item.get("session_index", 0)), int(item.get("ordinal") or -1), str(item.get("call_id")))
         result = {

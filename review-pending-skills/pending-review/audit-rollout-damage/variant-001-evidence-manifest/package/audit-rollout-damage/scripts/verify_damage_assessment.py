@@ -8,7 +8,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from damage_common import atomic_write_text, canonical_json, display_path, sha256_file
+from damage_common import atomic_write_text, canonical_json, display_path, normalize_home_text, sha256_file
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,8 +41,8 @@ def run_renderer(renderer: Path, manifest: Path, output_root: Path, run_name: st
     return {
         "name": run_name,
         "exit_code": completed.returncode,
-        "stdout": completed.stdout,
-        "stderr": completed.stderr,
+        "stdout": normalize_home_text(completed.stdout),
+        "stderr": normalize_home_text(completed.stderr),
         "markdown": display_path(markdown),
         "json": display_path(derived),
         "markdown_sha256": sha256_file(markdown) if markdown.is_file() else None,

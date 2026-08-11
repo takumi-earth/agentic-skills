@@ -703,6 +703,189 @@ class DamageAssessmentScriptsTest(unittest.TestCase):
             result = json.loads(candidates.read_text(encoding="utf-8"))
             self.assertEqual(result["candidates"][0]["operations"], [{"operation": "add", "target": "src/new.rs"}])
 
+    def test_candidate_discovery_parses_nested_exec_and_uses_exact_results(self) -> None:
+        """Classify nested commands while leaving absent or conflicting status unknown."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repository = root / "repository"
+            repository.mkdir()
+            home_target = Path.home() / "nested-artifact"
+            nested_input = {
+                "cmd": f"touch {home_target}",
+                "workdir": str(repository),
+                "yield_time_ms": 1_000,
+            }
+            wrapped = f"const result = await tools.exec_command({json.dumps(nested_input)}); text(result.output);"
+            calls = [
+                ("call-nested", "exec", wrapped, {"exit_code": 0, "output": str(home_target)}),
+                (
+                    "call-failed",
+                    "exec_command",
+                    {"cmd": "touch failed", "workdir": str(repository)},
+                    {"exit_code": 9},
+                ),
+                (
+                    "call-unknown",
+                    "exec_command",
+                    {"cmd": "touch unknown", "workdir": str(repository)},
+                    "Done!",
+                ),
+                (
+                    "call-conflict",
+                    "exec_command",
+                    {"cmd": "touch conflict", "workdir": str(repository)},
+                    {"exit_code": 0, "isError": True},
+                ),
+            ]
+            records: list[dict[str, object]] = [
+                {"type": "session_meta", "payload": {"id": "rollout-exec-results"}}
+            ]
+            for call_id, name, tool_input, output in calls:
+                output_payload: dict[str, object] = {
+                    "type": "custom_tool_call_output",
+                    "call_id": call_id,
+                    "output": output,
+                }
+                if call_id == "call-failed":
+                    output_payload["status"] = "completed"
+                records.extend(
+                    [
+                        {
+                            "type": "response_item",
+                            "payload": {
+                                "type": "custom_tool_call",
+                                "id": call_id,
+                                "name": name,
+                                "input": tool_input,
+                            },
+                        },
+                        {
+                            "type": "response_item",
+                            "payload": output_payload,
+                        },
+                    ]
+                )
+            session = root / "rollout.jsonl"
+            session.write_text("".join(json.dumps(item) + "\n" for item in records), encoding="utf-8")
+            index = root / "index.json"
+            indexed = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS / "index_rollout_tools.py"),
+                    "--session",
+                    str(session),
+                    "--output",
+                    str(index),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(indexed.returncode, 0, indexed.stderr)
+            candidates = root / "candidates.json"
+            discovered = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS / "discover_edit_candidates.py"),
+                    "--tool-index",
+                    str(index),
+                    "--repository",
+                    str(repository),
+                    "--output",
+                    str(candidates),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(discovered.returncode, 0, discovered.stderr)
+            indexed_text = index.read_text(encoding="utf-8")
+            candidate_text = candidates.read_text(encoding="utf-8")
+            expanded_home = str(Path.home().resolve(strict=False))
+            self.assertNotIn(expanded_home, indexed_text)
+            self.assertNotIn(expanded_home, candidate_text)
+            self.assertIn("~/nested-artifact", indexed_text)
+            result = json.loads(candidate_text)
+            by_call = {item["call_id"]: item for item in result["candidates"]}
+            self.assertEqual(by_call["call-nested"]["reported_success"], True)
+            self.assertEqual(by_call["call-nested"]["nested_tool"], "exec_command")
+            self.assertEqual(by_call["call-failed"]["reported_success"], False)
+            self.assertIsNone(by_call["call-unknown"]["reported_success"])
+            self.assertIsNone(by_call["call-conflict"]["reported_success"])
+
+    def test_candidate_discovery_retains_unparsed_mutation_wrapper(self) -> None:
+        """Emit unsupported evidence instead of dropping mutation-shaped JavaScript."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repository = root / "repository"
+            repository.mkdir()
+            source = (
+                'await tools.exec_command({cmd: "touch marker", '
+                f'workdir: "{repository}"}});'
+            )
+            records = [
+                {"type": "session_meta", "payload": {"id": "rollout-unparsed-wrapper"}},
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "custom_tool_call",
+                        "id": "call-unparsed",
+                        "name": "exec",
+                        "input": source,
+                    },
+                },
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "custom_tool_call_output",
+                        "call_id": "call-unparsed",
+                        "output": "Done!",
+                    },
+                },
+            ]
+            session = root / "rollout.jsonl"
+            session.write_text("".join(json.dumps(item) + "\n" for item in records), encoding="utf-8")
+            index = root / "index.json"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS / "index_rollout_tools.py"),
+                    "--session",
+                    str(session),
+                    "--output",
+                    str(index),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            candidates = root / "candidates.json"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPTS / "discover_edit_candidates.py"),
+                    "--tool-index",
+                    str(index),
+                    "--repository",
+                    str(repository),
+                    "--output",
+                    str(candidates),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            result = json.loads(candidates.read_text(encoding="utf-8"))
+            self.assertEqual(result["candidates"], [])
+            unsupported = result["unsupported_mutation_shaped_calls"]
+            self.assertEqual(len(unsupported), 1)
+            self.assertEqual(
+                unsupported[0]["reason"],
+                "mutation-shaped exec wrapper contains unparsed tools.exec_command input",
+            )
+            self.assertEqual(unsupported[0]["unparsed_nested_calls"], 1)
+            self.assertIsNone(unsupported[0]["reported_success"])
+
     def test_context_extractor_preserves_surrounding_messages_and_origin_hints(self) -> None:
         """Extract cited context without treating a harness envelope as direct authority."""
         with tempfile.TemporaryDirectory() as directory:
