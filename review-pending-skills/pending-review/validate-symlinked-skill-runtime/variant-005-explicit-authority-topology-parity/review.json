@@ -1,0 +1,41 @@
+{
+  "activation_effects": [
+    "none during pending creation",
+    "future promotion could add deployment-runtime validation for stateful scripted skills"
+  ],
+  "candidate_name": "validate-symlinked-skill-runtime",
+  "predecessors": [
+    "review-pending-skills/pending-review/validate-symlinked-skill-runtime/variant-001-explicit-runtime-root",
+    "review-pending-skills/pending-review/validate-symlinked-skill-runtime/variant-002-deployment-topology-matrix"
+  ],
+  "provenance": [
+    "filesystem observation | codex-home-environment.json | The installed auto-skill-enhancer package is a symlink to canonical source and CODEX_HOME is ~/.codex.",
+    "direct source inspection | ~/rust-forks/codex-orig/codex-rs/hooks/src/engine/command_runner.rs | Hook commands inherit environment; runtime state need not be inferred from package location.",
+    "approved pending-skill review plan | active living goal | Converge variants 001 and 002, exercise real entry points, add missing-authority and resolved-parent negatives, and reproduce declared sibling dependencies."
+  ],
+  "relationships": [
+    {
+      "kind": "deployment-owner",
+      "mutation_authority": "none",
+      "target": "link-agentic-skills"
+    },
+    {
+      "kind": "filesystem-evidence-owner",
+      "mutation_authority": "none",
+      "target": "filesystem-git-observability"
+    },
+    {
+      "kind": "current-regression-example",
+      "mutation_authority": "none",
+      "target": "resolve-managed-goal-artifacts"
+    },
+    {
+      "kind": "convergence",
+      "mutation_authority": "none",
+      "target": "variant-001-explicit-runtime-root + variant-002-deployment-topology-matrix"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-005-explicit-authority-topology-parity"
+}
