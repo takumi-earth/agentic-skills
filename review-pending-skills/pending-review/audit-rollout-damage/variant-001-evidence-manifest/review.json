@@ -1,0 +1,30 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into harness skill roots",
+    "use of generated remediation candidates as inputs to a separately authorized repair workflow"
+  ],
+  "candidate_name": "audit-rollout-damage",
+  "predecessors": [],
+  "provenance": [
+    "Current user request for a reusable skill and scripts rather than an incident-specific report generator",
+    "Current template-rs unauthorized-change damage assessment and normalized rollout evidence"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "protect-causal-architecture"
+    },
+    {
+      "kind": "overlap",
+      "target": "verify-test-parity"
+    },
+    {
+      "kind": "overlap",
+      "target": "skill-researcher"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-evidence-manifest"
+}

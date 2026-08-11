@@ -3,12 +3,12 @@ set -euo pipefail
 
 usage() {
   printf '%s\n' \
-    'usage: compare-test-inventory.sh [--baseline REF] [--repo PATH]' \
+    'usage: compare-test-inventory.sh --baseline REF [--repo PATH]' \
     '' \
     'Print a TAB-separated removed/moved/globally-missing/added Rust test inventory.'
 }
 
-baseline='HEAD'
+baseline=''
 repository='.'
 
 while (($# > 0)); do
@@ -40,6 +40,11 @@ while (($# > 0)); do
       ;;
   esac
 done
+
+if [[ -z $baseline ]]; then
+  printf '%s\n' 'error: --baseline is required; use the recorded user-selected baseline OID' >&2
+  exit 2
+fi
 
 script_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 audit_tmp=$(mktemp -d)

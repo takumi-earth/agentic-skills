@@ -22,6 +22,33 @@ Keep only the sections the task needs, normally:
 
 Do not copy generic commit, verification, dependency-review, compaction, or slice procedure into every goal when a triggered user-level skill supplies it. Do not remove repository-specific rationale merely because a skill contains the general rule.
 
+## Prevent self-authorizing goal edits
+
+A goal edit records authority or evidence that already exists; it never creates authority for later implementation merely because the assistant wrote it into the goal.
+
+Before each edit, classify every changed statement and retain its primary provenance:
+
+- **Explicit user selection:** cite the user message or already protected packet that selected it.
+- **Carried protected contract:** preserve its existing authority, causal edges, counterfactual, and evidence without changing their meaning.
+- **Source-derived mutable fact:** cite the direct source, command, or external-authority observation and keep it factual; it may describe implementation status but may not add a target decision.
+- **Assistant proposal:** keep it visibly proposed and non-authoritative. If it changes architecture, tests, a baseline, or an allowed mutator, route it through `$protect-causal-architecture` and wait for explicit user selection before dependent effects.
+
+Never label an assistant-derived design “decision-complete,” rewrite it as implementation fact, or use it as the premise for source/test edits unless its authority can be traced past assistant-authored goal text to an explicit user decision or protected/source-derived contract. The goal itself is not independent corroboration for a statement the assistant inserted.
+
+Mutable status cannot:
+
+- change a parity or historical baseline;
+- retire a production capability or protecting test;
+- turn a removed architecture into a replacement-test obligation;
+- add an authority read, mutator, barrier, compatibility surface, or migration;
+- reinterpret implementation drift as the selected target.
+
+When a status update would do any of those things, stop the dependent edit. Record the current packet, proposed packet, primary authority, affected tests, and counterfactual for user review. Do not implement the proposal first and then reconcile the goal to legitimize it.
+
+When the user corrects a baseline, architecture, or test disposition, treat every downstream assistant-authored goal statement and dependent source/test edit as untrusted until a provenance audit revalidates or retracts it. Apply the correction across the whole goal in the same pass; a local wording fix that leaves a contradictory status claim is not a completed correction.
+
+For the concrete failure that established these rules, load [the autonomous goal-edit regression](references/autonomous-goal-edit-regression.md) when auditing goal provenance, parity-baseline drift, or a correction that may have left dependent statements alive.
+
 ## Execute one complete slice
 
 1. Investigate the complete owning boundary and every behavior required for one coherent correction.
@@ -46,6 +73,8 @@ Classify each statement before changing it:
 
 Touch protected packets individually. Never replace a whole section when that prevents statement-for-statement attribution.
 
+For each removal or rewrite, retain an attributable record containing the old statement, its provenance class, the replacement statement, its provenance class, and the primary evidence that permits the change. A later pass must be able to distinguish user selection from assistant mechanics without consulting current source as intent.
+
 Implementation, passing tests, formatting, generation, and canonical verification may change a protected packet's mutable status and rewrite planned wording into present-tense repository fact. They do not delete the packet's authority, causal reason, predecessor/successor order, barrier, counterfactual failure, forbidden shortcut, or positive/negative evidence. Remove a protected field only after an explicit user decision supersedes it with an equal-or-stronger packet.
 
 After pruning, reconstruct from the goal alone:
@@ -58,6 +87,8 @@ After pruning, reconstruct from the goal alone:
 - the exact next slice.
 
 Then scan the whole goal for contradictory counts, vocabulary, ownership, phase order, source authority, and test intent. Repair ambiguity before implementation continues.
+
+The contradiction sweep must also compare every historical/parity baseline and every replacement-versus-retirement disposition across protected architecture, mutable status, remaining slices, and acceptance evidence. A correct baseline in one paragraph does not neutralize a conflicting assistant-authored claim elsewhere.
 
 ## Govern whole-goal state without punting
 

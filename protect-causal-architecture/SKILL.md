@@ -34,6 +34,10 @@ Use this order:
 
 Do not reverse this order. Partial source is status evidence, not authority to rationalize a new architecture or retire tests that protect the selected design.
 
+Assistant-authored goal text has no independent rank in this hierarchy. Before using a goal statement to authorize production or test changes, trace it to an explicit user decision, an unchanged protected packet, accepted behavior evidence, or direct source-derived fact. If the only provenance is an earlier assistant goal edit, the statement is a proposal or status claim, not authority.
+
+Keep mutable implementation status one-way: primary authority and evidence may update status, but status may never flow back into architecture, baseline selection, capability retirement, or test obligations. Do not implement a proposal and then cite the resulting partial source plus a rewritten goal as mutually supporting evidence.
+
 ## Gate architecture changes
 
 Before an edit that changes an authority read, mutator, causal edge, barrier count, child attempt, migration/generation pass, checkpoint, cleanup, or persistence order:
@@ -51,12 +55,28 @@ Record the pending decision as a local causal stop, not an automatic whole-goal 
 
 Do not use a passing test, fewer processes, static preplanning, performance, naming symmetry, or reduced writes as implicit approval.
 
+The same gate applies when the proposed change is phrased as pruning, status reconciliation, parity closure, or removal of stale tests. Record statement-level provenance before the goal edit. An assistant-derived replacement design remains non-authoritative even when it is written in present tense, called “decision-complete,” or partially implemented.
+
+When the user corrects an authority, historical baseline, or test disposition:
+
+- invalidate every downstream assistant-authored statement and dependent effect that used the superseded premise;
+- search the complete goal for contradictory copies, status claims, remaining slices, and acceptance rows;
+- retract or revalidate each dependent statement against primary authority;
+- stop source and test work until that audit closes.
+
+A correction to one paragraph is insufficient when another paragraph still encodes the invalid premise.
+
 ## Protect behavior evidence
 
 - A test is stale only when an explicitly retired production capability makes its observable contract obsolete.
 - A changed implementation strategy does not retire the behavior it was meant to preserve.
+- A parity baseline is authority, not a convenient comparison point. Do not switch `HEAD^`, `HEAD`, a checkpoint, tag, or release boundary because the current tree makes the inventory smaller or the replacement easier.
+- Decompose aggregate removed tests by observable assertion. Map still-live behavior to equal-or-stronger evidence and retire only assertions whose sole production capability was explicitly removed.
+- Never invent replacement behavior that recreates a removed architecture merely to give a ledger row a replacement test. Retirement evidence and replacement evidence are distinct dispositions.
 - For each edge, test both the required path and the forbidden shortcut, including failure ordering and canonical reruns where relevant.
 - Use `$verify-test-parity` before broad test deletion, moves, consolidation, or replacement.
+
+Load [the goal-authority regression](references/goal-authority-regression.md) when an assistant goal edit, baseline correction, or replacement-versus-retirement decision may have changed protecting evidence.
 
 ## Reconstruct closed-book
 

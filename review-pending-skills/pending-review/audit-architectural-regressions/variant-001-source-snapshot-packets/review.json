@@ -1,0 +1,34 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into harness skill roots",
+    "use of a generated remediation packet as authority to modify a repository"
+  ],
+  "candidate_name": "audit-architectural-regressions",
+  "predecessors": [],
+  "provenance": [
+    "Current user request for a reusable skill and scripts that make architectural regression remediation repeatable",
+    "Current codex-bun regression-remediation packet required source anchors and completed dispositions instead of deferred review work"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "audit-rollout-damage"
+    },
+    {
+      "kind": "overlap",
+      "target": "protect-causal-architecture"
+    },
+    {
+      "kind": "overlap",
+      "target": "document-strict-work"
+    },
+    {
+      "kind": "overlap",
+      "target": "skill-researcher"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-source-snapshot-packets"
+}

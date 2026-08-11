@@ -7,12 +7,19 @@ description: Close every removed-test disposition against a Git baseline and pre
 
 Build and close a test-by-test behavioral ledger. Treat inventory counts and renamed functions as discovery evidence, never as proof of parity. Accept no unexplained removed test.
 
+## Fix the baseline before auditing
+
+Treat the Git baseline as user-selected authority, not as a value to rediscover from the evolving repository. Resolve a selected symbolic ref once to an immutable commit OID, record both the user's spelling and that OID in the task's durable audit state, and pass the same OID to every inventory and ledger command.
+
+Never replace that baseline with `HEAD`, a later `HEAD^`, a newer checkpoint, the merge base, or the current worktree to reduce the removed-test inventory. If the selected baseline is missing or appears wrong, stop for user review; do not silently shrink or rebase the audit.
+
 ## Inventory the change
 
 Run the comparator from the repository root:
 
 ```bash
-"$CODEX_HOME/skills/verify-test-parity/scripts/compare-test-inventory.sh" --baseline HEAD --repo .
+parity_baseline_oid='<recorded immutable baseline OID>'
+"$CODEX_HOME/skills/verify-test-parity/scripts/compare-test-inventory.sh" --baseline "$parity_baseline_oid" --repo .
 ```
 
 When `CODEX_HOME` is unset, use the discovered skill path directly. Use `scripts/list-test-identities.sh` when a normalized baseline or worktree inventory is needed independently.
@@ -24,7 +31,7 @@ Interpret the comparator categories as follows:
 - `globally-missing`: the old name exists nowhere in the worktree; locate a semantic replacement or identify an intentionally retired product behavior.
 - `added`: a worktree path/name identity was absent from the baseline; it may be a replacement, a split polarity, or unrelated new coverage.
 
-The scripts lexically discover Rust functions carrying `#[test]` or a namespaced `...::test` attribute. Supplement them with `git diff --name-status <baseline>` and targeted diff inspection for deleted test files, doctests, macro-generated cases, snapshots, diagnostic fixtures, and non-Rust suites.
+The scripts lexically discover Rust functions carrying `#[test]` or a namespaced `...::test` attribute. Supplement them with `git diff --name-status "$parity_baseline_oid"` and targeted diff inspection for deleted test files, doctests, macro-generated cases, snapshots, diagnostic fixtures, and non-Rust suites.
 
 ## Create the closure ledger
 
@@ -34,22 +41,24 @@ Maintain a tab-separated ledger with this exact header:
 baseline-path	test-name	disposition	replacement-path	replacement-test	production-capability-removal	evidence
 ```
 
-Use one or more rows per removed baseline identity, with one row per independently observable old behavior:
+Use one or more rows per removed baseline identity, with one row per independently observable old contract. A row closes a contract, not a test name and not an implementation mechanism:
 
-- Use `replaced` when live behavior remains. Name one existing replacement per row, set `production-capability-removal` to `-`, and use `evidence` to map the old observable assertions to that replacement. Multiple rows may map a former aggregate test to stronger split-polarity tests.
-- Use `intentionally-retired` only when production capability was deliberately removed and therefore made the old behavior obsolete. Set both replacement fields to `-`, name the removed production command/API/format/workflow in `production-capability-removal`, and cite its source or diff evidence in `evidence`.
+- Use `replaced` only when the old observable contract remains live. Name one existing equal-or-stronger replacement per row, set `production-capability-removal` to `-`, and map the old input, output, failure, and effect assertions to that replacement. A test of the new architecture is not a replacement for deliberately retired old mechanics merely because both concern the same domain.
+- Use `intentionally-retired` only for a contract whose owning production command, API, format, workflow, or effect was explicitly removed. Set both replacement fields to `-`, name that exact removed capability, and cite production-source or approved architecture evidence. A refactor or replacement architecture is not itself retirement evidence.
 
-An old aggregate test may have both row kinds when some behavior remains under refactored tests while a distinct production capability was removed. Do not retire the whole test merely because one assertion became obsolete.
+Split every aggregate baseline test into its independently observable contracts before choosing dispositions. The same old test may require both row kinds when live behavior moved to a new owner while a distinct mechanism was removed. Do not retire the whole test because one assertion became obsolete, and do not claim the whole test as replaced because one generic invariant survived.
 
-Do not use retirement for a refactor, rename, changed implementation strategy, currently failing behavior, or difficult fixture. Those still require replacement coverage.
+Never invent a substitute test merely to make the ledger validate. Add a test only when a still-live contract lacks equal-or-stronger coverage. If the only uncovered assertion exercised an explicitly removed capability, retire that contract with evidence instead of recreating it under a new name.
+
+Do not use retirement for a refactor, rename, changed implementation strategy, currently failing behavior, or difficult fixture. Those still require replacement coverage. Treat a passing ledger script as structural validation only; it cannot prove that a claimed replacement is semantically equivalent.
 
 ## Audit one old test at a time
 
 For each `removed` identity:
 
-1. Read the complete baseline test body with `git show <baseline>:<path>`.
+1. Read the complete baseline test body with `git show "$parity_baseline_oid:<path>"`.
 2. Enumerate its observable contracts: inputs, positive result, negative guard, typed error, effect order, exact request shape, byte preservation, idempotency, and cleanup behavior.
-3. Locate the actual replacement by behavior, not only by name. Inspect every candidate body completely.
+3. For each contract, establish whether its owning production capability remains live. Locate an actual replacement by behavior only for live contracts; inspect every candidate body completely.
 4. Record the mapping in the closure ledger before editing:
    - old path and test name;
    - live behavior assertions;
@@ -57,12 +66,12 @@ For each `removed` identity:
    - assertions that preserve each old contract;
    - strengthened polarities or invariants;
    - deliberately retired behavior and the removed production capability that makes it obsolete.
-5. Add a focused replacement when any live assertion lacks coverage. Rewrite test by test; do not replace a whole file when individual edits can retain attribution.
+5. Add a focused replacement only when a live assertion lacks coverage. Never create coverage for a retired mechanism to satisfy the ledger. Rewrite test by test; do not replace a whole file when individual edits can retain attribution.
 6. Re-run the inventory after edits and reconcile every remaining `removed` and `globally-missing` row.
 7. Run the ledger gate:
 
 ```bash
-"$CODEX_HOME/skills/verify-test-parity/scripts/verify-test-parity-ledger.sh" --baseline HEAD --repo . --ledger /absolute/path/to/test-parity.tsv
+"$CODEX_HOME/skills/verify-test-parity/scripts/verify-test-parity-ledger.sh" --baseline "$parity_baseline_oid" --repo . --ledger /absolute/path/to/test-parity.tsv
 ```
 
 The gate rejects an omitted removal, a stale baseline identity, a missing replacement, or an intentional retirement without production-capability evidence.
@@ -80,3 +89,7 @@ Run the repository's authorized focused tests for each changed owner, then its c
 - any unresolved parity gap.
 
 If a parity gap or disputed capability retirement cannot be resolved without a product decision, stop and ask rather than silently weakening the suite.
+
+## Provenance
+
+This contract is grounded in rollout `019fe1d3-ea48-7de1-91b0-ea98810d1213`, session `~/.codex/sessions/2026/08/08/rollout-2026-08-08T22-43-09-019fe1d3-ea48-7de1-91b0-ea98810d1213.jsonl`: user rule ordinal `8` requires contract-level replacement evidence or capability-specific retirement and permits mixed rows for aggregate tests; ordinals `846–848` record the first successful `test-parity.tsv` creation. Use this only as provenance for the reusable rule, never as a repository-specific baseline or ledger answer.

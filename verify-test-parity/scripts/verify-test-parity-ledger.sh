@@ -3,12 +3,12 @@ set -euo pipefail
 
 usage() {
   printf '%s\n' \
-    'usage: verify-test-parity-ledger.sh --ledger PATH [--baseline REF] [--repo PATH]' \
+    'usage: verify-test-parity-ledger.sh --ledger PATH --baseline REF [--repo PATH]' \
     '' \
     'Require every removed Rust test to name existing replacements or an evidenced production capability removal.'
 }
 
-baseline='HEAD'
+baseline=''
 repository='.'
 ledger=''
 
@@ -52,6 +52,10 @@ done
 
 if [[ -z $ledger ]]; then
   printf '%s\n' 'error: --ledger is required' >&2
+  exit 2
+fi
+if [[ -z $baseline ]]; then
+  printf '%s\n' 'error: --baseline is required; use the recorded user-selected baseline OID' >&2
   exit 2
 fi
 if [[ ! -f $ledger ]]; then
