@@ -1,7 +1,7 @@
 {
   "activation_effects": [
     "none during pending creation",
-    "future promotion could alter automatic goal-completion handoff resolution"
+    "future merge into maintain-living-goal could alter automatic goal-completion handoff resolution"
   ],
   "candidate_name": "resolve-managed-goal-artifacts",
   "predecessors": [],
@@ -12,12 +12,12 @@
   ],
   "relationships": [
     {
-      "kind": "possible-enhancement-owner",
+      "kind": "downstream-consumer",
       "mutation_authority": "none",
       "target": "auto-skill-enhancer"
     },
     {
-      "kind": "goal-file-consumer",
+      "kind": "canonical-owner",
       "mutation_authority": "none",
       "target": "maintain-living-goal"
     },

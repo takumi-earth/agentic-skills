@@ -4,7 +4,9 @@ Use this reference only for `resolve-managed-goal-artifacts/variant-001-environm
 
 ## Contract
 
-Read CODEX_HOME from the inherited hook environment, expand and canonicalize it, resolve only exact regular files under its attachments directory, reject ambiguity and symlink escape, and return a typed result naming condition, expected root, received root, candidate count, and candidate path.
+Read inherited `CODEX_HOME`, falling back to `~/.codex` only when the variable is absent. Reject an empty or unusable configured root. Use objective prose only to identify path references; require exactly one canonical regular non-symlink `attachments/<uuid>/<filename>` artifact beneath the trusted root. Return a deterministic typed result and make no writes or hook-envelope decisions.
+
+Use success code `resolved-exact-artifact`. Use failure codes `invalid-runtime-root`, `objective-not-text`, `no-managed-artifact-reference`, `ambiguous-managed-artifacts`, `attachments-root-mismatch`, `managed-path-shape`, and `artifact-not-file`.
 
 ## Required evidence
 
@@ -18,8 +20,10 @@ Read CODEX_HOME from the inherited hook environment, expand and canonicalize it,
 
 - custom CODEX_HOME positive fixture
 - unset CODEX_HOME ~/.codex fallback fixture
-- missing, ambiguous, invalid UUID, non-file, and symlink-escape negatives
-- canonical-direct, copied, and symlinked package execution parity
+- empty and unusable CODEX_HOME negatives
+- non-text, zero-reference, and ambiguous-reference negatives
+- invalid UUID, traversal, non-file, direct-symlink, and symlink-escape negatives
+- repeat-call determinism and filename/extension independence
 
 ## Scope
 

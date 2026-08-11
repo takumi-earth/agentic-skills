@@ -6,9 +6,9 @@ Resolve an exact harness-managed goal artifact from a structured goal objective 
 
 ## Preserved approach
 
-Treat CODEX_HOME as the authoritative runtime root and fall back to ~/.codex only when it is unset.
+Treat inherited `CODEX_HOME` as the authoritative runtime root and fall back to `~/.codex` only when the variable is absent.
 
-Read CODEX_HOME from the inherited hook environment, expand and canonicalize it, resolve only exact regular files under its attachments directory, reject ambiguity and symlink escape, and return a typed result naming condition, expected root, received root, candidate count, and candidate path.
+Reject an empty, relative, missing, non-directory, or otherwise unusable configured root with `invalid-runtime-root`. Use objective prose only to identify filename- and extension-agnostic attachment references; never use it to select the trusted root. Preserve exactly one canonical, regular, non-symlink `attachments/<uuid>/<filename>` artifact and return a pure typed result with stable stage, code, condition, expected, received, candidate-count, and artifact fields.
 
 ## Difference from sibling variants
 
@@ -26,8 +26,10 @@ The production hook derived codex_home from Path(__file__).resolve().parents[3].
 
 - custom CODEX_HOME positive fixture
 - unset CODEX_HOME ~/.codex fallback fixture
-- missing, ambiguous, invalid UUID, non-file, and symlink-escape negatives
-- canonical-direct, copied, and symlinked package execution parity
+- empty, missing, relative, and non-directory CODEX_HOME negatives
+- non-text, missing, and ambiguous objective-reference negatives
+- invalid UUID, traversal, non-file, direct-symlink, and symlink-escape negatives
+- repeated-call determinism and filename/extension independence
 
 ## Uncertainty and risk
 
@@ -49,4 +51,4 @@ The candidate remains pending because structural validity does not decide whethe
 ## Possible activation effects
 
 - none during pending creation
-- future promotion could alter automatic goal-completion handoff resolution
+- future merge into maintain-living-goal could alter automatic goal-completion handoff resolution

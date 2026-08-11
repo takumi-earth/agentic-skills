@@ -1,6 +1,6 @@
 ---
 name: resolve-managed-goal-artifacts
-description: "Resolve an exact harness-managed goal artifact from a structured goal objective without coupling harness state to skill package topology. Use when a completion hook or resumed workflow must resolve the exact file designated by a structured goal objective or typed goal artifact."
+description: "Resolve an exact harness-managed goal artifact from objective prose without coupling harness state to skill package topology. Use when a lifecycle hook or resumed workflow must identify one regular attachments artifact through inherited CODEX_HOME; do not use package location, objective paths, or hook output to infer the trusted runtime root."
 ---
 
 # Resolve Managed Goal Artifacts
@@ -16,7 +16,21 @@ Apply the `variant-001-environment-root` design without silently merging it with
 
 ## Apply this design
 
-Read CODEX_HOME from the inherited hook environment, expand and canonicalize it, resolve only exact regular files under its attachments directory, reject ambiguity and symlink escape, and return a typed result naming condition, expected root, received root, candidate count, and candidate path.
+Read inherited `CODEX_HOME` and fall back to `~/.codex` only when the variable is absent. Treat an empty or unusable configured root as `invalid-runtime-root`; never replace it with the fallback.
+
+Use objective prose only to identify filename- and extension-agnostic path references. Require exactly one canonical `attachments/<uuid>/<filename>` path beneath the trusted root, reject traversal and symlink escape, and require a regular non-symlink file.
+
+Return a side-effect-free `GoalArtifactResolution`-equivalent result with `status`, `stage`, `code`, `condition`, safe `expected` and `received` values, `candidate_count`, and optional `artifact`. Use `resolved-exact-artifact` for success and these failure codes:
+
+- `invalid-runtime-root`;
+- `objective-not-text`;
+- `no-managed-artifact-reference`;
+- `ambiguous-managed-artifacts`;
+- `attachments-root-mismatch`;
+- `managed-path-shape`;
+- `artifact-not-file`.
+
+Keep hook-envelope rendering outside this resolver. The operation must make no writes and return the same result for the same objective, environment, and filesystem state.
 
 Use this sequence:
 
@@ -30,8 +44,10 @@ Use this sequence:
 
 - Prove custom CODEX_HOME positive fixture.
 - Prove unset CODEX_HOME ~/.codex fallback fixture.
-- Prove missing, ambiguous, invalid UUID, non-file, and symlink-escape negatives.
-- Prove canonical-direct, copied, and symlinked package execution parity.
+- Prove empty, missing, relative, and non-directory CODEX_HOME negatives.
+- Prove non-text, missing, and ambiguous objective-reference negatives.
+- Prove invalid UUID, traversal, non-file, direct-symlink, and symlink-escape negatives.
+- Prove repeat-call determinism and filename/extension independence.
 
 Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.
 
@@ -39,7 +55,7 @@ Report assertions and process exit status separately. A nonzero command is diagn
 
 - Guard against Trusting arbitrary objective paths outside the managed attachments root.
 - Guard against Treating custom CODEX_HOME as equivalent to a package location.
-- Guard against Schema version skew between Codex and hook packages.
+- Guard against Letting one concurrent hook write resolver state for another hook.
 - Guard against Overfitting the current pasted-text wrapper wording.
 - Guard against Retaining the installation-relative approach even though it is known to be fragile.
 

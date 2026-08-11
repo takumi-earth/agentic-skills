@@ -1,4 +1,4 @@
 interface:
   display_name: "Resolve Managed Goal Artifacts"
   short_description: "Resolve exact managed goal artifact files"
-  default_prompt: "Use $resolve-managed-goal-artifacts to apply the variant-001-environment-root pending design with explicit evidence and authority boundaries."
+  default_prompt: "Use $resolve-managed-goal-artifacts to resolve one exact managed artifact through inherited runtime authority and return a typed result."

@@ -8,9 +8,9 @@
 
 ## Required behavior
 
-Treat CODEX_HOME as the authoritative runtime root and fall back to ~/.codex only when it is unset.
+Treat inherited `CODEX_HOME` as the authoritative runtime root and fall back to `~/.codex` only when the variable is absent.
 
-Read CODEX_HOME from the inherited hook environment, expand and canonicalize it, resolve only exact regular files under its attachments directory, reject ambiguity and symlink escape, and return a typed result naming condition, expected root, received root, candidate count, and candidate path.
+Reject empty and unusable configured roots. Use objective prose only to identify candidate references, never to establish the trusted root. Resolve exactly one filename- and extension-agnostic `attachments/<uuid>/<filename>` regular non-symlink file after canonical containment and symlink-escape checks. Return a pure typed result and keep hook-envelope rendering outside the resolver.
 
 ## Planned resources
 
@@ -21,8 +21,8 @@ Read CODEX_HOME from the inherited hook environment, expand and canonicalize it,
 
 ## Relationships
 
-- `auto-skill-enhancer`: `possible-enhancement-owner`
-- `maintain-living-goal`: `goal-file-consumer`
+- `maintain-living-goal`: `canonical-owner`
+- `auto-skill-enhancer`: `downstream-consumer`
 - `define-codex-goal-artifacts`: `typed-contract-alternative`
 
 Relationships preserve overlap for review. They do not authorize mutation of the named owner.
@@ -31,8 +31,10 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 
 - custom CODEX_HOME positive fixture
 - unset CODEX_HOME ~/.codex fallback fixture
-- missing, ambiguous, invalid UUID, non-file, and symlink-escape negatives
-- canonical-direct, copied, and symlinked package execution parity
+- invalid configured root and non-text objective negatives
+- zero, one, and multiple managed references
+- invalid UUID, traversal, non-file, direct-symlink, and symlink-escape negatives
+- repeat-call determinism and filename/extension independence
 
 ## Git and activation boundary
 
