@@ -1,0 +1,36 @@
+{
+  "activation_effects": [
+    "none during pending creation",
+    "future merge changes auto-skill-creator creation-batch persistence semantics"
+  ],
+  "candidate_name": "persist-pending-creation-batches",
+  "predecessors": [
+    "review-pending-skills/pending-review/persist-pending-creation-batches/variant-001-single-invocation-commit",
+    "review-pending-skills/pending-review/persist-pending-creation-batches/variant-002-write-ahead-batch-manifest"
+  ],
+  "provenance": [
+    "live user correction | retained visible turn | Create all candidates and commit them in that go; do not create roughly twenty commits.",
+    "live user correction | retained visible turn | The commit requirement means persist the initial creation before editing the candidates again.",
+    "approved pending-skill review plan | active living goal | Converge variants 001 and 002, verify staged Git objects, and keep staging and committing with the calling workflow."
+  ],
+  "relationships": [
+    {
+      "kind": "canonical-owner",
+      "mutation_authority": "none during pending creation",
+      "target": "auto-skill-creator"
+    },
+    {
+      "kind": "history-consumer",
+      "mutation_authority": "none",
+      "target": "review-pending-skills"
+    },
+    {
+      "kind": "convergence",
+      "mutation_authority": "none",
+      "target": "variant-001-single-invocation-commit + variant-002-write-ahead-batch-manifest"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-004-write-ahead-single-invocation-commit"
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "candidate_roots": {
+      "items": {
+        "pattern": "^review-pending-skills/pending-review/[a-z0-9]+(?:-[a-z0-9]+)*$",
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "inventory": {
+      "$ref": "#/$defs/evidence"
+    },
+    "precommit_oid": {
+      "oneOf": [
+        {
+          "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "staged_entries": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "blob_oid": {
+            "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$",
+            "type": "string"
+          },
+          "blob_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "100644",
+              "100755",
+              "120000"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "symlink_target": {
+            "oneOf": [
+              {
+                "pattern": "^(?:[0-9a-f]{2})*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "blob_oid",
+          "blob_sha256",
+          "mode",
+          "path",
+          "symlink_target"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "validation_reports": {
+      "items": {
+        "$ref": "#/$defs/evidence"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "candidate_roots",
+    "inventory",
+    "precommit_oid",
+    "schema_version",
+    "staged_entries",
+    "validation_reports"
+  ],
+  "type": "object",
+  "$defs": {
+    "evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "type": "object"
+    }
+  }
+}

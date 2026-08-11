@@ -1,0 +1,6 @@
+interface:
+  display_name: "Persist Pending Creation Batches"
+  short_description: "Checkpoint complete candidate batches once"
+  default_prompt: "Use $persist-pending-creation-batches to checkpoint this validated automatic-creation batch with immutable staged-object evidence."
+policy:
+  allow_implicit_invocation: true
