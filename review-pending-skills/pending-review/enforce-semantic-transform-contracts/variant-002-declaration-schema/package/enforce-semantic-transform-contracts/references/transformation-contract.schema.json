@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/enforce-semantic-transform-contracts/transformation-contract.schema.json",
+  "title": "Semantic transformation declaration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "owner",
+    "scope",
+    "query",
+    "precondition",
+    "rewrite",
+    "postcondition",
+    "cardinality",
+    "hints",
+    "outcomes",
+    "transaction",
+    "evidence"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1}
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "roots"],
+      "properties": {
+        "kind": {"enum": ["workspace", "crate", "module", "owned-content"]},
+        "roots": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["language", "semantic_identity"],
+      "properties": {
+        "language": {"type": "string", "minLength": 1},
+        "semantic_identity": {"type": "string", "minLength": 1},
+        "resolver": {"type": "string"}
+      }
+    },
+    "precondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["load_bearing_predicates"],
+      "properties": {
+        "load_bearing_predicates": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "rewrite": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation", "minimal_ast_change"],
+      "properties": {
+        "operation": {"type": "string", "minLength": 1},
+        "minimal_ast_change": {"const": true}
+      }
+    },
+    "postcondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semantic_predicates"],
+      "properties": {
+        "semantic_predicates": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "cardinality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum", "maximum", "absence"],
+      "properties": {
+        "minimum": {"type": "integer", "minimum": 0},
+        "maximum": {"type": "integer", "minimum": 1},
+        "absence": {"enum": ["optional", "required"]}
+      }
+    },
+    "hints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "value", "authoritative", "miss_behavior"],
+        "properties": {
+          "kind": {"enum": ["path", "marker", "version", "fingerprint", "hash", "rendered-fragment"]},
+          "value": {"type": "string"},
+          "authoritative": {"const": false},
+          "miss_behavior": {"const": "continue-authoritative-query"}
+        }
+      }
+    },
+    "outcomes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"enum": ["applied", "already-applied", "optional-absent", "required-absent", "ambiguous", "mixed-state", "incompatible-shape", "postcondition-failed", "replay-failed"]}
+    },
+    "transaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classify_complete_scope_before_edit", "verify_postcondition", "verify_replay", "atomic_publish"],
+      "properties": {
+        "classify_complete_scope_before_edit": {"const": true},
+        "verify_postcondition": {"const": true},
+        "verify_replay": {"const": true},
+        "atomic_publish": {"const": true}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["metamorphic_cases", "product_owner_tests"],
+      "properties": {
+        "metamorphic_cases": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "product_owner_tests": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

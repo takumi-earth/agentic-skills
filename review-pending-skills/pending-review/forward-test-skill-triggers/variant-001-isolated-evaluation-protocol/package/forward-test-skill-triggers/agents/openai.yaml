@@ -1,0 +1,4 @@
+interface:
+  display_name: "Forward Test Skill Triggers"
+  short_description: "Evaluate skills without context leakage"
+  default_prompt: "Use $forward-test-skill-triggers to design context-isolated positive and negative skill evaluations from raw prompts and artifacts."

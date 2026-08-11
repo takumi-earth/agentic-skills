@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into a rollout-audit owner",
+    "installation or synchronization into harness skill roots",
+    "future generation of bounded forensic context packets"
+  ],
+  "candidate_name": "query-rollout-evidence",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Need to preserve exact raw ordinals while avoiding oversized raw-record output"
+  ],
+  "relationships": [
+    {"kind": "complements", "target": "query-rollout-evidence/variant-001-index-query-cli"},
+    {"kind": "overlap", "target": "filesystem-git-observability"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-context-packet-renderer"
+}

@@ -1,0 +1,21 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into verification owners",
+    "installation or synchronization into harness skill roots",
+    "future use in completion ledgers and worker handoffs"
+  ],
+  "candidate_name": "classify-test-evidence-state",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Forensic finding that unexecuted test source was used to close behavioral ledger rows"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "verify-test-parity"},
+    {"kind": "overlap", "target": "maintain-living-goal"},
+    {"kind": "overlap", "target": "verify-strict-work"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-evidence-state-protocol"
+}

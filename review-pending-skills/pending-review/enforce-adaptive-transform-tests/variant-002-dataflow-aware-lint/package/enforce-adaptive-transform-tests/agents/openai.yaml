@@ -1,0 +1,4 @@
+interface:
+  display_name: "Enforce Adaptive Transform Tests"
+  short_description: "Reject brittle transform test oracles"
+  default_prompt: "Use $enforce-adaptive-transform-tests to detect rendered-source oracle laundering through provenance-aware analysis."

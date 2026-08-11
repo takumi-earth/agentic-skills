@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge of its schema into an official owner",
+    "installation or synchronization into harness skill roots",
+    "use of the validator in repository gates after separate adoption"
+  ],
+  "candidate_name": "enforce-semantic-transform-contracts",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Reviewer finding that prose alone left typed states and transaction ordering ambiguous"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "design-semantic-source-transforms"},
+    {"kind": "alternative", "target": "enforce-semantic-transform-contracts/variant-001-contract-reference"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-declaration-schema"
+}

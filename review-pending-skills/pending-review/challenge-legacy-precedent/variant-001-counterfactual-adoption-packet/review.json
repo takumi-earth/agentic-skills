@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into a causal-architecture owner",
+    "installation or synchronization into harness skill roots",
+    "future use as a mandatory design-review packet"
+  ],
+  "candidate_name": "challenge-legacy-precedent",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Forensic finding that nearby expected_contains machinery displaced the user-selected semantic contract"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "protect-causal-architecture"},
+    {"kind": "complements", "target": "audit-rollout-damage"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-counterfactual-adoption-packet"
+}

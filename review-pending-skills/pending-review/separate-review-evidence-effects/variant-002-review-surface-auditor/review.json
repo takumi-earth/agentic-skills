@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge of its auditor into an audit owner",
+    "installation or synchronization into harness skill roots",
+    "future adoption as an advisory skill-contract gate"
+  ],
+  "candidate_name": "separate-review-evidence-effects",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Repeated reviewer need to correct implied artifact and probe authority in audit skills"
+  ],
+  "relationships": [
+    {"kind": "complements", "target": "separate-review-evidence-effects/variant-001-effect-classification-template"},
+    {"kind": "overlap", "target": "audit-skill-trigger-contracts"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-review-surface-auditor"
+}

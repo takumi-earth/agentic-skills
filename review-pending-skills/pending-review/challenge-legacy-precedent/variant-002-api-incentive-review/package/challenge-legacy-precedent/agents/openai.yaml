@@ -1,0 +1,4 @@
+interface:
+  display_name: "Challenge Legacy Precedent"
+  short_description: "Test local precedent against invariants"
+  default_prompt: "Use $challenge-legacy-precedent to review whether a helper API makes a forbidden shortcut the easiest implementation path."

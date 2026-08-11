@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge of its validator into a verification owner",
+    "installation or synchronization into harness skill roots",
+    "future adoption as an evidence-ledger gate"
+  ],
+  "candidate_name": "classify-test-evidence-state",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Need to preserve assertion outcome and process exit as separate evidence"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "verify-test-parity"},
+    {"kind": "complements", "target": "classify-test-evidence-state/variant-001-evidence-state-protocol"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-ledger-validator"
+}

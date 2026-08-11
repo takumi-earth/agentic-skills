@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge of its runner into a trigger-audit owner",
+    "installation or synchronization into harness skill roots",
+    "future use by separately authorized fresh-agent evaluation workflows"
+  ],
+  "candidate_name": "forward-test-skill-triggers",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "System skill-creator requirement to forward-test with raw artifacts and minimal leaked context"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "audit-skill-trigger-contracts"},
+    {"kind": "complements", "target": "forward-test-skill-triggers/variant-001-isolated-evaluation-protocol"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-prompt-matrix-runner"
+}

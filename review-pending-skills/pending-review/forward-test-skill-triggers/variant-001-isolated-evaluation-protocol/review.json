@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into trigger-audit guidance",
+    "installation or synchronization into harness skill roots",
+    "future launch of fresh-agent evaluations under separate authority"
+  ],
+  "candidate_name": "forward-test-skill-triggers",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Accepted completion caveat that full-history reviewers did not prove isolated implicit triggering"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "audit-skill-trigger-contracts"},
+    {"kind": "overlap", "target": "system/skill-creator"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-isolated-evaluation-protocol"
+}

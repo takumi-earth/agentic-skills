@@ -1,0 +1,4 @@
+interface:
+  display_name: "Classify Test Evidence State"
+  short_description: "Separate written tests from passing gates"
+  default_prompt: "Use $classify-test-evidence-state to distinguish written, compiled, executed, passing, and canonically accepted test evidence."

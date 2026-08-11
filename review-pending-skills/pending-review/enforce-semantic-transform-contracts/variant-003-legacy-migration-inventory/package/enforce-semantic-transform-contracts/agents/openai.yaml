@@ -1,0 +1,4 @@
+interface:
+  display_name: "Enforce Semantic Transform Contracts"
+  short_description: "Enforce semantic patch contracts"
+  default_prompt: "Use $enforce-semantic-transform-contracts to inventory brittle source-transform callers and plan semantic migration by owner."

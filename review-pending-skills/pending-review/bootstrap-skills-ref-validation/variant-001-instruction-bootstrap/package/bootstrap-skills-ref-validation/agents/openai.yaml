@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bootstrap Skills Ref Validation"
+  short_description: "Resolve and run the pinned skill validator"
+  default_prompt: "Use $bootstrap-skills-ref-validation to resolve the pinned skills-ref source and separate discovery, installation authority, and validation."

@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into the adaptive-test owner",
+    "installation or synchronization into harness skill roots",
+    "future adoption of opaque result APIs in product test harnesses"
+  ],
+  "candidate_name": "enforce-adaptive-transform-tests",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "User requirement that adaptive behavior rather than rendered string coincidence be tested"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "test-adaptive-source-transforms"},
+    {"kind": "overlap", "target": "verify-test-parity"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-opaque-typed-harness"
+}

@@ -1,0 +1,21 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or selective merge into audit owners",
+    "installation or synchronization into harness skill roots",
+    "future use as an effect-authorization review template"
+  ],
+  "candidate_name": "separate-review-evidence-effects",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Reviewer correction that audit artifact creation and executable probes require separate authority"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "filesystem-git-observability"},
+    {"kind": "overlap", "target": "audit-rollout-damage"},
+    {"kind": "overlap", "target": "audit-architectural-regressions"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-effect-classification-template"
+}

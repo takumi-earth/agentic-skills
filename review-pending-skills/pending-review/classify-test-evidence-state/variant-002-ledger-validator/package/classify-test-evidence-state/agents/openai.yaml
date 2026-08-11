@@ -1,0 +1,4 @@
+interface:
+  display_name: "Classify Test Evidence State"
+  short_description: "Separate written tests from passing gates"
+  default_prompt: "Use $classify-test-evidence-state to validate that a behavioral closure ledger cites the exact execution state it claims."

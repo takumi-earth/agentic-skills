@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into validation guidance",
+    "installation or synchronization into harness skill roots",
+    "future dependency installation only under separate explicit authority"
+  ],
+  "candidate_name": "bootstrap-skills-ref-validation",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "User instruction to install skills_ref from repository-pinned source after the module was missing"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "system/skill-creator"},
+    {"kind": "overlap", "target": "agentic-skills repository validation guidance"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-instruction-bootstrap"
+}

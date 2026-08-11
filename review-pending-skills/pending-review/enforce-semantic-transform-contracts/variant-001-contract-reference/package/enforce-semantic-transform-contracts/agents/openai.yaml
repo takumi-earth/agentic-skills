@@ -1,0 +1,4 @@
+interface:
+  display_name: "Enforce Semantic Transform Contracts"
+  short_description: "Enforce semantic patch contracts"
+  default_prompt: "Use $enforce-semantic-transform-contracts to require a location-independent typed contract for a parsed-source transformation."

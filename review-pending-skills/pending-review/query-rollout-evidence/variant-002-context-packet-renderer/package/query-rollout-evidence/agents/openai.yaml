@@ -1,0 +1,4 @@
+interface:
+  display_name: "Query Rollout Evidence"
+  short_description: "Query rollout traces with bounded output"
+  default_prompt: "Use $query-rollout-evidence to render a bounded chronology packet around exact rollout lines or ordinals."

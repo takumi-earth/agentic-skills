@@ -1,0 +1,4 @@
+interface:
+  display_name: "Query Rollout Evidence"
+  short_description: "Query rollout traces with bounded output"
+  default_prompt: "Use $query-rollout-evidence to query a normalized rollout index with schema-aware filters and deterministic output bounds."

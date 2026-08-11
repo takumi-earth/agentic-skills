@@ -1,0 +1,4 @@
+interface:
+  display_name: "Separate Review Evidence Effects"
+  short_description: "Keep review and persistence authority separate"
+  default_prompt: "Use $separate-review-evidence-effects to classify inline review, artifact, probe, validation, mutation, Git, and activation effects independently."

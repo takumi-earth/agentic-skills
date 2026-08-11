@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge of its analyzer into an official owner",
+    "installation or synchronization into harness skill roots",
+    "future adoption as an advisory or required repository gate"
+  ],
+  "candidate_name": "enforce-adaptive-transform-tests",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Forensic finding that parse-then-text and wrapper APIs preserved brittle test oracles"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "test-adaptive-source-transforms"},
+    {"kind": "alternative", "target": "enforce-adaptive-transform-tests/variant-001-opaque-typed-harness"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-dataflow-aware-lint"
+}

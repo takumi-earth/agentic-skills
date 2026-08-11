@@ -1,0 +1,24 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level routing skill",
+    "installation or synchronization into harness skill roots",
+    "future implicit routing among related official skills"
+  ],
+  "candidate_name": "route-source-transform-workflows",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Reviewer correction that initial owner handoffs were ambiguous and could bounce circularly"
+  ],
+  "relationships": [
+    {"kind": "routes-to", "target": "protect-causal-architecture"},
+    {"kind": "routes-to", "target": "audit-rollout-damage"},
+    {"kind": "routes-to", "target": "audit-architectural-regressions"},
+    {"kind": "routes-to", "target": "design-semantic-source-transforms"},
+    {"kind": "routes-to", "target": "test-adaptive-source-transforms"},
+    {"kind": "routes-to", "target": "verify-test-parity"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-owner-matrix-router"
+}

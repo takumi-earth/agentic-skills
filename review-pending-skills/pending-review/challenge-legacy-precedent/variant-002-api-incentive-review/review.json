@@ -1,0 +1,20 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into a causal-architecture owner",
+    "installation or synchronization into harness skill roots",
+    "future use as a helper API review gate"
+  ],
+  "candidate_name": "challenge-legacy-precedent",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Forensic finding that returning a final String made brittle substring assertions the natural path"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "protect-causal-architecture"},
+    {"kind": "alternative", "target": "challenge-legacy-precedent/variant-001-counterfactual-adoption-packet"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-api-incentive-review"
+}

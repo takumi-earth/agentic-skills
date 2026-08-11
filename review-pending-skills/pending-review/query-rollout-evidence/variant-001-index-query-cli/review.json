@@ -1,0 +1,21 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or merge into a rollout-audit owner",
+    "installation or synchronization into harness skill roots",
+    "future use to generate bounded forensic query results"
+  ],
+  "candidate_name": "query-rollout-evidence",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "Observed ad hoc jq shape failure and oversized truncated rollout-query output"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "audit-rollout-damage"},
+    {"kind": "overlap", "target": "skill-researcher"},
+    {"kind": "overlap", "target": "design-command-observability"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-index-query-cli"
+}

@@ -1,0 +1,21 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill or selective merge into a related official owner",
+    "installation or synchronization into harness skill roots",
+    "implicit or explicit invocation through skill metadata"
+  ],
+  "candidate_name": "enforce-semantic-transform-contracts",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for rollout 019ff0fe-c308-7451-8b67-c37689e837d0",
+    "User requirement that unchanged semantic targets survive line shifts and movement between files"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "design-semantic-source-transforms"},
+    {"kind": "overlap", "target": "protect-causal-architecture"},
+    {"kind": "overlap", "target": "audit-architectural-regressions"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-contract-reference"
+}

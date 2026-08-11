@@ -1,0 +1,4 @@
+interface:
+  display_name: "Challenge Legacy Precedent"
+  short_description: "Test local precedent against invariants"
+  default_prompt: "Use $challenge-legacy-precedent before adopting a nearby helper that may conflict with a protected user invariant."
