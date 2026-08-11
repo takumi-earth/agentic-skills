@@ -148,6 +148,24 @@ def matching_parenthesis(masked: str, open_index: int) -> int:
     raise InventoryError(f"call at offset {open_index} has no closing parenthesis")
 
 
+def matching_brace(masked: str, open_index: int) -> int:
+    if open_index < 0 or open_index >= len(masked) or masked[open_index] != "{":
+        raise InventoryError(f"owner at offset {open_index} has no opening brace")
+    stack = ["}"]
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    index = open_index + 1
+    while index < len(masked):
+        character = masked[index]
+        if character in pairs:
+            stack.append(pairs[character])
+        elif stack and character == stack[-1]:
+            stack.pop()
+            if not stack:
+                return index
+        index += 1
+    raise InventoryError(f"owner body at offset {open_index} has no closing brace")
+
+
 def split_arguments(source: str, masked: str, start: int, end: int) -> list[str]:
     arguments: list[str] = []
     stack: list[str] = []
@@ -219,7 +237,20 @@ def collect(spec_path: Path) -> dict[str, Any]:
     masked = mask_rust_noncode(source)
     owner_pattern = compile_pattern(spec.get("owner_pattern"), "owner_pattern")
     owner_matches = list(owner_pattern.finditer(source))
-    owner_offsets = [match.start() for match in owner_matches]
+    owner_spans: list[tuple[int, int, re.Match[str]]] = []
+    for owner_match in owner_matches:
+        owner_groups = owner_match.groupdict()
+        if owner_groups.get("owner") is None:
+            raise InventoryError("owner_pattern must define a named `owner` capture")
+        parameter_open = masked.find("(", owner_match.start(), owner_match.end())
+        if parameter_open == -1:
+            raise InventoryError(f"owner {owner_groups['owner']} has no parameter list")
+        parameter_close = matching_parenthesis(masked, parameter_open)
+        body_open = masked.find("{", parameter_close + 1)
+        if body_open == -1:
+            raise InventoryError(f"owner {owner_groups['owner']} has no braced body")
+        body_close = matching_brace(masked, body_open)
+        owner_spans.append((body_open, body_close, owner_match))
     call_specs = require_list(spec.get("calls"), "calls")
     if not call_specs:
         raise InventoryError("calls must not be empty")
@@ -257,15 +288,18 @@ def collect(spec_path: Path) -> dict[str, Any]:
             if maximum_index >= len(arguments):
                 line_number = bisect_right(line_starts, match.start())
                 raise InventoryError(f"{callee} at line {line_number} has {len(arguments)} arguments; identity index {maximum_index} is unavailable")
-            owner_position = bisect_right(owner_offsets, match.start()) - 1
-            if owner_position < 0:
+            containing_owners = [
+                (body_open, body_close, owner_match)
+                for body_open, body_close, owner_match in owner_spans
+                if body_open < match.start() < body_close
+            ]
+            if not containing_owners:
                 line_number = bisect_right(line_starts, match.start())
-                raise InventoryError(f"{callee} at line {line_number} has no enclosing owner match")
-            owner_match = owner_matches[owner_position]
+                raise InventoryError(f"{callee} at line {line_number} is not contained by a configured owner body")
+            _body_open, _body_close, owner_match = max(containing_owners, key=lambda item: item[0])
             owner_groups = owner_match.groupdict()
             owner = owner_groups.get("owner")
-            if owner is None:
-                raise InventoryError("owner_pattern must define a named `owner` capture")
+            assert owner is not None
             identity = {
                 label: normalize_argument(arguments[argument_index])
                 for argument_index, label in zip(indices, labels, strict=True)

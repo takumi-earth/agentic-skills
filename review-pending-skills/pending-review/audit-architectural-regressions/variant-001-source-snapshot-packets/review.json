@@ -2,7 +2,7 @@
   "activation_effects": [
     "promotion as a top-level user-level skill",
     "installation or synchronization into harness skill roots",
-    "use of a generated remediation packet as authority to modify a repository"
+    "use of a generated remediation packet as decision evidence in a separately authorized repair workflow"
   ],
   "candidate_name": "audit-architectural-regressions",
   "predecessors": [],

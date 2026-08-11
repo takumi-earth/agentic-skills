@@ -6,7 +6,7 @@ Produce repeatable architectural-regression assessments that read complete sourc
 
 ## Approach
 
-Use a deterministic source collector for worktree and historical blobs, an optional Rust owner-selector call-inventory collector for broad structural-helper families, a structured packet contract, and a validator that rejects missing anchors, undispositioned stable call-site keys, unresolved classification work, incomplete verdict units, and manually hard-wrapped prose. Keep semantic ownership judgments in the reviewed packet rather than encoding one repository's conclusions in the scripts.
+Use a deterministic source collector for worktree and historical blobs, an optional Rust owner-selector call-inventory collector for broad structural-helper families, a structured packet contract, and a validator that rejects missing anchors, undispositioned stable call-site keys, unresolved classification work, incomplete verdict units, and manually hard-wrapped prose. Treat the reviewed packet as decision evidence only: even an approved verdict does not authorize repository mutation without a separate current user instruction. Keep semantic ownership judgments in the reviewed packet rather than encoding one repository's conclusions in the scripts.
 
 ## Preserved nuance
 

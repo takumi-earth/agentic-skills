@@ -1,6 +1,6 @@
 # Rust call-inventory specification
 
-Use the Rust call-inventory collector when a finding depends on every invocation of a broad structural helper, not merely the number of matching calls. The collector masks Rust comments and literals, parses balanced call arguments, binds each call to the nearest configured owner function, and records selected identity arguments.
+Use the Rust call-inventory collector when a finding depends on every invocation of a broad structural helper, not merely the number of matching calls. The collector masks Rust comments and literals, parses balanced call arguments, verifies that each call is contained by a configured owner body, and records selected identity arguments.
 
 Use schema version `1`:
 
@@ -27,7 +27,7 @@ Use schema version `1`:
 
 - `source` may be absolute or relative to the specification. Home paths are normalized to `~/...` in output.
 - `scope_end_pattern` is optional. Use it to exclude an in-file test module when production call count is the contract.
-- `owner_pattern` must define a named `owner` capture and must match the function declarations that own the reviewed calls.
+- `owner_pattern` must define a named `owner` capture and must match declarations with braced bodies that own the reviewed calls. A preceding declaration is not an owner unless its balanced body contains the call.
 - Each `callee` is matched only in executable Rust code; occurrences in comments, ordinary strings, raw strings, and the callee's own function definition are excluded.
 - `identity_args` contains zero-based top-level call-argument indexes. `identity_labels` gives those arguments stable names in JSON and Markdown output.
 - The collector preserves the raw identity expression with whitespace normalized. This permits literal selectors, dynamic selector variables, and composite selector expressions without pretending to evaluate Rust.

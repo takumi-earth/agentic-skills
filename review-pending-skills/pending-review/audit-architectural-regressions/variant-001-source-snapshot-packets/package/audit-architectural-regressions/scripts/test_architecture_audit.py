@@ -239,6 +239,42 @@ mod tests {
             self.assertIn("`patch_one::function=first`", markdown)
             self.assertNotIn("wrong", markdown)
 
+    def test_rejects_call_after_owner_body_instead_of_using_preceding_declaration(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rust-call-containment-") as temporary:
+            root = Path(temporary)
+            source = root / "jobs.rs"
+            source.write_text(
+                '''fn patch_one() {
+    retained();
+}
+
+fn unrelated() {
+    replace_item_fn_if_needed(path, operation, syntax, "outside", reason, marker, replacement);
+}
+''',
+                encoding="utf-8",
+            )
+            spec = root / "spec.json"
+            spec.write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "source": str(source),
+                        "owner_pattern": "(?m)^fn (?P<owner>patch_[a-z0-9_]+)\\s*\\(",
+                        "calls": [
+                            {
+                                "callee": "replace_item_fn_if_needed",
+                                "identity_args": [3],
+                                "identity_labels": ["function"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(call_inventory.InventoryError, "not contained by a configured owner body"):
+                call_inventory.collect(spec)
+
 
 class VerdictPacketTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -347,7 +383,7 @@ Missing.
         self.assertTrue(any("source locators" in error for error in errors))
         self.assertTrue(any("missing label" in error for error in errors))
 
-    def test_scopes_placeholder_validation_to_contracted_findings(self) -> None:
+    def test_rejects_uncontracted_finding_and_its_placeholder(self) -> None:
         packet = """## Finding `R1`: ownership drift
 
 ### Verdict
@@ -394,7 +430,44 @@ Evidence record `r1-current` captures `current:src/policy.rs:1-4`.
 
 This uncontracted finding remains ____________________________.
 """
-        self.assertEqual(validator.validate(packet, self.contract, self.evidence_queries), [])
+        errors = validator.validate(packet, self.contract, self.evidence_queries)
+        self.assertTrue(any("uncontracted finding heading: R2" in error for error in errors))
+        self.assertTrue(any("finding R2 contains an unresolved placeholder" in error for error in errors))
+
+    def test_rejects_blank_verdict_unit_fields(self) -> None:
+        contract = {
+            "schema_version": 1,
+            "require_unwrapped_prose": True,
+            "forbidden_phrases": [],
+            "findings": [
+                {
+                    "id": "R1",
+                    "required_sections": [],
+                    "required_evidence_queries": [],
+                    "required_strings": [],
+                    "minimum_source_locators": 0,
+                    "minimum_verdict_units": 1,
+                }
+            ],
+        }
+        packet = """## Finding `R1`: blank verdict field
+
+#### `R1-A` Decide
+
+**Evidence:** Complete evidence.
+
+**Change:** Apply the named change.
+
+**Approval means:** Approve the named change.
+
+**Rejection means:** Retain the current behavior.
+
+**User verdict:** `approve / reject / question`
+
+**User comment:**
+"""
+        errors = validator.validate(packet, contract, {})
+        self.assertTrue(any("blank field: User comment" in error for error in errors))
 
     def test_pins_evidence_inventory_counts(self) -> None:
         contract = {
@@ -491,6 +564,15 @@ class MarkdownStyleTests(unittest.TestCase):
             with self.subTest(path=path):
                 lines = path.read_text(encoding="utf-8").splitlines()
                 self.assertEqual(validator.hardwrapped_lines(lines), [])
+
+    def test_packet_is_decision_evidence_not_repository_mutation_authority(self) -> None:
+        skill = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        intent = (VARIANT_ROOT / "intent.md").read_text(encoding="utf-8")
+        review = json.loads((VARIANT_ROOT / "review.json").read_text(encoding="utf-8"))
+        combined = "\n".join([skill, intent, *review["activation_effects"]])
+        self.assertIn("decision evidence", combined)
+        self.assertIn("does not authorize repository mutation", intent)
+        self.assertNotIn("as authority to modify a repository", combined)
 
 
 if __name__ == "__main__":

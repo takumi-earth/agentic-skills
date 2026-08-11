@@ -125,6 +125,22 @@ def verdict_units(block_lines: list[str]) -> list[tuple[str, list[str]]]:
     return units
 
 
+def verdict_unit_field(unit_lines: list[str], label: str) -> tuple[bool, str]:
+    prefix = f"**{label}:**"
+    positions = [index for index, line in enumerate(unit_lines) if line.startswith(prefix)]
+    if not positions:
+        return False, ""
+    start = positions[0]
+    values = [unit_lines[start][len(prefix) :].strip()]
+    for line in unit_lines[start + 1 :]:
+        if any(line.startswith(f"**{candidate}:**") for candidate in REQUIRED_UNIT_LABELS):
+            break
+        if re.match(r"^#{1,6}\s", line):
+            break
+        values.append(line.strip())
+    return True, "\n".join(value for value in values if value).strip()
+
+
 def evidence_queries_by_id(evidence: dict[str, Any]) -> dict[str, dict[str, Any]]:
     if evidence.get("schema_version") != SCHEMA_VERSION:
         raise PacketError(f"evidence schema_version must be {SCHEMA_VERSION}")
@@ -175,6 +191,22 @@ def validate(
         if wrapped:
             errors.append("manual prose wrapping detected at lines: " + ", ".join(str(line) for line in wrapped))
     blocks = finding_blocks(lines)
+    raw_findings = require_list(contract.get("findings"), "findings")
+    if not raw_findings:
+        raise PacketError("contract findings must not be empty")
+    contracted_ids: list[str] = []
+    for index, raw_finding in enumerate(raw_findings):
+        finding = require_mapping(raw_finding, f"findings[{index}]")
+        finding_id = require_string(finding.get("id"), f"findings[{index}].id")
+        if finding_id in contracted_ids:
+            raise PacketError(f"duplicate contract finding id: {finding_id}")
+        contracted_ids.append(finding_id)
+    for finding_id, bounds in blocks.items():
+        block = "\n".join(lines[bounds[0] : bounds[1]])
+        if finding_id not in contracted_ids:
+            errors.append(f"uncontracted finding heading: {finding_id}")
+        if UNRESOLVED_MARKER.search(block):
+            errors.append(f"finding {finding_id} contains an unresolved placeholder marker")
     global_forbidden = [
         require_string(value, f"forbidden_phrases[{index}]")
         for index, value in enumerate(require_list(contract.get("forbidden_phrases", []), "forbidden_phrases"))
@@ -182,9 +214,6 @@ def validate(
     for phrase in global_forbidden:
         if phrase.casefold() in packet.casefold():
             errors.append(f"packet contains forbidden deferral: {phrase!r}")
-    raw_findings = require_list(contract.get("findings"), "findings")
-    if not raw_findings:
-        raise PacketError("contract findings must not be empty")
     for index, raw_finding in enumerate(raw_findings):
         finding = require_mapping(raw_finding, f"findings[{index}]")
         finding_id = require_string(finding.get("id"), f"findings[{index}].id")
@@ -194,8 +223,6 @@ def validate(
             continue
         block_lines = lines[bounds[0] : bounds[1]]
         block = "\n".join(block_lines)
-        if UNRESOLVED_MARKER.search(block):
-            errors.append(f"finding {finding_id} contains an unresolved placeholder marker")
         subsection_titles = {match.group("title") for line in block_lines if (match := SUBSECTION_HEADING.match(line))}
         for section_index, raw_section in enumerate(require_list(finding.get("required_sections", []), f"finding {finding_id}.required_sections")):
             section = require_string(raw_section, f"finding {finding_id}.required_sections[{section_index}]")
@@ -294,10 +321,12 @@ def validate(
         if len(units) < minimum_units:
             errors.append(f"finding {finding_id} has {len(units)} verdict units; requires {minimum_units}")
         for unit_id, unit_lines in units:
-            unit = "\n".join(unit_lines)
             for label in REQUIRED_UNIT_LABELS:
-                if f"**{label}:**" not in unit:
+                present, value = verdict_unit_field(unit_lines, label)
+                if not present:
                     errors.append(f"verdict unit {unit_id} is missing label: {label}")
+                elif not value:
+                    errors.append(f"verdict unit {unit_id} has blank field: {label}")
         finding_forbidden = require_list(finding.get("forbidden_phrases", []), f"finding {finding_id}.forbidden_phrases")
         for phrase_index, raw_phrase in enumerate(finding_forbidden):
             phrase = require_string(raw_phrase, f"finding {finding_id}.forbidden_phrases[{phrase_index}]")

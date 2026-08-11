@@ -12,7 +12,7 @@ Produce a self-contained verdict packet that finishes the source investigation b
 - Read the current user decision, protected architecture, ownership ledgers, and applicable repository guidance before classifying source.
 - Name the comparison baseline, intermediate checkpoints, and current source explicitly. Resolve every historical checkpoint to a commit identifier and distinguish committed `HEAD` from the working tree.
 - Treat complete source at each checkpoint as evidence. Do not use a Git diff, changed-line count, dependency-version-only commit, or current implementation shape as the classification model.
-- Keep evidence collection and remediation application separate. This workflow may write only explicitly requested reports and scratch evidence; it does not authorize source edits, generators, dependency commands, staging, commits, pushes, or publication.
+- Keep evidence collection and remediation application separate. Treat the packet as decision evidence, never repository-mutation authority. Even a recorded approval does not authorize source edits, generators, dependency commands, staging, commits, pushes, or publication without a separate current user instruction for that effect.
 
 ## Collect reproducible source evidence
 
@@ -84,4 +84,5 @@ Require a zero exit status. The validator rejects manual prose wrapping, unresol
 - Link the packet, source-evidence JSON, evidence appendix, and packet contract.
 - State which claims remain interpretive and which source facts are machine-collected.
 - State every command, mutation, verification, commit, or activation effect that remains unauthorized.
+- State that the packet and any verdict recorded inside it are decision evidence only and do not grant implementation authority.
 - Stop after the user can approve, reject, or question each exact remediation unit without beginning a new investigation.
