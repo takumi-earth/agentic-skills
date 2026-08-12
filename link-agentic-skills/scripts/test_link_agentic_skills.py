@@ -135,6 +135,9 @@ class LinkAgenticSkillsTests(unittest.TestCase):
         """Trigger and OpenAI metadata preserve the exact invocation boundary."""
 
         skill_text = (SKILL_DIRECTORY / "SKILL.md").read_text(encoding="utf-8")
+        configuration_text = (
+            SKILL_DIRECTORY / "references" / "configuration.md"
+        ).read_text(encoding="utf-8")
         openai_text = (SKILL_DIRECTORY / "agents" / "openai.yaml").read_text(
             encoding="utf-8"
         )
@@ -143,6 +146,12 @@ class LinkAgenticSkillsTests(unittest.TestCase):
         self.assertIn("Set up, preview, sync, route, and prune relative", skill_text)
         self.assertIn("explaining generic skill discovery", skill_text)
         self.assertIn("For a review, explanation, or preflight request", skill_text)
+        self.assertIn("sole user-level distribution root for Codex", skill_text)
+        self.assertIn("inspect `~/.codex/hooks.json`", skill_text)
+        self.assertIn("must never rewrite or self-trust hook registrations", skill_text)
+        self.assertIn("Do not add `[harness.codex]`", configuration_text)
+        self.assertIn('There is no `"disable"` value', configuration_text)
+        self.assertIn("Legacy cleanup is causally gated", configuration_text)
         self.assertIn('display_name: "Link Agentic Skills"', openai_text)
         self.assertIn(
             'short_description: "Sync relative links across local harnesses"',
@@ -265,6 +274,294 @@ class LinkAgenticSkillsTests(unittest.TestCase):
             self.assertFalse(os.path.isabs(target))
             self.assertEqual((link.parent / target).resolve(), source.resolve())
         self.assertEqual(self.harness(report, "gemini")["status"], "skipped")
+
+    def test_default_sync_does_not_duplicate_agents_skills_in_codex(self) -> None:
+        """Codex uses the shared root and leaves its deprecated root empty."""
+
+        source = self.create_skill("alpha")
+        (self.home / ".codex" / "skills").mkdir(parents=True)
+
+        report, status = self.run_sync()
+
+        agents_link = self.home / ".agents" / "skills" / "alpha"
+        codex_link = self.home / ".codex" / "skills" / "alpha"
+        self.assertEqual(status, 0)
+        self.assertTrue(agents_link.is_symlink())
+        self.assertEqual(agents_link.resolve(), source.resolve())
+        self.assertFalse(os.path.lexists(codex_link))
+        codex = self.harness(report, "codex")
+        self.assertEqual(codex["selected_skills"], [])
+        self.assertEqual(codex["purpose"], "legacy-cleanup")
+        self.assertEqual(codex["target_status"], "active")
+
+    def test_configured_codex_route_migrates_into_agents(self) -> None:
+        """Legacy Codex selections move into the sole supported shared route."""
+
+        alpha = self.create_skill("alpha")
+        beta = self.create_skill("beta")
+        (self.home / ".codex").mkdir()
+        self.write_config(
+            """schema_version = 1
+
+[harness.agents]
+mode = "always"
+new_skills = "ignore"
+skills = ["alpha"]
+
+[harness.codex]
+mode = "detected"
+new_skills = "ignore"
+skills = ["alpha", "beta"]
+"""
+        )
+
+        report, status = self.run_sync()
+
+        agents = self.home / ".agents" / "skills"
+        codex = self.home / ".codex" / "skills"
+        parsed = tomllib.loads(self.config_path().read_text(encoding="utf-8"))
+        self.assertEqual(status, 0)
+        self.assertEqual((agents / "alpha").resolve(), alpha.resolve())
+        self.assertEqual((agents / "beta").resolve(), beta.resolve())
+        self.assertFalse(os.path.lexists(codex / "alpha"))
+        self.assertFalse(os.path.lexists(codex / "beta"))
+        self.assertEqual(set(parsed["harness"]), {"agents"})
+        self.assertEqual(parsed["harness"]["agents"]["skills"], ["alpha", "beta"])
+        self.assertEqual(report["config"]["migration"]["removed_harness"], "codex")
+        self.assertEqual(report["config"]["migration"]["destination_harness"], "agents")
+
+    def test_configured_codex_route_creates_agents_when_missing(self) -> None:
+        """A legacy Codex-only config becomes an equivalent shared-root policy."""
+
+        source = self.create_skill("alpha")
+        (self.home / ".codex").mkdir()
+        self.write_config(
+            """schema_version = 1
+
+[harness.codex]
+mode = "detected"
+new_skills = "ignore"
+skills = ["alpha"]
+"""
+        )
+
+        report, status = self.run_sync()
+
+        agents_link = self.home / ".agents" / "skills" / "alpha"
+        codex_link = self.home / ".codex" / "skills" / "alpha"
+        parsed = tomllib.loads(self.config_path().read_text(encoding="utf-8"))
+        self.assertEqual(status, 0)
+        self.assertEqual(agents_link.resolve(), source.resolve())
+        self.assertFalse(os.path.lexists(codex_link))
+        self.assertEqual(set(parsed["harness"]), {"agents"})
+        self.assertEqual(parsed["harness"]["agents"]["skills"], ["alpha"])
+        codex = self.harness(report, "codex")
+        self.assertEqual(codex["selected_skills"], [])
+        self.assertEqual(codex["purpose"], "legacy-cleanup")
+
+    def test_codex_migration_dry_run_preserves_config_and_links(self) -> None:
+        """Migration preview reports both sides without changing either one."""
+
+        source = self.create_skill("alpha")
+        path = self.write_config(
+            """schema_version = 1
+
+[harness.codex]
+mode = "detected"
+new_skills = "ignore"
+skills = ["alpha"]
+"""
+        )
+        codex = self.home / ".codex" / "skills"
+        codex.mkdir(parents=True)
+        codex_link = codex / "alpha"
+        os.symlink(
+            os.path.relpath(source, start=codex),
+            codex_link,
+            target_is_directory=True,
+        )
+        before = path.read_bytes()
+
+        report, status = self.run_sync(dry_run=True)
+
+        self.assertEqual(status, 0)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertTrue(codex_link.is_symlink())
+        self.assertFalse((self.home / ".agents").exists())
+        self.assertEqual(report["config"]["write_status"], "would-update")
+        self.assertEqual(
+            self.harness(report, "agents")["actions"],
+            [
+                {
+                    "action": "would-create",
+                    "skill": "alpha",
+                    "target": "../../../source/alpha",
+                }
+            ],
+        )
+        self.assertEqual(
+            self.harness(report, "codex")["actions"],
+            [{"action": "would-remove", "skill": "alpha"}],
+        )
+
+    def test_sync_prunes_legacy_codex_overlap_then_is_idempotent(self) -> None:
+        """One sync removes a former duplicate link and later syncs stay converged."""
+
+        source = self.create_skill("alpha")
+        agents = self.home / ".agents" / "skills"
+        codex = self.home / ".codex" / "skills"
+        agents.mkdir(parents=True)
+        codex.mkdir(parents=True)
+        for destination in (agents / "alpha", codex / "alpha"):
+            os.symlink(
+                os.path.relpath(source, start=destination.parent),
+                destination,
+                target_is_directory=True,
+            )
+
+        preview, preview_status = self.run_sync(dry_run=True)
+        first, first_status = self.run_sync()
+        second, second_status = self.run_sync()
+
+        self.assertEqual((preview_status, first_status, second_status), (0, 0, 0))
+        preview_actions = self.harness(preview, "codex")["actions"]
+        self.assertEqual(
+            preview_actions,
+            [{"action": "would-remove", "skill": "alpha"}],
+        )
+        self.assertTrue((agents / "alpha").is_symlink())
+        self.assertFalse(os.path.lexists(codex / "alpha"))
+        self.assertEqual(first["summary"]["removed"], 1)
+        self.assertEqual(second["summary"]["created"], 0)
+        self.assertEqual(second["summary"]["removed"], 0)
+
+    def test_legacy_cleanup_stops_before_breaking_registered_hook(self) -> None:
+        """A hook dependency blocks config and link writes until separately migrated."""
+
+        source = self.create_skill("alpha")
+        config = self.write_config(
+            """schema_version = 1
+
+[harness.codex]
+mode = "detected"
+new_skills = "ignore"
+skills = ["alpha"]
+"""
+        )
+        codex = self.home / ".codex" / "skills"
+        codex.mkdir(parents=True)
+        codex_link = codex / "alpha"
+        os.symlink(
+            os.path.relpath(source, start=codex),
+            codex_link,
+            target_is_directory=True,
+        )
+        hooks_path = self.home / ".codex" / "hooks.json"
+        hooks_path.write_text(
+            json.dumps(
+                {
+                    "hooks": {
+                        "Stop": [
+                            {
+                                "hooks": [
+                                    {
+                                        "type": "command",
+                                        "command": (
+                                            "python3 ~/.codex/skills/alpha/"
+                                            "scripts/stop_hook.py"
+                                        ),
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        before_config = config.read_bytes()
+
+        report, status = self.run_sync()
+
+        self.assertEqual(status, 1)
+        self.assertFalse(report["applied"])
+        self.assertEqual(report["config"]["write_status"], "blocked")
+        self.assertEqual(config.read_bytes(), before_config)
+        self.assertTrue(codex_link.is_symlink())
+        self.assertFalse((self.home / ".agents").exists())
+        self.assertEqual(len(report["errors"]), 1)
+        error = report["errors"][0]
+        self.assertEqual(error["code"], "deprecated-skill-hook-reference")
+        self.assertEqual(error["skill"], "alpha")
+        self.assertEqual(error["replacement_root"], "~/.agents/skills")
+        self.assertEqual(error["json_path"], "$.hooks.Stop[0].hooks[0].command")
+
+    def test_legacy_cleanup_accepts_hook_using_agents_projection(self) -> None:
+        """An already-migrated hook does not prevent owned legacy-link cleanup."""
+
+        source = self.create_skill("alpha")
+        codex = self.home / ".codex" / "skills"
+        codex.mkdir(parents=True)
+        codex_link = codex / "alpha"
+        os.symlink(
+            os.path.relpath(source, start=codex),
+            codex_link,
+            target_is_directory=True,
+        )
+        hooks_path = self.home / ".codex" / "hooks.json"
+        hooks_path.write_text(
+            json.dumps(
+                {
+                    "hooks": {
+                        "Stop": [
+                            {
+                                "hooks": [
+                                    {
+                                        "type": "command",
+                                        "command": (
+                                            "python3 ~/.agents/skills/alpha/"
+                                            "scripts/stop_hook.py"
+                                        ),
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        report, status = self.run_sync()
+
+        self.assertEqual(status, 0)
+        self.assertTrue(report["applied"])
+        self.assertEqual(report["errors"], [])
+        self.assertFalse(os.path.lexists(codex_link))
+        self.assertEqual(
+            (self.home / ".agents" / "skills" / "alpha").resolve(),
+            source.resolve(),
+        )
+
+    def test_source_edits_are_visible_through_an_unchanged_link(self) -> None:
+        """A linked package updates in place without replacing its stable symlink."""
+
+        source = self.create_skill("alpha")
+        _, first_status = self.run_sync()
+        link = self.home / ".agents" / "skills" / "alpha"
+        original_target = os.readlink(link)
+        (source / "SKILL.md").write_text(
+            "---\nname: alpha\ndescription: Updated skill.\n---\n",
+            encoding="utf-8",
+        )
+
+        report, second_status = self.run_sync()
+
+        self.assertEqual((first_status, second_status), (0, 0))
+        self.assertEqual(os.readlink(link), original_target)
+        self.assertIn("Updated skill.", (link / "SKILL.md").read_text(encoding="utf-8"))
+        actions = self.harness(report, "agents")["actions"]
+        self.assertEqual(actions[0]["action"], "unchanged")
 
     def test_link_target_is_relative_to_the_physical_destination_directory(
         self,
@@ -933,6 +1230,40 @@ skills = []
                 self.assertFalse((self.home / ".agents").exists())
                 self.assertFalse(overlapping_target.exists())
 
+    def test_disable_alias_error_explains_the_supported_cleanup_policy(self) -> None:
+        """An intuitive invalid value points to the exact non-adding route shape."""
+
+        self.create_skill("alpha")
+        self.write_config(
+            """schema_version = 1
+
+[harness.agents]
+mode = "disable"
+new_skills = "disable"
+skills = []
+"""
+        )
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        argv = [
+            "sync",
+            "--skills-root",
+            str(self.skills_root),
+            "--home",
+            str(self.home),
+        ]
+
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            status = linker.main(argv, self.environ)
+
+        report = json.loads(stdout.getvalue())
+        self.assertEqual(status, 2)
+        self.assertEqual(report["status"], "invalid-input")
+        self.assertIn("does not support 'disable'", stderr.getvalue())
+        self.assertIn("new_skills to 'ignore'", stderr.getvalue())
+        self.assertIn("skills to []", stderr.getvalue())
+        self.assertFalse((self.home / ".agents").exists())
+
     def test_malformed_config_and_source_layout_return_structured_exit_two(
         self,
     ) -> None:
@@ -1013,11 +1344,12 @@ skills = []
         self.assertIn(str(fallback), stderr.getvalue())
 
     def test_init_config_dry_run_selects_agents_and_detected_harnesses(self) -> None:
-        """Initializer mirrors default routing without writing anything."""
+        """Initializer omits deprecated Codex routing without writing anything."""
 
         self.create_skill("alpha")
         self.create_skill("beta")
         (self.home / ".claude").mkdir()
+        (self.home / ".codex").mkdir()
 
         report, status = linker.run_init_config(
             self.args(operation="init-config", dry_run=True), self.environ

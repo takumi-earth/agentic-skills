@@ -12,7 +12,7 @@ The CLI uses the first applicable config in this order:
 
 If both automatic paths exist, the XDG path wins and the CLI warns about the ignored fallback. `sync --config` requires that explicit file to exist. `init-config --config` uses that path only when no file exists there.
 
-The presence of any selected config disables all default routing. Only `[harness.<name>]` sections in the file are processed; omitted harnesses and any existing links in their directories are untouched.
+The presence of any selected config disables all default distribution routing. Only `[harness.<name>]` sections in the file select destinations or skills. Cleanup-only compatibility roots may still be scanned to remove relative links previously created by the selected source repository.
 
 ## Schema
 
@@ -40,6 +40,12 @@ Harness names and skill names must use lowercase hyphen-case. Unknown keys are r
 
 Built-in harness sections may omit `detect_dir` and `skills_dir` to use their registered paths. A custom harness requires `skills_dir`. Custom `mode = "detected"` also requires `detect_dir`.
 
+Do not add `[harness.codex]` to new configurations. Codex uses the shared `~/.agents/skills` user root; `~/.codex/skills` is a deprecated compatibility root, not a second distribution destination. Codex does not expose a supported config key that disables an entire skill root. Its `[[skills.config]]` entries control individual skill paths only.
+
+For compatibility, sync accepts an existing `[harness.codex]` section as one-time migration input. If `[harness.agents]` exists, the CLI merges the legacy selected skills into it, promotes `new_skills` to `"link"` when either route requested automatic additions, keeps the active `agents` exclusions authoritative, and reports ignored legacy exclusions. If `agents` is absent, the CLI creates it from the legacy Codex selection, exclusions, and new-skill policy. The canonical config rewrite removes `[harness.codex]`. Its former destination is then cleanup-only: repository-owned relative links are removed and unrelated entries are preserved.
+
+Legacy cleanup is causally gated by registered Codex hooks. When a repository-owned link is eligible for removal, the CLI reads `~/.codex/hooks.json` and refuses the whole sync if any command still references that deprecated skill path, including absolute, `~`, `HOME`, or `CODEX_HOME` spellings. The error identifies the hook command's JSON path and the `~/.agents/skills` replacement root. No routing config or link changes occur until the command is migrated. Changing a hook command changes its Codex trust hash, so hook review and approval remain a separate user-controlled effect; the linker neither edits hooks nor writes trusted hashes.
+
 ## Routing fields
 
 `mode` controls whether a missing destination is eligible:
@@ -54,6 +60,8 @@ Built-in harness sections may omit `detect_dir` and `skills_dir` to use their re
 
 `exclude_skills` always wins over `skills` and `new_skills`. During sync, names no longer present in the source repository are removed from both arrays. A newly excluded, deselected, or removed package causes link removal only when the existing entry is an owned relative link to this repository.
 
+There is no `"disable"` value for either field. `mode` answers only whether the destination is active (`"always"`) or conditional on detection (`"detected"`). To stop distributing skills to an active route and prune its repository-owned links, use `new_skills = "ignore"` with `skills = []`; retain the route until that cleanup sync succeeds. Omitting the section stops managing the destination but deliberately leaves its existing entries untouched.
+
 Before mutation, the CLI validates every route and materializes the complete link plan. When routing arrays change, it atomically rewrites the entire supported document in canonical order before applying harness changes. It preserves an existing file's permission mode and follows a valid config-file symlink, but comments and custom ordering are lost. If the config write fails, no harness changes begin. If routing is already current, the original file is left byte-for-byte unchanged. Use `sync --dry-run` to review `config.changes` and `config.write_status` before a rewrite.
 
 ## Built-in registry
@@ -61,7 +69,6 @@ Before mutation, the CLI validates every route and materializes the complete lin
 | Harness | Detection directory | Skills directory | Default mode |
 | --- | --- | --- | --- |
 | `agents` | none | `~/.agents/skills` | `always` |
-| `codex` | `~/.codex` | `~/.codex/skills` | `detected` |
 | `claude` | `~/.claude` | `~/.claude/skills` | `detected` |
 | `gemini` | `~/.gemini` | `~/.gemini/skills` | `detected` |
 | `kiro` | `~/.kiro` | `~/.kiro/skills` | `detected` |
@@ -71,7 +78,7 @@ Before mutation, the CLI validates every route and materializes the complete lin
 | `windsurf` | `~/.codeium/windsurf` | `~/.codeium/windsurf/skills` | `detected` |
 | `opencode` | `${XDG_CONFIG_HOME:-~/.config}/opencode` | `${XDG_CONFIG_HOME:-~/.config}/opencode/skills` | `detected` |
 
-`init-config` writes `agents` and those built-ins currently detected, selects all current source skills, uses `new_skills = "link"`, and begins with no exclusions. It refuses to overwrite either selected automatic config or an existing explicit path. With `--dry-run`, its JSON report contains the complete proposed TOML without writing it.
+`init-config` writes `agents` and those distinct-root built-ins currently detected, selects all current source skills, uses `new_skills = "link"`, and begins with no exclusions. It deliberately omits `codex`, even when `~/.codex` exists, because `agents` is Codex's user-level route. It refuses to overwrite either selected automatic config or an existing explicit path. With `--dry-run`, its JSON report contains the complete proposed TOML without writing it.
 
 ## Multiple repositories
 

@@ -75,6 +75,7 @@ class HarnessRoute:
     skills_dir: Path
     detect_value: str | None = None
     skills_value: str | None = None
+    purpose: str = "distribution"
 
 
 @dataclass(frozen=True)
@@ -365,9 +366,20 @@ def load_config(
 
         mode = table["mode"]
         if not isinstance(mode, str) or mode not in {"always", "detected"}:
+            if mode == "disable":
+                raise InputError(
+                    f"{label}.mode does not support 'disable'; to stop distribution "
+                    "and prune owned links, keep mode as 'always' or 'detected', set "
+                    "new_skills to 'ignore', and set skills to []"
+                )
             raise InputError(f"{label}.mode must be 'always' or 'detected'")
         new_skills = table["new_skills"]
         if not isinstance(new_skills, str) or new_skills not in {"link", "ignore"}:
+            if new_skills == "disable":
+                raise InputError(
+                    f"{label}.new_skills does not support 'disable'; use 'ignore' "
+                    "and set skills to [] to stop distribution and prune owned links"
+                )
             raise InputError(f"{label}.new_skills must be 'link' or 'ignore'")
         skills = validate_name_list(table["skills"], f"{label}.skills")
         exclusions = validate_name_list(
@@ -459,7 +471,7 @@ def validate_destination_safety(
 def default_routes(
     builtins: Mapping[str, BuiltinHarness], skill_names: set[str]
 ) -> dict[str, HarnessRoute]:
-    """Build no-config routes for every built-in harness."""
+    """Build no-config routes without the deprecated Codex-native root."""
 
     return {
         name: HarnessRoute(
@@ -472,7 +484,70 @@ def default_routes(
             skills_dir=builtin.skills_dir,
         )
         for name, builtin in sorted(builtins.items())
+        if name != "codex"
     }
+
+
+def legacy_codex_cleanup_route(route: HarnessRoute) -> HarnessRoute:
+    """Convert one former Codex distribution route into cleanup-only state."""
+
+    return HarnessRoute(
+        name="codex",
+        mode=route.mode,
+        new_skills="ignore",
+        skills=set(),
+        exclude_skills=set(),
+        detect_dir=route.detect_dir,
+        skills_dir=route.skills_dir,
+        detect_value=route.detect_value,
+        skills_value=route.skills_value,
+        purpose="legacy-cleanup",
+    )
+
+
+def migrate_legacy_codex_route(
+    routes: dict[str, HarnessRoute],
+    builtins: Mapping[str, BuiltinHarness],
+) -> tuple[HarnessRoute | None, dict[str, Any] | None]:
+    """Move a configured Codex route into the shared `agents` route."""
+
+    legacy = routes.pop("codex", None)
+    if legacy is None:
+        return None, None
+
+    agents = routes.get("agents")
+    destination_created = agents is None
+    if agents is None:
+        builtin = builtins["agents"]
+        agents = HarnessRoute(
+            name="agents",
+            mode=builtin.mode,
+            new_skills=legacy.new_skills,
+            skills=set(legacy.skills),
+            exclude_skills=set(legacy.exclude_skills),
+            detect_dir=builtin.detect_dir,
+            skills_dir=builtin.skills_dir,
+        )
+        routes["agents"] = agents
+        added_skills = sorted(agents.skills)
+        ignored_exclusions: list[str] = []
+    else:
+        before_skills = set(agents.skills)
+        agents.skills.update(legacy.skills)
+        agents.skills.difference_update(agents.exclude_skills)
+        if legacy.new_skills == "link":
+            agents.new_skills = "link"
+        added_skills = sorted(agents.skills - before_skills)
+        ignored_exclusions = sorted(legacy.exclude_skills - agents.exclude_skills)
+
+    migration = {
+        "removed_harness": "codex",
+        "destination_harness": "agents",
+        "destination_created": destination_created,
+        "added_skills": added_skills,
+        "ignored_legacy_exclusions": ignored_exclusions,
+    }
+    return legacy_codex_cleanup_route(legacy), migration
 
 
 def reconcile_config_routes(
@@ -592,10 +667,12 @@ def harness_is_detected(route: HarnessRoute) -> bool:
 def init_routes(
     builtins: Mapping[str, BuiltinHarness], skill_names: set[str]
 ) -> dict[str, HarnessRoute]:
-    """Seed config routes for `agents` and currently discovered built-ins."""
+    """Seed shared `agents` plus detected non-Codex harness routes."""
 
     routes: dict[str, HarnessRoute] = {}
     for name, builtin in sorted(builtins.items()):
+        if name == "codex":
+            continue
         route = HarnessRoute(
             name=name,
             mode=builtin.mode,
@@ -673,6 +750,124 @@ def owned_relative_link(link: Path, physical_parent: Path, skills_root: Path) ->
     return relative_link_destination(physical_parent, target) == expected_package_path(
         skills_root, link.name
     )
+
+
+def command_path_variants(user: UserDirectories, skill_name: str) -> tuple[str, ...]:
+    """Return supported spellings of one deprecated Codex skill path."""
+
+    absolute = user.home / ".codex" / "skills" / skill_name
+    return (
+        str(absolute),
+        f"~/.codex/skills/{skill_name}",
+        f"$HOME/.codex/skills/{skill_name}",
+        f"${{HOME}}/.codex/skills/{skill_name}",
+        f"$CODEX_HOME/skills/{skill_name}",
+        f"${{CODEX_HOME}}/skills/{skill_name}",
+    )
+
+
+def command_references_path(command: str, spelling: str) -> bool:
+    """Return whether a command contains one path spelling at a boundary."""
+
+    start = 0
+    while True:
+        index = command.find(spelling, start)
+        if index < 0:
+            return False
+        end = index + len(spelling)
+        if end == len(command) or command[end] in "/\\ \t\r\n'\"":
+            return True
+        start = end
+
+
+def iter_hook_commands(
+    value: Any, path: tuple[str | int, ...] = ()
+) -> Sequence[tuple[tuple[str | int, ...], str]]:
+    """Collect command strings from a hooks document without assuming its shape."""
+
+    commands: list[tuple[tuple[str | int, ...], str]] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_path = (*path, key)
+            if key == "command" and isinstance(child, str):
+                commands.append((child_path, child))
+            commands.extend(iter_hook_commands(child, child_path))
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            commands.extend(iter_hook_commands(child, (*path, index)))
+    return commands
+
+
+def json_path(parts: Sequence[str | int]) -> str:
+    """Render one compact JSON path for a reported hook dependency."""
+
+    rendered = "$"
+    for part in parts:
+        if isinstance(part, int):
+            rendered += f"[{part}]"
+        else:
+            rendered += f".{part}"
+    return rendered
+
+
+def legacy_codex_hook_dependency_errors(
+    plans: Sequence[HarnessPlan], user: UserDirectories
+) -> list[dict[str, Any]]:
+    """Block legacy-link cleanup while registered hooks still use those links."""
+
+    removals = {
+        action["skill"]
+        for plan in plans
+        if plan.route.purpose == "legacy-cleanup"
+        for action in plan.actions
+        if action.get("action") == "would-remove" and "skill" in action
+    }
+    if not removals:
+        return []
+
+    hooks_path = user.home / ".codex" / "hooks.json"
+    if not path_exists(hooks_path):
+        return []
+    try:
+        document = json.loads(hooks_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        return [
+            {
+                "scope": "legacy-codex-cleanup",
+                "code": "hooks-config-unreadable",
+                "path": str(hooks_path),
+                "message": (
+                    "refusing legacy Codex link cleanup because registered hook "
+                    f"dependencies cannot be inspected: {error}"
+                ),
+            }
+        ]
+
+    errors: list[dict[str, Any]] = []
+    for command_path, command in iter_hook_commands(document):
+        for skill_name in sorted(removals):
+            if not any(
+                command_references_path(command, spelling)
+                for spelling in command_path_variants(user, skill_name)
+            ):
+                continue
+            errors.append(
+                {
+                    "scope": "legacy-codex-cleanup",
+                    "code": "deprecated-skill-hook-reference",
+                    "path": str(hooks_path),
+                    "json_path": json_path(command_path),
+                    "skill": skill_name,
+                    "command": command,
+                    "replacement_root": "~/.agents/skills",
+                    "message": (
+                        "refusing legacy Codex link cleanup before config or link "
+                        "writes; migrate this hook command to ~/.agents/skills and "
+                        "approve its new trust hash separately"
+                    ),
+                }
+            )
+    return errors
 
 
 def reconcile_target(
@@ -814,8 +1009,14 @@ def build_harness_plans(
 
     plans: list[HarnessPlan] = []
     for _, route in sorted(routes.items()):
-        target_status, physical_dir, error = ensure_target(route, dry_run=True)
-        if target_status == "skipped":
+        if not route.skills and not path_exists(route.skills_dir):
+            target_status = "not-required"
+            physical_dir = None
+            actions = []
+            had_failure = False
+        else:
+            target_status, physical_dir, error = ensure_target(route, dry_run=True)
+        if target_status in {"skipped", "not-required"}:
             actions: list[dict[str, Any]] = []
             had_failure = False
         elif target_status == "error":
@@ -858,6 +1059,7 @@ def harness_report(
         status = "partial" if had_failure else "converged"
     return {
         "name": route.name,
+        "purpose": route.purpose,
         "mode": route.mode,
         "detect_dir": str(route.detect_dir) if route.detect_dir else None,
         "skills_dir": str(route.skills_dir),
@@ -886,7 +1088,7 @@ def apply_harness_plan(
 ) -> tuple[dict[str, Any], bool]:
     """Apply one prebuilt plan while rechecking its destination state."""
 
-    if plan.target_status in {"skipped", "error"}:
+    if plan.target_status in {"skipped", "not-required", "error"}:
         return planned_harness_report(plan), plan.had_failure
 
     target_status, physical_dir, error = ensure_target(plan.route, dry_run=False)
@@ -1002,10 +1204,25 @@ def run_sync(
     warnings = [*user.warnings, *location.warnings]
 
     loaded: LoadedConfig | None = None
+    legacy_cleanup: HarnessRoute | None = None
+    config_migration: dict[str, Any] | None = None
     config_changes: list[dict[str, Any]] = []
     config_semantic_change = False
     if location.active is None:
         routes = default_routes(builtins, skill_names)
+        native_codex = builtins["codex"]
+        if path_exists(native_codex.skills_dir):
+            legacy_cleanup = legacy_codex_cleanup_route(
+                HarnessRoute(
+                    name=native_codex.name,
+                    mode=native_codex.mode,
+                    new_skills="ignore",
+                    skills=set(),
+                    exclude_skills=set(),
+                    detect_dir=native_codex.detect_dir,
+                    skills_dir=native_codex.skills_dir,
+                )
+            )
         config_report: dict[str, Any] = {
             "mode": "defaults",
             "path": None,
@@ -1016,9 +1233,23 @@ def run_sync(
     else:
         loaded = load_config(location.active, user, builtins)
         routes = loaded.routes
-        config_semantic_change, config_changes = reconcile_config_routes(
-            loaded, skill_names
-        )
+        legacy_cleanup, config_migration = migrate_legacy_codex_route(routes, builtins)
+        routes_changed, config_changes = reconcile_config_routes(loaded, skill_names)
+        config_semantic_change = routes_changed or config_migration is not None
+        if legacy_cleanup is None:
+            native_codex = builtins["codex"]
+            if path_exists(native_codex.skills_dir):
+                legacy_cleanup = legacy_codex_cleanup_route(
+                    HarnessRoute(
+                        name=native_codex.name,
+                        mode=native_codex.mode,
+                        new_skills="ignore",
+                        skills=set(),
+                        exclude_skills=set(),
+                        detect_dir=native_codex.detect_dir,
+                        skills_dir=native_codex.skills_dir,
+                    )
+                )
         config_report = {
             "mode": "authoritative",
             "path": str(loaded.path),
@@ -1033,11 +1264,18 @@ def run_sync(
             ),
             "changes": config_changes,
         }
-    validate_unique_destinations(routes)
-    validate_destination_safety(routes, skills_root, user.home)
+        if config_migration is not None:
+            config_report["migration"] = config_migration
+
+    reconciliation_routes = dict(routes)
+    if legacy_cleanup is not None:
+        reconciliation_routes[legacy_cleanup.name] = legacy_cleanup
+    validate_unique_destinations(reconciliation_routes)
+    validate_destination_safety(reconciliation_routes, skills_root, user.home)
     canonical_config = serialize_config(routes) if loaded is not None else None
-    plans = build_harness_plans(routes, skills_root, source_skills)
+    plans = build_harness_plans(reconciliation_routes, skills_root, source_skills)
     planned_reports = [planned_harness_report(plan) for plan in plans]
+    hook_dependency_errors = legacy_codex_hook_dependency_errors(plans, user)
     planning_failed = any(plan.had_failure for plan in plans)
 
     report: dict[str, Any] = {
@@ -1055,8 +1293,14 @@ def run_sync(
     }
 
     if args.dry_run:
-        finalize_sync_report(report, planned_reports)
-        return report, 1 if planning_failed else 0
+        finalize_sync_report(report, planned_reports, hook_dependency_errors)
+        return report, 1 if planning_failed or hook_dependency_errors else 0
+
+    if hook_dependency_errors:
+        if config_report.get("write_status") == "pending":
+            config_report["write_status"] = "blocked"
+        finalize_sync_report(report, planned_reports, hook_dependency_errors)
+        return report, 1
 
     if loaded is not None and config_semantic_change and not args.dry_run:
         assert canonical_config is not None
