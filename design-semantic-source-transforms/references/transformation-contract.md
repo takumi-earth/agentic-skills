@@ -5,12 +5,13 @@ Use this reference to specify or review one adaptive parsed-source transformatio
 ## Contents
 
 1. Equivalence invariant
-2. Required declaration fields
-3. Candidate classification and atomicity
-4. Semantic identity, syntax anchoring, and drift examples
-5. Discovery hints and movement
-6. Ownership and exact-content exceptions
-7. Acceptance checklist
+2. Migration from brittle mechanisms
+3. Required declaration fields
+4. Candidate classification and atomicity
+5. Semantic identity, syntax anchoring, and drift examples
+6. Discovery hints and movement
+7. Ownership and exact-content exceptions
+8. Acceptance checklist
 
 ## Equivalence invariant
 
@@ -23,6 +24,14 @@ relevant_semantics(A, T) == relevant_semantics(B, T)
 ```
 
 File paths, line numbers, trivia, item order, unrelated sibling syntax, package version strings, and complete upstream-owned bodies must not appear in `relevant_semantics` unless the user explicitly made one of them part of the external contract.
+
+## Migration from brittle mechanisms
+
+When fixed paths, complete bodies, fingerprints, exact fragments, marker gates, or rendered-source test helpers have been explicitly rejected, remove their reusable APIs first. Do not keep them live while designing replacements, and do not encode them as hashes, regexes, token signatures, templates, or compatibility fallbacks.
+
+Temporary compile failures are the migration queue. Rebuild each affected capability through the typed contract below. Define the current semantic identity and product delta before consulting old source. Use `git show` or `git grep` against a known pre-removal ref only when one specific caller or test needs historical context.
+
+Do not require a global inventory or audit before implementation unless that inventory is itself the requested deliverable. Compiler coverage across the repository's real feature and target surface, followed by the removal of all legacy API definitions, is stronger completion evidence than an aggregate textual count.
 
 ## Required declaration fields
 
@@ -140,6 +149,8 @@ If any condition is missing, decompose the item into semantic query, minimal rew
 
 ## Acceptance checklist
 
+- Obsolete generic APIs and structural-test escape hatches are unavailable from the start of migration.
+- No compatibility wrapper, hash, regex, token signature, template, or Git fallback recreates them.
 - The target can move between permitted files or modules without declaration changes.
 - Formatting, comments, line shifts, item order, and unrelated syntax do not affect applicability.
 - Equal-looking decoys in other owners, comments, strings, macros, and tests remain untouched.

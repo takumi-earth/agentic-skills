@@ -1,4 +1,4 @@
 interface:
   display_name: "Protect Causal Architecture"
-  short_description: "Preserve authority epochs and causal barriers"
-  default_prompt: "Use $protect-causal-architecture to preserve user-selected authority and causal barriers, routing source-transform details to $design-semantic-source-transforms."
+  short_description: "Protect disputed authority without blocking work"
+  default_prompt: "Use $protect-causal-architecture to preserve a genuinely disputed causal invariant while keeping already-authorized implementation moving."

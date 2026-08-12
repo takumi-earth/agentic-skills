@@ -1,102 +1,80 @@
 ---
 name: protect-causal-architecture
-description: "Preserve causal architecture across multi-phase workflows, refactors, and protected adaptive source transformations. Use when a design has multiple authority epochs, mutations, refresh or validation barriers, checkpoints, child attempts, generation passes, cleanup or persistence order; when parser or AST use is being mistaken for a user-selected semantic identity; when legacy implementation or test precedent conflicts with a protected invariant; when changing the causal chain; or when current code is being used to call protecting tests stale. Do not use solely to design or review one source transformation when no protected decision, authority chain, or causal barrier is at risk; use `$design-semantic-source-transforms` instead."
+description: "Protect user-selected causal ordering and ownership when a change genuinely alters who may mutate what, when authority becomes valid, or which barrier makes later effects safe. Use for disputed multi-stage authority, generation or cleanup order, assistant-authored status being treated as authority, or legacy precedent conflicting with an explicit architecture. Do not use as a preflight for ordinary implementation, to create an audit artifact by default, or for one source transformation with no disputed causal edge; use `$design-semantic-source-transforms` instead."
 ---
 
 # Protect Causal Architecture
 
-Final-state equivalence is not causal equivalence. Preserve why each authority becomes available, which owner may mutate which artifact, and which barrier makes that state safe for the next consumer.
+Preserve load-bearing causal relationships without turning implementation into a governance project.
 
-## Build reconstructable packets
-
-Record every load-bearing invariant as one packet containing:
-
-1. **Authority and input state:** exact source of truth and artifact state before the step.
-2. **Allowed mutation and output state:** semantic owner, permitted effect, and exact state produced.
-3. **Causal order:** required predecessor and successor.
-4. **Barrier:** refresh, validation, checkpoint, generation, cleanup, or persistence condition that makes the output usable.
-5. **Counterfactual:** concrete regression caused by omission, reordering, narrowing, or late mutation.
-6. **Behavior evidence:** positive path and negative forbidden-shortcut tests.
-
-Mark the packet as user-selected or source-derived. Keep it separate from mutable implementation status.
-
-After implementation or verification, update only the packet's mutable status or tense. Passing tests, a favorable audit, reduced process count, and verified repository state do not erase the authority source, causal explanation, ordering, barrier, counterfactual, forbidden shortcut, or positive/negative evidence that make the packet reconstructable.
-
-## Apply the authority hierarchy
+## Start from current authority
 
 Use this order:
 
-1. Current explicit user decision.
-2. Protected causal packets.
-3. Accepted behavior tests.
+1. Current explicit user decisions.
+2. Direct source and external facts within the authorized scope.
+3. Accepted behavior evidence.
 4. Current partial implementation.
-5. Names, process-count reductions, minimal-change preferences, and implementation convenience.
+5. Names, convenience, precedent, and implementation size.
 
-Do not reverse this order. Partial source is status evidence, not authority to rationalize a new architecture or retire tests that protect the selected design.
+Assistant-authored goals, plans, status, and audits record authority; they do not create it. Do not cite partial code plus an assistant-authored status update as mutually supporting authority.
 
-Assistant-authored goal text has no independent rank in this hierarchy. Before using a goal statement to authorize production or test changes, trace it to an explicit user decision, an unchanged protected packet, accepted behavior evidence, or direct source-derived fact. If the only provenance is an earlier assistant goal edit, the statement is a proposal or status claim, not authority.
+If the user already authorized the exact architectural change, implement it. Do not require another approval, a baseline selection exercise, a causal packet, or a durable audit before starting. Pause only when the next effect would decide an owner, ordering, authority, or retirement question the user has not resolved.
 
-Keep mutable implementation status one-way: primary authority and evidence may update status, but status may never flow back into architecture, baseline selection, capability retirement, or test obligations. Do not implement a proposal and then cite the resulting partial source plus a rewritten goal as mutually supporting evidence.
+## Record only the disputed causal contract
+
+When a real causal edge is disputed or easy to lose, state the minimum facts needed to preserve it:
+
+- the authority or owner before the step;
+- the allowed mutation and resulting state;
+- the required predecessor or barrier;
+- the next consumer;
+- the concrete failure caused by bypassing or reordering the edge;
+- the positive behavior and forbidden-shortcut evidence.
+
+Keep this record in the existing plan, goal, issue, or code contract. Do not create a separate scratch artifact unless the user requested one or the authorized workflow intrinsically requires durable recovery state. Expand to a complete multi-stage chain only when several interacting edges would otherwise remain ambiguous.
 
 ## Reject architectural lookalikes
 
-When the protected requirement is semantic, adaptive, structural, or location-independent, record target identity, discovery scope, local syntax anchoring, load-bearing drift, mutation, and postcondition as separate fields. Do not let one easy-to-compare representation stand in for all of them.
+When the requirement is semantic, adaptive, structural, or location-independent, keep target identity, discovery scope, syntax anchoring, load-bearing drift, mutation, and postcondition separate.
 
-- A parseable input or AST-bounded write proves only a syntax boundary. It does not prove the intended entity was discovered semantically.
-- A normalized token stream, complete subtree fingerprint, body hash, regex, or encoded snapshot remains exact source ownership when unrelated non-trivia changes invalidate it.
-- A path, marker, package version, or expected module may be a non-authoritative hint. If its miss can suppress the complete semantic query, it is acting as prohibited correctness authority. A lawful hint miss always continues with the authoritative full-scope query.
-- A name such as `semantic_owner` is diagnostic unless the mechanism actually resolves or discovers that owner.
-- Parsing source and rendering the selected node back to text does not make substring, snapshot, or equality assertions structural.
+- An AST-bounded write proves a syntax boundary, not semantic discovery.
+- A normalized token stream, body hash, regex, or encoded snapshot remains complete source ownership when unrelated changes invalidate it.
+- A path, marker, version, or expected module is only a hint when its miss still runs the authoritative full-scope query.
+- A field named `semantic_owner` is diagnostic unless the implementation actually resolves or discovers that owner.
+- Rendering parsed source back to text does not make a substring, equality, or snapshot assertion structural.
 
-Treat nearby legacy helpers and passing local precedent as implementation evidence at most. They cannot supersede an explicit user invariant or create a test-only loophole. The user need not enumerate every string API, hash representation, or wrapper that could violate a semantic requirement; apply the requirement end to end through discovery, mutation, postconditions, and tests.
+Legacy implementation and passing local tests are evidence of current behavior, not permission to reproduce an explicitly rejected mechanism. When the user has declared a mechanism obsolete, remove its reusable API and test escape hatches first. Let compile failures identify capabilities that need rebuilding, and consult Git history only for a specific capability after defining its replacement contract.
 
-Before adopting a local mechanism, run its counterfactuals against the protected packet: move the target to another permitted file, add unrelated syntax, add an equal-looking decoy, create two genuine candidates, and change one load-bearing predicate. If the mechanism cannot distinguish those states with typed outcomes and zero partial edits, it is not equivalent to the protected architecture.
+Use `$design-semantic-source-transforms` for production transformation design and `$test-adaptive-source-transforms` for its evidence.
 
-Use `$design-semantic-source-transforms` for the production contract and `$test-adaptive-source-transforms` for its evidence when parsed-source transformation is in scope.
+## Gate only unresolved architecture
 
-## Gate architecture changes
+Do not stop already-authorized implementation merely because it changes a mutator, barrier, cleanup step, or test. Gate work only when the requested implementation would force an unresolved architectural choice.
 
-Before an edit that changes an authority read, mutator, causal edge, barrier count, child attempt, migration/generation pass, checkpoint, cleanup, or persistence order:
+For an unresolved choice:
 
-- write the complete current chain;
-- write the proposed replacement chain;
-- enumerate every altered edge and artifact state;
-- explain each counterfactual and affected positive/negative test;
-- reconcile the living goal;
-- stop every production or generated effect that depends on the disputed edge;
-- continue every authorized lane that is causally independent of that edge;
-- obtain explicit user approval before production edits.
+1. State the current and proposed causal edge.
+2. Name the affected owner and artifact state.
+3. Give the concrete counterfactual regression.
+4. Name the evidence that would distinguish the choices.
+5. Stop only the effects that depend on that decision and ask once.
 
-Record the pending decision as a local causal stop, not an automatic whole-goal blocker. Only when no meaningful in-scope work remains may `$maintain-living-goal` apply the harness-owned repeated-impasse protocol to the whole goal.
+When the user corrects an authority or test disposition, retract the affected downstream statements and effects. Search farther only when the same invalid premise may have been duplicated elsewhere; do not turn every correction into a whole-goal audit.
 
-Do not use a passing test, fewer processes, static preplanning, performance, naming symmetry, or reduced writes as implicit approval.
+## Protect behavior without creating a parity project
 
-The same gate applies when the proposed change is phrased as pruning, status reconciliation, parity closure, or removal of stale tests. Record statement-level provenance before the goal edit. An assistant-derived replacement design remains non-authoritative even when it is written in present tense, called “decision-complete,” or partially implemented.
+- Removing a brittle assertion mechanism does not retire the behavior it attempted to protect.
+- A changed implementation strategy does not make a still-live behavior obsolete.
+- Map touched tests to equal-or-stronger typed or owner-level evidence as they are rewritten.
+- Retire a contract only when its production capability was actually removed.
+- Never invent replacement behavior to satisfy bookkeeping.
+- Require evidence to observe the semantic owner or causal effect, not a marker, copied body, aggregate count, or rendered source.
 
-When the user corrects an authority, historical baseline, or test disposition:
+Use `$verify-test-parity` only when the user explicitly requests a comprehensive parity audit. If a broad rewrite cannot be closed safely through local touched-test mappings, report that concrete gap and ask whether the user wants the comprehensive audit; do not start it automatically. Never invoke it merely because a plan mentions it or because one brittle test is being replaced.
 
-- invalidate every downstream assistant-authored statement and dependent effect that used the superseded premise;
-- search the complete goal for contradictory copies, status claims, remaining slices, and acceptance rows;
-- retract or revalidate each dependent statement against primary authority;
-- stop source and test work until that audit closes.
+## Preserve compacted causal state proportionally
 
-A correction to one paragraph is insufficient when another paragraph still encodes the invalid premise.
+After compaction, reconstruct only the genuinely protected multi-stage chain before changing one of its disputed edges. Ordinary implementation does not require a closed-book reconstruction exercise.
 
-## Protect behavior evidence
-
-- A test is stale only when an explicitly retired production capability makes its observable contract obsolete.
-- A changed implementation strategy does not retire the behavior it was meant to preserve.
-- A parity baseline is authority, not a convenient comparison point. Do not switch `HEAD^`, `HEAD`, a checkpoint, tag, or release boundary because the current tree makes the inventory smaller or the replacement easier.
-- Decompose aggregate removed tests by observable assertion. Map still-live behavior to equal-or-stronger evidence and retire only assertions whose sole production capability was explicitly removed.
-- Never invent replacement behavior that recreates a removed architecture merely to give a ledger row a replacement test. Retirement evidence and replacement evidence are distinct dispositions.
-- For each edge, test both the required path and the forbidden shortcut, including failure ordering and canonical reruns where relevant.
-- Require evidence to observe the load-bearing relationship and semantic owner. A green rendered-source assertion, copied body, marker call, aggregate count, or test-source presence cannot prove that the required edge ran or the forbidden shortcut did not.
-- Use `$verify-test-parity` before broad test deletion, moves, consolidation, or replacement.
-
-Load [the goal-authority regression](references/goal-authority-regression.md) when an assistant goal edit, baseline correction, or replacement-versus-retirement decision may have changed protecting evidence.
-
-## Reconstruct closed-book
-
-After planning, pruning, or compaction, enumerate the entire sequence from the living goal without consulting source. If two sequences are possible, a packet is missing. Repair the contract before work continues.
-
-Outcome-only phrases such as “reach a fixed point,” “plan statically,” “refresh when needed,” or “already converged” are insufficient unless the complete packet remains reconstructable.
+Outcome-only phrases such as “reach a fixed point” or “refresh when needed” are insufficient when ordering is load-bearing; replace them with the one missing owner, predecessor, barrier, or postcondition.

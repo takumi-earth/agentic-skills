@@ -81,7 +81,7 @@ Use the specialized skill whose trigger matches the active phase:
 - `$document-strict-work` for documentation, research artifacts, generated guidance, fragments, snapshots, or configuration commentary.
 - `$upgrade-strict-dependencies` for dependency, manifest, fork, patch, edition, toolchain, or runtime-version migrations.
 - `$maintain-living-goal` when a user-designated goal or plan is the active implementation contract.
-- `$protect-causal-architecture` when phase order, authority epochs, mutation barriers, cleanup, persistence, or protecting tests could change.
+- `$protect-causal-architecture` only when a user-protected or genuinely disputed phase edge, authority epoch, mutation barrier, cleanup order, persistence rule, or test disposition would change. Do not route ordinary multi-phase implementation through it merely because phases exist.
 - `$review-strict-dependency-candidates` before selecting or adding a third-party crate or runtime dependency.
 - `$design-command-observability` when a command can block, fan out, make policy decisions, or must preserve payload output while reporting progress.
 

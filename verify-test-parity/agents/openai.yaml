@@ -1,4 +1,6 @@
 interface:
   display_name: "Verify Test Parity"
-  short_description: "Preserve behavior across test rewrites"
-  default_prompt: "Use $verify-test-parity to map every removed or brittle test contract to equal-or-stronger behavioral evidence."
+  short_description: "Audit broad test rewrites without ceremony"
+  default_prompt: "Use $verify-test-parity to audit a broad test rewrite and map live contracts to executed replacement evidence."
+policy:
+  allow_implicit_invocation: false

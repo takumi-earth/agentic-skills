@@ -1,4 +1,4 @@
 interface:
   display_name: "Design Semantic Source Transforms"
   short_description: "Design location-independent source patches"
-  default_prompt: "Use $design-semantic-source-transforms to design, implement, or review a location-independent semantic source transformation within the user-authorized phase."
+  default_prompt: "Use $design-semantic-source-transforms to remove brittle patch mechanisms first and implement a location-independent semantic transformation."

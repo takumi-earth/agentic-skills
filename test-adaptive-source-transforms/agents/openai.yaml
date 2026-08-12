@@ -1,4 +1,4 @@
 interface:
   display_name: "Test Adaptive Source Transforms"
   short_description: "Prove adaptive transforms with typed tests"
-  default_prompt: "Use $test-adaptive-source-transforms to design, implement, or review typed, metamorphic evidence for an adaptive source transformation within the user-authorized phase."
+  default_prompt: "Use $test-adaptive-source-transforms to remove rendered-source test escape hatches and prove an adaptive transformation with typed, behavioral evidence."

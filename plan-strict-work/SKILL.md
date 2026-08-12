@@ -1,13 +1,13 @@
 ---
 name: plan-strict-work
-description: "Create source-backed, decision-complete plans for `strict*` ecosystem architecture, refactors, upgrades, migrations, extractions, crate splits, generated workflows, and multi-repository convergence. Use when the user asks to plan, design, investigate for a plan, review a proposed plan, or prepare a handoff that must require no implementation-time discovery. Planning remains read-only unless the user separately authorizes edits."
+description: "Create source-backed implementation plans for `strict*` ecosystem architecture, refactors, upgrades, migrations, extractions, crate splits, generated workflows, and multi-repository convergence. Use when the user asks to plan, design, investigate for a plan, review a proposed plan, or prepare an implementation handoff. Settle load-bearing user decisions without turning ordinary implementation discovery into a preflight audit. Planning remains read-only unless the user separately authorizes edits."
 ---
 
 # Plan Strict Work
 
-Produce an approval artifact that closes discoverable choices before implementation. Do not use planning detail as later execution authority.
+Produce a plan that settles load-bearing ownership and behavior choices while leaving ordinary local implementation discovery to implementation. Do not use planning detail as later execution authority.
 
-When the plan becomes a user-designated living implementation contract, maintain it through `$maintain-living-goal`. For any workflow with multiple authority epochs, mutations, refreshes, validations, child attempts, migrations, cleanup, or persistence ordering, use `$protect-causal-architecture` and keep protected packets separate from mutable implementation status.
+When the plan becomes a user-designated living implementation contract, maintain it through `$maintain-living-goal`. Use `$protect-causal-architecture` only when the plan changes a user-protected or genuinely disputed causal edge. Do not load it merely because the plan has several phases, mutations, validations, or cleanup steps.
 
 ## Establish the planning contract
 
@@ -46,9 +46,9 @@ For every behavior, identify:
 
 Do not choose an owner from the current file, caller, language, workspace glob, command, or failing diagnostic.
 
-## Close load-bearing decisions
+## Close only load-bearing decisions
 
-An implementation-ready plan names, where relevant:
+Name only the categories that materially affect this implementation:
 
 - exact repositories, paths, modules, and non-owned surfaces;
 - final public and internal types, signatures, commands, schemas, configuration keys, and error behavior;
@@ -68,7 +68,7 @@ An implementation-ready plan names, where relevant:
 - orchestration waves, non-overlapping ownership, and handoff fields when explicitly requested;
 - commit boundaries only when the user requests commit planning.
 
-Run an ambiguity sweep for `may`, `might`, `could`, `either`, `or`, `if needed`, `as appropriate`, `TBD`, and “decide during implementation.” Replace each with a decision, a source-backed rule, or an explicit user-owned question.
+Resolve wording ambiguity only when it would change behavior, ownership, scope, compatibility, or an external effect. Do not turn harmless conditional wording into a mechanical audit.
 
 Do not compress a selected multi-phase sequence into outcome-only wording such as “reach a fixed point,” “plan statically,” or “refresh when needed.” Final-state equivalence does not prove that information was available at the same time or that failure ordering is preserved.
 
@@ -83,21 +83,21 @@ Ask only when all of these are true:
 
 Present complete alternatives and consequences. Do not hide consequential subchoices behind a selected top-level option. Do not cite assistant-authored “Decision N” labels as user authorization.
 
-If a proposal changes a protected causal edge, first record the current and proposed chains, altered artifact states, counterfactuals, and affected tests. Stop planning or implementation effects that depend on that edge and obtain explicit user approval before changing it, while continuing every causally independent authorized lane. Use `$maintain-living-goal` for whole-goal status; a pending edge review does not establish `blocked` while meaningful work remains.
+If a proposal changes a protected causal edge that the user has not already authorized, state the current edge, proposed edge, affected owner, counterfactual, and evidence needed for the choice. Stop only dependent effects and ask once. If the user already authorized that exact change, plan it directly without another approval gate.
 
 ## Plan for convergence, not passes
 
 For multi-repository or replacement work:
 
 - Build a matrix of owner, old surface, new surface, consumer migration, verification, and completion state.
-- Land replacements with removals rather than deleting now and restoring capability later.
+- Follow the user-selected migration order. When an invalid reusable mechanism would otherwise remain precedent, remove its API first, let compile failures identify affected capabilities, and use Git history only on demand.
 - Separate publication order from working-tree completeness.
 - Keep every in-scope consumer coherent at the promised stage boundary.
 - Preserve product capability unless the user explicitly chooses breakage or retirement.
 
 ## Handoff standard
 
-The final plan must be self-contained enough that an implementer does not need to rediscover architecture or make user-owned choices. State:
+The final plan must prevent the implementer from having to make user-owned architecture choices. It need not reproduce routine repository discovery, command hygiene, or workflow rules already owned by current guidance. State:
 
 - what becomes true;
 - why each owner is correct;
@@ -107,4 +107,4 @@ The final plan must be self-contained enough that an implementer does not need t
 - explicit non-goals and prohibitions;
 - stop and escalation conditions.
 
-Do not call a plan “decision-complete” while it delegates ordinary discovery, leaves conditional architecture, or depends on undocumented context.
+Do not call a plan implementation-ready while it leaves a load-bearing user choice unresolved. Ordinary source navigation and local implementation discovery are not plan defects.

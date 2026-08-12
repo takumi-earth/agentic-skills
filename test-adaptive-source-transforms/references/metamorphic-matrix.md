@@ -2,6 +2,8 @@
 
 Use this matrix to prove that an adaptive transformation observes semantic ownership instead of current rendered source.
 
+Treat the matrix as a coverage model, not a demand for a separate handwritten fixture and test for every cell. Apply shared engine invariants once through a reusable family harness, then require each transformation to supply the semantic owner, load-bearing precondition, rewrite, and postcondition that the harness varies.
+
 ## Contents
 
 1. Required variation matrix
@@ -123,4 +125,5 @@ Examples include a protocol field, documented CLI line, stable diagnostic code, 
 - Claimed product behavior is executed at its real owner.
 - Legitimate exact-text contracts are isolated and explicitly named.
 - Unexecuted tests are not reported as passing evidence.
-- Broad test replacement closes `$verify-test-parity` contract by contract.
+- Touched legacy contracts map to executed typed or owner-level evidence.
+- `$verify-test-parity` runs only when comprehensive removed-test accounting is explicitly selected; unresolved local parity risk is reported for a user decision rather than automatically escalating the workflow.

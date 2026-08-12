@@ -9,11 +9,13 @@ Change the owner of the behavior, preserve the intended capability, and converge
 
 ## Reconfirm authority and target state
 
-Before editing:
+Use the current task contract. Do not repeat intake, rebuild an audit, or reconcile a living goal before every edit when authority and target architecture are unchanged.
 
-- Re-read the current task contract and approved plan.
-- Use `$maintain-living-goal` to reconcile the complete owner-level slice before source edits and to prune only after that slice is complete.
-- Use `$protect-causal-architecture` when current source, a refactor, or a proposed simplification changes a protected owner, phase edge, barrier, failure order, cleanup, or persistence rule.
+Before editing a new owner-level slice:
+
+- Re-read the current task contract only if context, scope, or authority changed.
+- Use `$maintain-living-goal` when a user-designated living goal actually needs an in-place requirement or status update; do not make goal reconciliation a source-edit prerequisite.
+- Use `$protect-causal-architecture` only when the change would alter a user-protected or genuinely disputed owner, phase edge, barrier, failure order, cleanup, or persistence rule.
 - When the user designates a goal or plan file as a living implementation contract, update the affected decision in place with each authorized correctness change. Rewrite or remove contradicted instructions instead of appending progress notes; the file records authority already granted and does not create new authority.
 - Keep that living contract causal, not merely factual. Preserve why each load-bearing owner, invariant, ordering, capability split, boundary, or verification distinction must remain true and what deviation it prevents; prune superseded chronology, not architectural rationale.
 - Confirm owned writes, forbidden paths, method constraints, and current phase.
@@ -23,7 +25,7 @@ Before editing:
 
 Do not implement the work that depends on unresolved load-bearing ownership, public API, compatibility, or end-state choices. Surface the missing choice rather than deciding it silently, and continue every authorized owner-level slice that is causally independent of it.
 
-Work one complete slice at a time: investigate the full owner boundary, reconcile the goal, implement every required behavior and polarity, close the authorized diagnostic batch, format, repeat affected symbol scans after formatting, prune to current fact, then investigate the next slice. If this loop repeats without closing a slice or producing a new owner-level decision, stop that loop, record the repeated condition, and challenge whether another authorized slice can progress. Use `$maintain-living-goal` for a whole-goal blocker only when every remaining lane shares the same genuine impasse.
+Work one complete vertical slice at a time: identify the owner and intended behavior, implement the structural change, add the required positive and negative evidence, format when authorized, and continue. Update a living goal only when its authoritative requirements or material status changed. If repeated attempts expose a real unresolved owner-level decision, stop that dependent slice and continue any independent authorized work.
 
 ## Trace every symptom upstream
 
@@ -58,12 +60,12 @@ Use a narrow exception only when the current repository contract or the user exp
 
 ## Preserve behavior while changing structure
 
-- Inventory public and internal capabilities before extraction, upgrade, or simplification.
+- Identify affected public and internal capabilities while migrating the owner; do not require a repository-wide inventory unless the user requested one or the change cannot otherwise be bounded safely.
 - Treat strict-owned forks and local product crates as refactoring surfaces, not immutable external limitations.
 - Do not reduce lifecycle, schema, protocol, output, error, macro, or test-support behavior merely to align with upstream or make a new abstraction compile.
 - Decode, validate, and report errors at typed boundaries; do not convert unsupported or invalid input into quiet no-ops.
 - Before deletion, prove semantic obsolescence and identify the owner of any incomplete wiring.
-- Do not call a test stale because partial implementation no longer expresses its scenario. Use `$verify-test-parity` whenever tests are deleted, moved, renamed, consolidated, or broadly rewritten, and require evidence of intentional production-capability retirement for every obsolete test.
+- Do not call a test stale because partial implementation no longer expresses its scenario. Map touched tests to equal-or-stronger owner-level evidence as they are rewritten. Use `$verify-test-parity` only when the user explicitly requests a comprehensive parity audit; if local mappings expose an unresolved live contract, report it and ask before starting that audit.
 - Before creating a helper, search for the existing ecosystem abstraction and extend its owner when appropriate.
 - Name abstractions after capabilities and invariants, not current callers or workflows.
 

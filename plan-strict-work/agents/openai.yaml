@@ -1,7 +1,7 @@
 interface:
   display_name: "Plan Strict Work"
-  short_description: "Create decision-complete strict work plans"
-  default_prompt: "Use $plan-strict-work to create a source-backed, decision-complete plan for this strict-ecosystem task."
+  short_description: "Create implementation-focused strict work plans"
+  default_prompt: "Use $plan-strict-work to create a source-backed strict-ecosystem plan that settles load-bearing choices without preflight ceremony."
 
 policy:
   allow_implicit_invocation: true

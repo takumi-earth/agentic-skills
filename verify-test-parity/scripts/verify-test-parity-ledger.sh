@@ -55,7 +55,7 @@ if [[ -z $ledger ]]; then
   exit 2
 fi
 if [[ -z $baseline ]]; then
-  printf '%s\n' 'error: --baseline is required; use the recorded user-selected baseline OID' >&2
+  printf '%s\n' 'error: --baseline is required; pass the resolved comprehensive-audit OID' >&2
   exit 2
 fi
 if [[ ! -f $ledger ]]; then
