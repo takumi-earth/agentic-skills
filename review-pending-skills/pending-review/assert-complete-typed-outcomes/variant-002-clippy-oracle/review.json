@@ -1,0 +1,22 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level Rust diagnostic skill",
+    "installation or synchronization into harness skill roots",
+    "future use during separately authorized Rust lint remediation"
+  ],
+  "candidate_name": "assert-complete-typed-outcomes",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "Transcript line 2356 supplied the exact single_call_fn diagnostic",
+    "The completed source repair removed the lone accessor call without lint suppression or public API change"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "rstriage"},
+    {"kind": "overlap", "target": "implement-strict-work"},
+    {"kind": "alternative", "target": "assert-complete-typed-outcomes/variant-001-implement-strict-pattern"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-clippy-oracle"
+}

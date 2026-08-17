@@ -1,0 +1,4 @@
+interface:
+  display_name: "Assert Complete Typed Outcomes"
+  short_description: "Resolve test-created Rust accessor lints"
+  default_prompt: "Use $assert-complete-typed-outcomes to resolve a Rust lint caused by a test-only accessor call."

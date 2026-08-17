@@ -1,0 +1,4 @@
+interface:
+  display_name: "Read Complete Owner Files"
+  short_description: "Plan and track complete owner-file reads"
+  default_prompt: "Use $read-complete-owner-files to read every selected owner file through EOF before concluding."

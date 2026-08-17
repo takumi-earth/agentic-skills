@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Prepared Authority Handoffs"
+  short_description: "Protect canonical prepared-state handoffs"
+  default_prompt: "Use $test-prepared-authority-handoffs to test a canonical prepared result across its downstream workflow."

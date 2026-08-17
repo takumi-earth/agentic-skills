@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preserve Real Workflow Fixtures"
+  short_description: "Keep workflow fixtures file-backed and role-correct"
+  default_prompt: "Use $preserve-real-workflow-fixtures to design role-correct file-backed workflow fixtures."

@@ -1,0 +1,25 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into harness skill roots",
+    "future enforcement of prepared-result workflow evidence during separately authorized work"
+  ],
+  "candidate_name": "test-prepared-authority-handoffs",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "Transcript lines 506 and 552 selected PreparedUpdate as the owner and identified missing workflow-level handoff coverage",
+    "The template-update failure reread CurrentTarget after schema-engine preparation"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "protect-causal-architecture"},
+    {"kind": "overlap", "target": "plan-strict-work"},
+    {"kind": "complements", "target": "audit-architectural-regressions"},
+    {"kind": "complements", "target": "preserve-real-workflow-fixtures"},
+    {"kind": "alternative", "target": "test-prepared-authority-handoffs/variant-002-causal-reference"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-standalone-handoff-contract"
+}
+

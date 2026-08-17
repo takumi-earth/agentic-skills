@@ -1,0 +1,4 @@
+interface:
+  display_name: "Read Complete Owner Files"
+  short_description: "Integrate full reads with strict work owners"
+  default_prompt: "Use $read-complete-owner-files to activate complete source reads across strict work phases."

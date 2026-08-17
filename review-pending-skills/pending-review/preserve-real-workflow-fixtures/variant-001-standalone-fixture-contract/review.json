@@ -1,0 +1,24 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into harness skill roots",
+    "application of file-backed fixture rules to later authorized test changes"
+  ],
+  "candidate_name": "preserve-real-workflow-fixtures",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "Transcript lines 552 and 618 required role-specific real fixtures and rejected inline or artificial snapshot substitutes",
+    "The completed template-update regression used distinct current-target and materialized-snapshot fixture roles"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "plan-strict-work"},
+    {"kind": "overlap", "target": "implement-strict-work"},
+    {"kind": "complements", "target": "protect-causal-architecture"},
+    {"kind": "alternative", "target": "preserve-real-workflow-fixtures/variant-002-strict-owner-reference"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-standalone-fixture-contract"
+}
+

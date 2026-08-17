@@ -1,0 +1,23 @@
+{
+  "activation_effects": [
+    "merge of fixture-role guidance into one or more official strict-work skills",
+    "installation or synchronization of any promoted package into harness skill roots",
+    "future enforcement during separately authorized strict test work"
+  ],
+  "candidate_name": "preserve-real-workflow-fixtures",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "Transcript line 618 established the real-fixture and valid-source rules",
+    "Existing strict phase skills already separate planning, implementation, causal protection, and verification authority"
+  ],
+  "relationships": [
+    {"kind": "possible-merge-target", "target": "plan-strict-work"},
+    {"kind": "possible-merge-target", "target": "implement-strict-work"},
+    {"kind": "possible-merge-target", "target": "protect-causal-architecture"},
+    {"kind": "alternative", "target": "preserve-real-workflow-fixtures/variant-001-standalone-fixture-contract"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-strict-owner-reference"
+}

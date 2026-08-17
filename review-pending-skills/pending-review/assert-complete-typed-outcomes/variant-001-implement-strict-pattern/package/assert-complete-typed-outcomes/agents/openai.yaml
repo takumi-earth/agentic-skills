@@ -1,0 +1,4 @@
+interface:
+  display_name: "Assert Complete Typed Outcomes"
+  short_description: "Use complete typed outcomes in strict tests"
+  default_prompt: "Use $assert-complete-typed-outcomes to replace a test-only projection with a meaningful typed assertion."

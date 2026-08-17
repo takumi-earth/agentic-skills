@@ -1,0 +1,22 @@
+{
+  "activation_effects": [
+    "merge of the prepared-authority reference into protect-causal-architecture",
+    "installation or synchronization of any promoted package into harness skill roots",
+    "future use of the causal pattern during separately authorized workflow changes"
+  ],
+  "candidate_name": "test-prepared-authority-handoffs",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "The accepted plan preserved phase 4 prewrite preparation, phase 5 mutation, cleanup, and persistence while changing the authority read",
+    "Current protect-causal-architecture guidance owns disputed authority and barrier edges"
+  ],
+  "relationships": [
+    {"kind": "possible-merge-target", "target": "protect-causal-architecture"},
+    {"kind": "complements", "target": "preserve-real-workflow-fixtures"},
+    {"kind": "alternative", "target": "test-prepared-authority-handoffs/variant-001-standalone-handoff-contract"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-causal-reference"
+}

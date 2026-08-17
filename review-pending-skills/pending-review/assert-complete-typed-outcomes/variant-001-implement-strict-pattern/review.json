@@ -1,0 +1,24 @@
+{
+  "activation_effects": [
+    "merge of typed-outcome assertion guidance into implement-strict-work",
+    "installation or synchronization of any promoted package into harness skill roots",
+    "future application during separately authorized strict Rust test changes"
+  ],
+  "candidate_name": "assert-complete-typed-outcomes",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "Transcript line 2356 reported single_call_fn after the new test became the only stage accessor caller",
+    "Transcript lines 2363 and 2422 selected complete typed outcome equality and a reused expected-value helper"
+  ],
+  "relationships": [
+    {"kind": "possible-merge-target", "target": "implement-strict-work"},
+    {"kind": "overlap", "target": "rstriage"},
+    {"kind": "complements", "target": "verify-strict-work"},
+    {"kind": "alternative", "target": "assert-complete-typed-outcomes/variant-002-clippy-oracle"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-implement-strict-pattern"
+}
+

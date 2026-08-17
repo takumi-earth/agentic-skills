@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preserve Real Workflow Fixtures"
+  short_description: "Route strict fixture ownership through phase owners"
+  default_prompt: "Use $preserve-real-workflow-fixtures to route strict fixture decisions through their owning phase."

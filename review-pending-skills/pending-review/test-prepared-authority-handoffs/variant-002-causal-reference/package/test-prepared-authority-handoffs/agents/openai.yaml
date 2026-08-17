@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Prepared Authority Handoffs"
+  short_description: "Model prepared authority as a causal edge"
+  default_prompt: "Use $test-prepared-authority-handoffs to preserve a prepared-result authority epoch and its barriers."

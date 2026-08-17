@@ -1,0 +1,24 @@
+{
+  "activation_effects": [
+    "merge of direct-reading rules into official strict-work skills",
+    "installation or synchronization of any promoted package into harness skill roots",
+    "future source-reading behavior during separately authorized strict work"
+  ],
+  "candidate_name": "read-complete-owner-files",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "Transcript lines 143 and 148 established and applied the complete-read contract",
+    "Current strict phase skills already own intake, planning, implementation, steering, and compaction"
+  ],
+  "relationships": [
+    {"kind": "possible-merge-target", "target": "guard-strict-work"},
+    {"kind": "possible-merge-target", "target": "plan-strict-work"},
+    {"kind": "possible-merge-target", "target": "reconcile-live-steering"},
+    {"kind": "possible-merge-target", "target": "resume-strict-context"},
+    {"kind": "alternative", "target": "read-complete-owner-files/variant-001-source-read-planner"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-strict-owner-integration"
+}

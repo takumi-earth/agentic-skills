@@ -1,0 +1,24 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into harness skill roots",
+    "execution of the metadata-only read planner during later authorized source research"
+  ],
+  "candidate_name": "read-complete-owner-files",
+  "predecessors": [],
+  "provenance": [
+    "Automatic post-goal inventory for session 01a01103-150c-7bf3-be33-b8407cd6549e",
+    "Transcript line 143 required whole-file reads rather than grep snippets",
+    "The existing instruction-read planner supplied reusable deterministic range-planning mechanics"
+  ],
+  "relationships": [
+    {"kind": "overlap", "target": "resume-strict-context"},
+    {"kind": "overlap", "target": "plan-strict-work"},
+    {"kind": "complements", "target": "guard-strict-work"},
+    {"kind": "alternative", "target": "read-complete-owner-files/variant-002-strict-owner-integration"}
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-source-read-planner"
+}
+
