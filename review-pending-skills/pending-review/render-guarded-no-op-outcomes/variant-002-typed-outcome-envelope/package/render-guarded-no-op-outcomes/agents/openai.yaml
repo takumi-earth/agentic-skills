@@ -1,0 +1,4 @@
+interface:
+  display_name: "Render Guarded No-Op Outcomes"
+  short_description: "Validate and explain guarded mutation outcomes"
+  default_prompt: "Use $render-guarded-no-op-outcomes to validate this typed mutation result and render its exact zero-write or write consequence."

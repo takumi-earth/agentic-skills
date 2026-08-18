@@ -1,0 +1,28 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root",
+    "use of the bundled report in living-goal maintenance"
+  ],
+  "candidate_name": "reconcile-completed-living-goal-status",
+  "predecessors": [
+    "variant-001-terminal-status-checklist"
+  ],
+  "provenance": [
+    "Session line 2584 correction that the active plan was complete",
+    "Session line 2671 request to correct all stale plan parts"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "variant-001-terminal-status-checklist"
+    },
+    {
+      "kind": "overlap",
+      "target": "maintain-living-goal"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-status-reconciliation-report"
+}

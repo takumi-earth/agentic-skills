@@ -1,0 +1,4 @@
+interface:
+  display_name: "Extract Nested Codex Goal Lifecycle"
+  short_description: "Merge transcript and authoritative goal state"
+  default_prompt: "Use $extract-nested-codex-goal-lifecycle to merge normalized transcript events with read-only authoritative goal status."

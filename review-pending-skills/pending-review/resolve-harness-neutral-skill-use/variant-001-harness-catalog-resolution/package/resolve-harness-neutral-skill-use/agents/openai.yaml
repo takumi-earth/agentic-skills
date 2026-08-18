@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resolve Harness-Neutral Skill Use"
+  short_description: "Resolve skill evidence from harness catalogs"
+  default_prompt: "Use $resolve-harness-neutral-skill-use to classify skill references and body reads from this harness catalog and rollout."

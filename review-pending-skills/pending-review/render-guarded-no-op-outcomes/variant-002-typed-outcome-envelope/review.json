@@ -1,0 +1,31 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root",
+    "adoption of the typed envelope by mutation commands"
+  ],
+  "candidate_name": "render-guarded-no-op-outcomes",
+  "predecessors": [
+    "variant-001-no-op-reporting-vocabulary"
+  ],
+  "provenance": [
+    "Session line 2086 user question caused by unexplained guarded no-op wording"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "variant-001-no-op-reporting-vocabulary"
+    },
+    {
+      "kind": "overlap",
+      "target": "filesystem-git-observability"
+    },
+    {
+      "kind": "overlap",
+      "target": "design-command-observability"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-typed-outcome-envelope"
+}

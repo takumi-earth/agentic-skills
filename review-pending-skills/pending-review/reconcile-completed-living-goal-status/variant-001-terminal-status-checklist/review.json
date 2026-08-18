@@ -1,0 +1,27 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "reconcile-completed-living-goal-status",
+  "predecessors": [],
+  "provenance": [
+    "Session line 2515 pending-work question",
+    "Session line 2584 user statement that the active plan was done",
+    "Session line 2671 request to correct every stale part",
+    "Session line 2740 separate authorization to mark the goal achieved"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "maintain-living-goal"
+    },
+    {
+      "kind": "overlap",
+      "target": "document-strict-work"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-terminal-status-checklist"
+}

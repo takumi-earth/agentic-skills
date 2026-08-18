@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preserve Settled Verdict Finality"
+  short_description: "Lint plans for reopened settled decisions"
+  default_prompt: "Use $preserve-settled-verdict-finality to lint this plan for operative reassessment of settled units."

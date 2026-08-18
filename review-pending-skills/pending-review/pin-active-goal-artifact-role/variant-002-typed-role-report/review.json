@@ -1,0 +1,28 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root",
+    "use of the bundled role-report script in a managed goal workflow"
+  ],
+  "candidate_name": "pin-active-goal-artifact-role",
+  "predecessors": [
+    "variant-001-artifact-role-checkpoint"
+  ],
+  "provenance": [
+    "Session line 2578 wrong-goal status answer",
+    "Session line 2584 exact-path correction"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "variant-001-artifact-role-checkpoint"
+    },
+    {
+      "kind": "overlap",
+      "target": "resume-strict-context"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-typed-role-report"
+}

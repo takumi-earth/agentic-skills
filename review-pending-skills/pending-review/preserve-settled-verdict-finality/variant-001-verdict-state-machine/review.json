@@ -1,0 +1,30 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "preserve-settled-verdict-finality",
+  "predecessors": [],
+  "provenance": [
+    "Session line 480 correction that a safety commit did not alter application readiness",
+    "Session lines 591 and 593 rejection of repeated U1 and U2 work",
+    "Session lines 782 and 2212 explicit no-re-adjudication constraints"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "guard-strict-work"
+    },
+    {
+      "kind": "overlap",
+      "target": "maintain-living-goal"
+    },
+    {
+      "kind": "overlap",
+      "target": "reconcile-live-steering"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-verdict-state-machine"
+}

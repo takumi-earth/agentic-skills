@@ -1,0 +1,31 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root",
+    "implicit invocation during explicitly authorized delegation waits"
+  ],
+  "candidate_name": "orchestrate-codex-forks-and-waits",
+  "predecessors": [
+    "variant-001-codex-orchestration-adapter"
+  ],
+  "provenance": [
+    "Session line 371 direct request for longest waits to avoid continuous re-polling"
+  ],
+  "relationships": [
+    {
+      "kind": "specialization",
+      "target": "variant-001-codex-orchestration-adapter"
+    },
+    {
+      "kind": "overlap",
+      "target": "reconcile-live-steering"
+    },
+    {
+      "kind": "harness-adapter",
+      "target": "Codex wait_agent"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-wait-budget-protocol"
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pin Active Goal Artifact Role"
+  short_description: "Render typed active and historical goal roles"
+  default_prompt: "Use $pin-active-goal-artifact-role to render a read-only role report for the exact active goal and its explicit references."

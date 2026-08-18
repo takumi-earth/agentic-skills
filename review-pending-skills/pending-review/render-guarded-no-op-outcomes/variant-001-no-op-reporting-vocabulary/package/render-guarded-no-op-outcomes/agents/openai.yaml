@@ -1,0 +1,4 @@
+interface:
+  display_name: "Render Guarded No-Op Outcomes"
+  short_description: "Explain matched guards and zero writes"
+  default_prompt: "Use $render-guarded-no-op-outcomes to explain this guarded zero-write result with its exact condition and consequence."

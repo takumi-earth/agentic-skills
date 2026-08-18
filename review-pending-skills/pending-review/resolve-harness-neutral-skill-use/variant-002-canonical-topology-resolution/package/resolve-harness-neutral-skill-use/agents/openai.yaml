@@ -1,0 +1,4 @@
+interface:
+  display_name: "Resolve Harness-Neutral Skill Use"
+  short_description: "Resolve canonical and projected skill topology"
+  default_prompt: "Use $resolve-harness-neutral-skill-use to report exact skill projections and canonical topology without changing deployment."

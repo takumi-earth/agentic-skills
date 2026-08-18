@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrate Codex Forks and Waits"
+  short_description: "Translate delegated work into Codex controls"
+  default_prompt: "Use $orchestrate-codex-forks-and-waits to translate this authorized agent workflow into Codex fork and wait controls."

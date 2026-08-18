@@ -1,0 +1,31 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "pin-active-goal-artifact-role",
+  "predecessors": [],
+  "provenance": [
+    "Session line 2515 plan-status question",
+    "Session line 2578 answer from the wrong historical goal",
+    "Session line 2584 user correction naming the exact active attachment",
+    "Session line 2665 acknowledgement of the artifact-role error"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "resume-strict-context"
+    },
+    {
+      "kind": "overlap",
+      "target": "maintain-living-goal"
+    },
+    {
+      "kind": "always-loaded-guidance",
+      "target": "strict repository active-goal path rule"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-artifact-role-checkpoint"
+}

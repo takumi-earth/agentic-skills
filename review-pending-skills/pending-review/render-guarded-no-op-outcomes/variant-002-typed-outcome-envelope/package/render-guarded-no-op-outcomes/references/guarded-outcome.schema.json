@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "desired_state": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "proven": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "description",
+        "proven"
+      ],
+      "type": "object"
+    },
+    "error": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "guard": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "expected": {
+          "type": "string"
+        },
+        "matched": {
+          "type": "boolean"
+        },
+        "received": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "condition",
+        "expected",
+        "received",
+        "matched"
+      ],
+      "type": "object"
+    },
+    "operation": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "outcome": {
+      "enum": [
+        "write",
+        "no-op",
+        "blocked",
+        "failed",
+        "verified"
+      ]
+    },
+    "target": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "verification": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "not-run",
+            "passed",
+            "failed"
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "description"
+      ],
+      "type": "object"
+    },
+    "write_count": {
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "operation",
+    "target",
+    "outcome",
+    "guard",
+    "desired_state",
+    "write_count",
+    "verification",
+    "error"
+  ],
+  "type": "object"
+}

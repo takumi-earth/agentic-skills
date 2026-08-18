@@ -1,0 +1,27 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "merge into the skill-researcher resource owner",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "resolve-harness-neutral-skill-use",
+  "predecessors": [],
+  "provenance": [
+    "Session assistant announcements of strict-work and living-goal skill use",
+    "Bounded extractor report rooted only at ~/.codex/skills with no used user-owned skills",
+    "Observed SKILL.md body reads under ~/.agents/skills"
+  ],
+  "relationships": [
+    {
+      "kind": "resource-owner",
+      "target": "skill-researcher"
+    },
+    {
+      "kind": "catalog-source",
+      "target": "harness available-skills metadata"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-harness-catalog-resolution"
+}

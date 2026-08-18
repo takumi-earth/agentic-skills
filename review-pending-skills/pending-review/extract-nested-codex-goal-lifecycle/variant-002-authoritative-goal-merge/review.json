@@ -1,0 +1,33 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "read-only integration with a harness goal store",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "extract-nested-codex-goal-lifecycle",
+  "predecessors": [
+    "variant-001-schema-aware-nested-parser"
+  ],
+  "provenance": [
+    "Session raw line 2920 nested completion call",
+    "Bounded extractor false negative for successful completion",
+    "Need to distinguish transcript observation from authoritative current goal status"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "variant-001-schema-aware-nested-parser"
+    },
+    {
+      "kind": "resource-owner",
+      "target": "skill-researcher"
+    },
+    {
+      "kind": "harness-specific",
+      "target": "read-only goal status source"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-authoritative-goal-merge"
+}

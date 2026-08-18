@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preserve Settled Verdict Finality"
+  short_description: "Do not reopen settled remediation decisions"
+  default_prompt: "Use $preserve-settled-verdict-finality to keep settled units final unless the user explicitly supersedes them."

@@ -1,0 +1,28 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root",
+    "use of the bundled comparator in guarded remediation workflows"
+  ],
+  "candidate_name": "preserve-application-readiness-across-git-representation-change",
+  "predecessors": [
+    "variant-001-readiness-invariant-model"
+  ],
+  "provenance": [
+    "Session line 480 distinction between safety commit and application readiness",
+    "Session line 2212 current-index preservation requirement"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "variant-001-readiness-invariant-model"
+    },
+    {
+      "kind": "overlap",
+      "target": "filesystem-git-observability"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-guard-comparison-report"
+}

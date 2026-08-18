@@ -1,0 +1,24 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "render-guarded-no-op-outcomes",
+  "predecessors": [],
+  "provenance": [
+    "Session line 2086 user question asking what guarded no-op meant"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "filesystem-git-observability"
+    },
+    {
+      "kind": "overlap",
+      "target": "design-command-observability"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-no-op-reporting-vocabulary"
+}

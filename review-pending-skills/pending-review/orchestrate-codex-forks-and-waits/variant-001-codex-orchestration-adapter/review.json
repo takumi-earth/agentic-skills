@@ -1,0 +1,27 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root",
+    "implicit invocation during explicitly authorized delegation"
+  ],
+  "candidate_name": "orchestrate-codex-forks-and-waits",
+  "predecessors": [],
+  "provenance": [
+    "Session line 219 instruction to use Codex rather than Claude Code subagent workflow",
+    "Session line 248 explicit no-full-history override",
+    "Session line 371 request for the longest practical wait spans"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "orchestrate-strict-work"
+    },
+    {
+      "kind": "harness-adapter",
+      "target": "Codex collaboration tools"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-codex-orchestration-adapter"
+}

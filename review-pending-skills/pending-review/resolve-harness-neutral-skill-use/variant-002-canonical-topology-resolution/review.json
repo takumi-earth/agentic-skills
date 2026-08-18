@@ -1,0 +1,32 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "merge into the skill-researcher resource owner",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "resolve-harness-neutral-skill-use",
+  "predecessors": [
+    "variant-001-harness-catalog-resolution"
+  ],
+  "provenance": [
+    "Bounded extractor selected ~/.codex/skills despite live user-owned skill reads under ~/.agents/skills",
+    "Canonical ~/agentic-skills source is exposed through harness projections"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "variant-001-harness-catalog-resolution"
+    },
+    {
+      "kind": "overlap",
+      "target": "link-agentic-skills"
+    },
+    {
+      "kind": "overlap",
+      "target": "validate-symlinked-skill-runtime"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-canonical-topology-resolution"
+}

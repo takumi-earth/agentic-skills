@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preserve Application Readiness"
+  short_description: "Compare apply guards and Git representation"
+  default_prompt: "Use $preserve-application-readiness-across-git-representation-change to compare application invariants without applying or re-adjudicating anything."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reconcile Completed Living Goal Status"
+  short_description: "Report stale terminal goal-status prose"
+  default_prompt: "Use $reconcile-completed-living-goal-status to report stale mutable status before an authorized living-goal edit."

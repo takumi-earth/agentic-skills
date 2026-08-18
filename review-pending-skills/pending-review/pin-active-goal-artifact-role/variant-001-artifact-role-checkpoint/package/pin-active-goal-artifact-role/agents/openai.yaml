@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pin Active Goal Artifact Role"
+  short_description: "Keep status anchored to the exact active goal"
+  default_prompt: "Use $pin-active-goal-artifact-role to pin the exact active goal and prevent historical artifacts from supplying current status."

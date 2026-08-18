@@ -1,0 +1,28 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root",
+    "use of the bundled linter in goal-maintenance workflows"
+  ],
+  "candidate_name": "preserve-settled-verdict-finality",
+  "predecessors": [
+    "variant-001-verdict-state-machine"
+  ],
+  "provenance": [
+    "Session line 591 plan patch containing new U1 and U2 reassessment choices",
+    "Session line 593 direct prohibition on redoing approved work"
+  ],
+  "relationships": [
+    {
+      "kind": "alternative",
+      "target": "variant-001-verdict-state-machine"
+    },
+    {
+      "kind": "overlap",
+      "target": "maintain-living-goal"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-002-settled-unit-linter"
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reconcile Completed Living Goal Status"
+  short_description: "Replace stale plan status after terminal work"
+  default_prompt: "Use $reconcile-completed-living-goal-status to align mutable goal status with the terminal evidence without overstating verification."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Preserve Application Readiness"
+  short_description: "Separate Git representation from apply guards"
+  default_prompt: "Use $preserve-application-readiness-across-git-representation-change to decide whether a Git representation change actually invalidated application."

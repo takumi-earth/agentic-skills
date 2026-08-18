@@ -1,0 +1,27 @@
+{
+  "activation_effects": [
+    "promotion as a top-level user-level skill",
+    "installation or synchronization into a harness skill root"
+  ],
+  "candidate_name": "preserve-application-readiness-across-git-representation-change",
+  "predecessors": [],
+  "provenance": [
+    "Session line 233 user report of a safety commit",
+    "Session line 480 correction that the commit did not change application readiness",
+    "Session line 2105 user report of formatting and staging",
+    "Session line 2212 requirement to preserve the current index during application"
+  ],
+  "relationships": [
+    {
+      "kind": "overlap",
+      "target": "filesystem-git-observability"
+    },
+    {
+      "kind": "overlap",
+      "target": "audit-rollout-damage"
+    }
+  ],
+  "schema_version": 1,
+  "status": "pending",
+  "variant_id": "variant-001-readiness-invariant-model"
+}

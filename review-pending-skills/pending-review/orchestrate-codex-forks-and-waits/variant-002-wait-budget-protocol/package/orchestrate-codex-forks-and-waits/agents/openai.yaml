@@ -1,0 +1,4 @@
+interface:
+  display_name: "Orchestrate Codex Forks and Waits"
+  short_description: "Budget long interruptible subagent waits"
+  default_prompt: "Use $orchestrate-codex-forks-and-waits to choose the longest justified mailbox wait and avoid liveness polling."
