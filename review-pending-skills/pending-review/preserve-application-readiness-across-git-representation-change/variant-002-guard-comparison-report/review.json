@@ -14,12 +14,16 @@
   ],
   "relationships": [
     {
-      "kind": "alternative",
+      "kind": "historical-alternative",
       "target": "variant-001-readiness-invariant-model"
     },
     {
       "kind": "overlap",
       "target": "filesystem-git-observability"
+    },
+    {
+      "kind": "shared-guidance-owner",
+      "target": "filesystem-git-observability/references/guarded-application-readiness.md"
     }
   ],
   "schema_version": 1,

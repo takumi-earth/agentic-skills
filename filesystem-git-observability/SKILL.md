@@ -19,6 +19,8 @@ Never promote an observed attribute into an acceptance invariant merely because 
 
 State every invariant before the first production mutation. For each one, record its source: explicit user instruction, repository contract, or accepted test. If no source authorizes a check, do not gate on it.
 
+When prepared guarded-application evidence is followed by a commit, formatting, staging, or another Git change, load [guarded application readiness](references/guarded-application-readiness.md) to reassess only the affected application invariants.
+
 ## Scope durable command recording to evidence-producing work
 
 - This skill governs how to preserve a filesystem or Git evidence chain after the current task already requires one. Triggering the skill does not authorize a new audit, report, manifest, wrapper, baseline, fixture, or command.

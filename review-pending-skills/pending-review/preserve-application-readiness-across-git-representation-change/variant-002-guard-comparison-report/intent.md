@@ -14,7 +14,17 @@ The comparator consumes supplied evidence and applies nothing. A ready result do
 
 ## Relationships and uncertainty
 
-This is a mechanical alternative to `variant-001-readiness-invariant-model` and overlaps `$filesystem-git-observability`. Review should decide whether the evidence schema is general enough for adoption.
+This remains a mechanical alternative to `variant-001-readiness-invariant-model`, whose guidance the user approved folding into `filesystem-git-observability/references/guarded-application-readiness.md` before pruning the draft. The predecessor and alternative names in `review.json` are Git-history references.
+
+## Current review disposition
+
+Retain pending correction. The comparator has not been adopted into the official owner. Before adoption:
+
+- Validate nested guard and restore records, complete effect-path coverage, and actual replacement availability; unchanged invalid inputs must not produce a ready result.
+- Clarify deletion-only operations, operation identity beyond path names, and recovery methods that explicitly require an exact `HEAD` or index identity.
+- Preserve the distinction between supplied evidence comparison and independently established application readiness, and normalize home paths in diagnostics.
+
+These requirements record the review findings; the executable remains unchanged pending correction.
 
 ## Review questions
 
