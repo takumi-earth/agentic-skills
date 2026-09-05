@@ -12,7 +12,15 @@
   ],
   "relationships": [
     {"kind": "overlap", "target": "design-semantic-source-transforms"},
-    {"kind": "alternative", "target": "enforce-semantic-transform-contracts/variant-001-contract-reference"}
+    {"kind": "historical-alternative", "target": "enforce-semantic-transform-contracts/variant-001-contract-reference"},
+    {"kind": "shared-guidance-owner", "target": "design-semantic-source-transforms/references/transformation-contract.md"}
+  ],
+  "review_notes": [
+    "User disposition: retain pending correction as a distinct machine-readable declaration validator; no adoption or interface change is approved by this disposition.",
+    "The user approved folding the declaration-versus-proof distinction from `variant-001-contract-reference` into the existing optional transformation contract reference, then pruning that draft. Its creation remains in candidate-root Git history.",
+    "Before adoption, reconcile the JSON Schema and executable for empty objects, Boolean schema versions, unknown nested fields, resolver types, duplicate or unknown outcomes, required outcomes, and evidence requirements. Handle malformed field types without uncaught exceptions and return the promised `condition`, `expected`, and `received` diagnostics.",
+    "Distinguish evidence categories from actual test identifiers. Require separate product-owner tests only for substantive product behavior that needs that evidence, following the existing adaptive-testing owner. Declaration validity does not prove implementation behavior.",
+    "The current package remains uncorrected pending that work."
   ],
   "schema_version": 1,
   "status": "pending",

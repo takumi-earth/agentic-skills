@@ -2,6 +2,8 @@
 
 Use this reference to specify or review one adaptive parsed-source transformation.
 
+A completed declaration or checklist records intended behavior. It does not establish that the implementation discovers candidates, classifies states, or applies changes correctly; substantiate those claims with actual source and applicable, authorized execution evidence.
+
 ## Contents
 
 1. Equivalence invariant

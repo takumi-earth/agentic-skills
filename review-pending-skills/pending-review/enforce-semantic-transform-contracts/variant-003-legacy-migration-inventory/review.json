@@ -12,8 +12,16 @@
   ],
   "relationships": [
     {"kind": "overlap", "target": "audit-architectural-regressions"},
-    {"kind": "complements", "target": "enforce-semantic-transform-contracts/variant-001-contract-reference"},
-    {"kind": "complements", "target": "enforce-semantic-transform-contracts/variant-002-declaration-schema"}
+    {"kind": "historical-complement", "target": "enforce-semantic-transform-contracts/variant-001-contract-reference"},
+    {"kind": "complements", "target": "enforce-semantic-transform-contracts/variant-002-declaration-schema"},
+    {"kind": "shared-guidance-owner", "target": "design-semantic-source-transforms/references/transformation-contract.md"}
+  ],
+  "review_notes": [
+    "User disposition: retain pending correction as an explicitly requested lexical inventory alternative; no adoption or interface change is approved by this disposition.",
+    "The user approved folding the declaration-versus-proof distinction from `variant-001-contract-reference` into the existing optional transformation contract reference, then pruning that draft. Its creation remains in candidate-root Git history.",
+    "Before adoption, remove the automatic inventory prerequisite and the instruction to retire brittle helpers last. Preserve the current design owner's rule to remove explicitly rejected reusable mechanisms first and rebuild affected capabilities through typed contracts.",
+    "Correct the documented command's missing `--repo` argument, report missing or unreadable inputs explicitly, deduplicate overlapping roots, and prevent file symlinks from expanding the selected source scope.",
+    "Describe location-based keys as identifiers within a source snapshot, not stable identities across a migration. Preserve `signal-only` classification and keep persistence subject to the current task contract. The current package remains uncorrected pending that work."
   ],
   "schema_version": 1,
   "status": "pending",
