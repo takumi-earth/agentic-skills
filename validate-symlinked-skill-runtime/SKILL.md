@@ -18,23 +18,26 @@ Classify and supply each dependency independently:
 
 Treat a declared sibling package as a package-resource dependency. Reproduce that sibling under the same lexical repository layout in copied, relative-link, and absolute-link fixtures. Test the missing-sibling failure separately.
 
+The lexical invocation path is not runtime authority either: direct canonical registration, copied launchers, and renamed wrappers invalidate installation-layout inference from `argv[0]`.
+
 ## Execute the topology matrix
 
 1. Identify the target package, package-relative real entry point, arguments, runtime root, canonical repository, and declared sibling packages.
 2. Confirm the target is stateful or deployment-sensitive. Do not run this workflow for a stateless package or merely because links will be synchronized.
-3. Run `scripts/validate_runtime_topology.py`; it creates and cleans its own disposable topology repositories.
+3. Run `scripts/validate_runtime_topology.py`; it creates and cleans its own disposable topology repositories under the selected canonical repository's `.scratchpad/`. Use `--scratch-root` for an explicitly selected existing scratch directory; keep it outside the target and sibling packages.
 4. Execute the same real entry point and arguments under:
    - canonical-direct;
    - copied;
    - relative-symlink;
    - absolute-symlink.
-5. Compare process exit status and normalized JSON output. Require the target to report every side-effect path and keep each path within the topology's task-output root.
-6. Require the canonical repository and runtime state hashes to remain unchanged.
+5. Compare process exit status, normalized JSON results, and actual output artifacts, including bytes, types, permissions, and link targets. Accept an empty `side_effects` array for read-only targets. Check declarations against observed output and reject fixture changes outside the current task-output root.
+6. Require canonical repository and runtime snapshots, including empty directories and permissions, to remain unchanged. Stop later topology runs after an observed protected-state or fixture mutation and report those runs as unexecuted. Exclude only the validator's own temporary directory during execution, then compare the full protected trees after cleanup.
 7. Run the missing-authority, missing-sibling, and resolved-package-parent negative cases.
 
 ## Preserve scope and authority
 
 - Confine generated fixture repositories and output to automatically cleaned temporary roots.
+- Treat success as parity of the reported results and observed artifacts. Snapshot checks do not prevent writes or detect arbitrary external writes and changes reverted between observations; run only targets whose effects are already authorized.
 - Use the environment-selected Python interpreter; do not hard-code an interpreter path.
 - Render paths beneath the user home as `~/...`.
 - Do not execute arbitrary entry points during `$link-agentic-skills` synchronization.
@@ -44,4 +47,5 @@ Treat a declared sibling package as a package-resource dependency. Reproduce tha
 
 - Read `references/authority-topology-contract.md` before executing a target.
 - Read `references/target-output-contract.md` before interpreting target stdout or side effects.
-- Run `python3 scripts/validate_runtime_topology.py --self-test` before relying on the validator and report assertions separately from process exit status.
+- Run `python3 scripts/validate_runtime_topology.py --self-test --scratch-root ~/agentic-skills/.scratchpad` before relying on the validator and report assertions separately from process exit status. Self-tests require an explicit scratch destination.
+- From the canonical package, run `python3 scripts/test_validate_runtime_topology.py` after changing the validator to exercise its CLI regressions.

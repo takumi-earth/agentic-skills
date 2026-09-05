@@ -14,6 +14,11 @@
   ],
   "relationships": [
     {
+      "kind": "alternative-to-existing-owner",
+      "mutation_authority": "none",
+      "target": "validate-symlinked-skill-runtime"
+    },
+    {
       "kind": "deployment-owner",
       "mutation_authority": "none",
       "target": "link-agentic-skills"

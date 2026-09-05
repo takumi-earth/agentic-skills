@@ -1,4 +1,0 @@
-interface:
-  display_name: "Validate Symlinked Skill Runtime"
-  short_description: "Validate scripted skills across deployments"
-  default_prompt: "Use $validate-symlinked-skill-runtime to execute this stateful target's real entry point across direct, copied, and linked deployment fixtures."

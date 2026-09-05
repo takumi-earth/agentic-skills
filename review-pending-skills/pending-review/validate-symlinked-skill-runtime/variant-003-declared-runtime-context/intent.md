@@ -12,7 +12,7 @@ Define a small context manifest listing CODEX_HOME, canonical skill repository, 
 
 ## Difference from sibling variants
 
-Keep this approach distinct from `variant-001-explicit-runtime-root`, `variant-002-deployment-topology-matrix`, `variant-004-lexical-install-path`. Do not converge implementation authority, activation effects, or failure semantics merely because common text could be shared.
+Keep the launcher-manifest protocol distinct from the explicit-authority validation already owned by `$validate-symlinked-skill-runtime`. The other runtime drafts were pruned after review; predecessor paths in `review.json` identify their Git history. This alternative remains pending until a concrete launcher use case and authority-conflict behavior are established.
 
 ## Causal evidence
 
