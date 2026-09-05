@@ -46,6 +46,8 @@ struct AppliedSourceTransformation {
 
 Keep `ParsedWorkspace` opaque. Provide typed queries for declarations, implementations, calls, arguments, fields, arms, paths, owners, candidates, failed predicates, and semantic deltas.
 
+Apply the same opacity to every returned child value. Prevent source-bearing `Debug` or serialization from exposing rendered syntax through structural assertion interfaces. Typed diagnostic data remains valid, and diagnostic adapters retain their rendering role.
+
 Assert that:
 
 - the intended semantic owner was selected;

@@ -12,8 +12,16 @@
   ],
   "relationships": [
     {"kind": "overlap", "target": "test-adaptive-source-transforms"},
-    {"kind": "complements", "target": "enforce-adaptive-transform-tests/variant-001-opaque-typed-harness"},
-    {"kind": "alternative", "target": "enforce-adaptive-transform-tests/variant-002-dataflow-aware-lint"}
+    {"kind": "historical-complement", "target": "enforce-adaptive-transform-tests/variant-001-opaque-typed-harness"},
+    {"kind": "alternative", "target": "enforce-adaptive-transform-tests/variant-002-dataflow-aware-lint"},
+    {"kind": "shared-guidance-owner", "target": "test-adaptive-source-transforms/SKILL.md"}
+  ],
+  "review_notes": [
+    "User disposition: retain pending correction as a distinct model-driven case generator; do not adopt the generator into product test workflows.",
+    "The user approved folding the narrow source-exposure rule from `variant-001-opaque-typed-harness` into `test-adaptive-source-transforms` and pruning that draft. The historical complement remains recoverable through candidate-root Git history.",
+    "Before adoption, validate nested types and variation relationships before generation, including `unrelated` entries, target paths, scope entries, permitted moves, and pre-state, post-state, and drift distinctions. Reject or explicitly classify moves outside scope, unchanged moves, identical pre/post states, and unchanged drift instead of emitting contradictory expectations or uncaught exceptions.",
+    "Preserve distinct fixture roles and prevent generated decoy owners and node IDs from colliding with supplied identities.",
+    "Describe annotation-only trivia, line-shift, and reorder records as a case-planning interface whose consuming adapter must materialize the variations. Generated case counts do not establish executed behavioral coverage. The executable package remains uncorrected and pending."
   ],
   "schema_version": 1,
   "status": "pending",
