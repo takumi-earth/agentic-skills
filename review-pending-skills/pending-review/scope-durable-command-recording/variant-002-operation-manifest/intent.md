@@ -12,7 +12,11 @@ Persist cwd, inputs, exact argv, expected conditions, outputs, and timeout befor
 
 ## Difference from sibling variants
 
-Keep this approach distinct from `variant-001-effect-classification`, `variant-003-record-every-command`. Do not converge implementation authority, activation effects, or failure semantics merely because common text could be shared.
+The user approved pruning `variant-001-effect-classification` after clarifying the evidence boundary in `$filesystem-git-observability`, and pruning the rejected `variant-003-record-every-command` comparison. Their names and the predecessor path in `review.json` are Git-history references. This manifest-driven approach remains a distinct pending design.
+
+## Current review disposition
+
+Retain pending. `filesystem-git-observability/scripts/persist_command_report.py` already preserves exact argv, input hashes, stdout, stderr, and exit status. This candidate provides a manifest schema and proposed runner contract; it has no runner implementation. Reconcile its proposed `cwd`, timeout, expected-condition, and output enforcement with that helper and the existing owner's task-required evidence boundary before implementing a runner or proposing promotion.
 
 ## Causal evidence
 
@@ -35,7 +39,7 @@ The durable-script mandate was correctly intended to make investigation and muta
 - Calling a substantive source selection a passive read to evade durability.
 - Wrapping trivial reads and obscuring intent.
 - Treating a persisted report as proof that a flawed procedure is correct.
-- Retaining the rejected record-every-command variant without marking it inactive.
+- Treating a label such as substantive computation as authority to create evidence artifacts.
 
 The candidate remains pending because structural validity does not decide whether this design should be promoted or merged into an existing owner.
 

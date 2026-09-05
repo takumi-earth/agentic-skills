@@ -5,7 +5,7 @@ description: "Design and execute auditable filesystem and Git mutations with dur
 
 # Filesystem Git Observability
 
-Make filesystem and Git effects explainable, repeatable, and resumable. Write the exact operation as a durable script before running it; preserve its parameters and evidence on disk; and report failures as a falsified condition with exact expected and received values.
+Make filesystem and Git effects explainable, repeatable, and resumable. When the authorized task requires recoverable evidence, write the exact operation as a durable script before running it and preserve its parameters and evidence on disk. Report failures as a falsified condition with exact expected and received values.
 
 ## Establish the real contract
 

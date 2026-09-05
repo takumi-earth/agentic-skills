@@ -14,9 +14,14 @@
   ],
   "relationships": [
     {
-      "kind": "possible-operational-owner",
+      "kind": "existing-operational-owner",
       "mutation_authority": "none",
       "target": "filesystem-git-observability"
+    },
+    {
+      "kind": "possible-runner-owner",
+      "mutation_authority": "none",
+      "target": "filesystem-git-observability/scripts/persist_command_report.py"
     },
     {
       "kind": "possible-policy-owner",
