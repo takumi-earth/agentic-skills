@@ -1,4 +1,0 @@
-interface:
-  display_name: "Isolate First-Party Policy"
-  short_description: "Keep strict crate policy from leaking into upstream"
-  default_prompt: "Use `$isolate-first-party-policy-in-mixed-workspaces` to preserve first-party lint and formatting standards without applying them to upstream crates."

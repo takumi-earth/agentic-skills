@@ -62,6 +62,8 @@ Do not infer destination architecture from an incomplete starting snapshot. Do n
 
 In mixed-ownership workspaces, distinguish first-party quality from policy reach. First-party crates must satisfy the strict standard through their own lint declarations and configuration; integration into a larger workspace must not leak that policy through ancestor files, inheritance, environment, or blanket flags. Authorized toolchain, edition, and dependency alignment does not transfer lint/format ownership of upstream crates. Fix a first-party failure structurally without weakening its standard or imposing that standard on unrelated consumers.
 
+When integration, configuration placement, or validation-command changes can alter that policy boundary, read [the mixed-workspace policy guidance](references/mixed-workspace-policy.md). An ordinary lint fix that leaves policy scope unchanged does not need this reference.
+
 ## Use strict-owned evidence before substitutes
 
 - For work in or affecting the strict ecosystem, use the current local checkout beneath `~/strict-rs/*` as the first source for ownership, implementation, behavior tests, manifests, features, patches, license, Rust edition and toolchain policy, and repository-specific guidance.
