@@ -52,6 +52,8 @@ When the requirement is semantic, adaptive, structural, or location-independent,
 
 Legacy implementation and passing local tests are evidence of current behavior, not permission to reproduce an explicitly rejected mechanism. When the user has declared a mechanism obsolete, remove its reusable API and test escape hatches first. Let compile failures identify capabilities that need rebuilding, and consult Git history only for a specific capability after defining its replacement contract.
 
+When adopting a nearby helper could materially conflict with a current invariant, compare its actual inputs, outputs, defaults, and failure states with that invariant. Evaluate only relevant counterfactuals, such as which variations it accepts, which states it collapses, or which owner it observes. Keep the comparison in existing task context without a mandatory adoption packet. Reuse compatible behavior within the authorized scope; an already-settled rejection needs no renewed comparison or approval.
+
 Use `$design-semantic-source-transforms` for production transformation design and `$test-adaptive-source-transforms` for its evidence.
 
 ## Gate only unresolved architecture
