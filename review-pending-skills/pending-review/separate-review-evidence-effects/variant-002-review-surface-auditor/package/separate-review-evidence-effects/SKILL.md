@@ -15,10 +15,12 @@ Read [the audit rules](references/audit-rules.md), then run:
 python3 scripts/audit_review_effects.py <skill-package>
 ```
 
-The auditor scans `SKILL.md` and directly referenced Markdown for phrases that make persistence, collectors, probes, validation, mutation, Git, activation, or publication appear automatic from a review trigger. It emits line-located findings, the effect classes involved, and the rule that matched.
+The auditor scans `SKILL.md` and directly referenced local Markdown for phrases that make persistence, collectors, probes, validation, mutation, Git, activation, or publication appear automatic from a review trigger. It also checks creation-to-activation wording. It resolves and deduplicates inputs within the selected package, then emits line-located findings, the effect classes involved, and the rule that matched.
 
 ## Adjudicate findings
 
 Treat each finding as a review lead. Explicit user-requested deliverables, narrowly declared automatic pipelines, and safe read-only inspection may be legitimate. Confirm the surrounding trigger, authority source, and stop boundary before proposing a change.
 
 Use `--json` for machine-readable findings. A zero-finding result means only that no declared pattern matched; it does not prove the skill's authority semantics are sound. The script never edits, executes package helpers, stages, commits, installs, or activates anything.
+
+The process exits `0` for no findings, `1` for advisory findings, and `2` for structured input errors. After changing the auditor, run `python3 scripts/test_audit_review_effects.py` from this package; its disposable fixtures use the canonical repository's `.scratchpad/`.

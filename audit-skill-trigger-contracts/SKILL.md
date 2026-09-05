@@ -33,8 +33,10 @@ For each path, record the trigger source, required retained inputs, allowed effe
 | Governing disablement | Record whether higher-authority instructions or harness policy disable invocation of the skill itself. Keep that separate from a prohibition on one effect. |
 | Activation | Record whether an explicit request, implicit match, lifecycle event, or handoff activated the skill after governing policy was applied. |
 | Evidence prerequisite | Record `satisfied`, `missing`, or `not required`; do not turn a useful input into an activation prerequisite. |
-| Effect authority | Record each requested read, write, configuration, registration, synchronization, trust, or external effect as separately authorized or unauthorized. |
+| Effect authority | Distinguish reads and inline findings, persisted reports, collector execution, probes and validation, source changes, each Git operation, promotion, installation, synchronization, registration, trust, and publication or external communication. Record authority for each actual effect. |
 | Execution outcome | Record `successful side effect`, `lawful no-op`, `failed`, or `not attempted`; none of these outcomes retroactively proves or disproves activation. |
+
+Classify helpers by what they actually do: a read-only inventory may serve an authorized review, while a collector that writes evidence needs authority for that output. Trace authority to the user's instruction or a workflow the user authorized; an assistant-authored plan or a skill's own wording cannot supply a missing grant. Preserve explicitly requested reports, validation, and implementation as required deliverables. Separating effects must neither omit those deliverables nor imply permission for remediation, commits, activation, or publication that the user did not authorize.
 
 ## Protect explicit invocation
 

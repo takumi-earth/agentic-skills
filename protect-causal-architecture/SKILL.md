@@ -56,6 +56,8 @@ Use `$design-semantic-source-transforms` for production transformation design an
 
 Do not stop already-authorized implementation merely because it changes a mutator, barrier, cleanup step, or test. Gate work only when the requested implementation would force an unresolved architectural choice.
 
+Check the actual effects of a command that bundles creation, validation, adoption, installation, or activation. If it combines authorized and unauthorized effects, use a narrower official command when available; otherwise identify the additional effect that needs user authorization. A bundled command does not merge those authorities, and already-authorized effects do not require another approval or a capability matrix.
+
 For an unresolved choice:
 
 1. State the current and proposed causal edge.

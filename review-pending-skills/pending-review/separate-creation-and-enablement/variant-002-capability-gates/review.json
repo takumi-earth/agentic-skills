@@ -13,10 +13,6 @@
   ],
   "relationships": [
     {
-      "kind": "alternative",
-      "target": "separate-creation-and-enablement/variant-001-artifact-lifecycle"
-    },
-    {
       "kind": "overlap",
       "target": "protect-causal-architecture"
     }

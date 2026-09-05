@@ -14,4 +14,4 @@ Static findings are not authority judgments. Explicit deliverables and narrowly 
 
 ## Relationships and uncertainty
 
-This executable alternative complements the effect template and overlaps `$audit-skill-trigger-contracts`. Review should tune false-positive rules from real packages before adoption.
+This executable alternative can support the effect-authority check in `$audit-skill-trigger-contracts`. Review should tune false-positive rules from real packages before adoption.

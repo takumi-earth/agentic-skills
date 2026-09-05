@@ -2,7 +2,7 @@
 
 ## Concrete intent
 
-Explore a more formal alternative to the artifact-lifecycle variant for workflows where one artifact crosses repository, installer, harness, hook, and runtime boundaries.
+Explore a more formal alternative to the existing procedural owners for workflows where one artifact crosses repository, installer, harness, hook, and runtime boundaries.
 
 ## Approach
 
@@ -12,11 +12,10 @@ Represent every effect as a capability edge with its own mutator, authority, new
 
 This approach detects commands that bundle creation and activation, and it treats writes through existing live projections as activation. It does not assume the lifecycle has exactly four stages.
 
-## Differences from `variant-001-artifact-lifecycle`
+## Differences from the existing owners
 
-The first variant is easier to use for ordinary artifact work and names four lifecycle states. This variant is more general and auditable but may be heavier; it uses a per-effect capability matrix and allows more stages.
+Governing guidance and `$protect-causal-architecture` cover creation, enablement, and bundled commands without a mandatory matrix. This variant retains the more formal per-effect capability matrix for comparison in fragile workflows; its context cost remains an open review question.
 
 ## Review questions
 
 - Is the matrix worth its context cost outside fragile multi-system workflows?
-- Should a convergence variant keep the simple lifecycle vocabulary but add the bundled-command and live-projection tests from this approach?

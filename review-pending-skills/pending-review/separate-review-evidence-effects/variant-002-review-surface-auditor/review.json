@@ -11,7 +11,6 @@
     "Repeated reviewer need to correct implied artifact and probe authority in audit skills"
   ],
   "relationships": [
-    {"kind": "complements", "target": "separate-review-evidence-effects/variant-001-effect-classification-template"},
     {"kind": "overlap", "target": "audit-skill-trigger-contracts"}
   ],
   "schema_version": 1,
