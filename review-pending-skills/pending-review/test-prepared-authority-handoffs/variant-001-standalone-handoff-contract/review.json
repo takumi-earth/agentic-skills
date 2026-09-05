@@ -16,10 +16,17 @@
     {"kind": "overlap", "target": "plan-strict-work"},
     {"kind": "complements", "target": "audit-architectural-regressions"},
     {"kind": "complements", "target": "preserve-real-workflow-fixtures"},
-    {"kind": "alternative", "target": "test-prepared-authority-handoffs/variant-002-causal-reference"}
+    {"kind": "historical-alternative", "target": "test-prepared-authority-handoffs/variant-002-causal-reference"},
+    {"kind": "shared-guidance-owner", "target": "protect-causal-architecture/references/prepared-authority-handoffs.md"}
+  ],
+  "review_notes": [
+    "User disposition: retain pending correction as a distinct broader test-workflow trigger; this disposition does not promote the standalone package.",
+    "The user approved integrating the corrected variant-002 guidance into an optional reference under protect-causal-architecture, then pruning that draft. Its creation remains in candidate-root Git history.",
+    "Before adoption, condition unresolved-authority negatives on constructible production inputs that can actually reach the failure. Preserve supported derivation and defaulting; prohibit fabricated prepared states or public API widening solely for test access.",
+    "Name the relevant protected target-write or mutation boundary and preserve legitimate earlier preparation effects, cleanup, and recovery. Remove blanket claims that no mutation or restoration attempt occurred.",
+    "Preserve field-specific prepared authority, independently owned raw facts, full-workflow positive evidence, and role-correct scenario inputs. Keep records proportional in the existing task contract without a mandatory matrix, new audit artifact, or renewed approval for an exact approved change. The current package remains uncorrected pending that work."
   ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-001-standalone-handoff-contract"
 }
-

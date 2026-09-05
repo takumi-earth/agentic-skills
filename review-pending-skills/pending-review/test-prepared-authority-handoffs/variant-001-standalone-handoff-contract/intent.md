@@ -14,11 +14,11 @@ Prepared authority is field-specific. Raw input remains valid for unrelated fact
 
 ## Relationships and uncertainty
 
-This variant overlaps `$protect-causal-architecture`, `$plan-strict-work`, and `$audit-architectural-regressions`. Review should decide whether the handoff pattern recurs broadly enough for a standalone trigger or belongs as a causal reference.
+Retain this broader standalone test-workflow trigger pending correction. The user approved folding the corrected `variant-002-causal-reference` into `protect-causal-architecture/references/prepared-authority-handoffs.md` and pruning that draft. The optional causal reference does not replace this broader trigger or approve its adoption.
 
-## Review questions
+## Required corrections before adoption
 
-- Should the workflow-level positive/negative pair be mandatory for every migrated field or only load-bearing authority?
-- Should the skill explicitly require typestate when the owner API can encode the ordering?
-- How much repository-specific vocabulary should remain in a promoted reference?
-
+- Require unresolved-authority negatives only when constructible production inputs can reach the failure. Preserve supported derivation or defaulting when authority is always available; do not invent branches, impossible prepared states, or public test access.
+- Name the protected target writes or mutation phase. Preserve legitimate earlier preparation effects and their cleanup or recovery obligations instead of asserting that every mutation or restoration attempt was absent.
+- Keep field-level ownership and the full-workflow positive while retaining raw input for independently owned facts. Use role-correct fixtures according to the actual scenario contract.
+- Make recording proportional in the existing task contract; an exact already-approved change requires no renewed approval, mandatory full matrix, or new audit artifact. The package body and reference remain pending these corrections before adoption.

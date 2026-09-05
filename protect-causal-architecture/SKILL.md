@@ -38,6 +38,8 @@ Keep this record in the existing plan, goal, issue, or code contract. Do not cre
 
 For upgrade-dependent integrations, preserve preparation as a real predecessor: dependency-tool mutation produces refreshed inputs, reviewed compatibility repairs produce the shapes that seams consume, and final convergence permits verification. Deterministic source jobs do not imply that their top-level orchestrator is forbidden to invoke the designated dependency tool. Do not discard preparation by reconstructing an older source state, carry stale indexes across external mutations, or claim that an inventory transaction rolls back earlier external command effects.
 
+When preparation changes which representation owns a field consumed by a later workflow decision or effect, read [the prepared authority handoff guidance](references/prepared-authority-handoffs.md). Apply it to the affected field and protected effect boundary; a pure conversion without an authority handoff does not need this reference.
+
 ## Reject architectural lookalikes
 
 When the requirement is semantic, adaptive, structural, or location-independent, keep target identity, discovery scope, syntax anchoring, load-bearing drift, mutation, and postcondition separate.
