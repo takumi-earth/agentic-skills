@@ -36,6 +36,7 @@ Apply these rules with low freedom:
 - Dirty or concurrent state changes merge-safety behavior only. It does not narrow the intended design or authorize cleanup.
 - Unexpected changes are evidence of concurrency, not evidence that the agent owns them.
 - Never restore, reset, checkout, clean, stage, or unstage unexpected state without explicit authorization for the exact action and targets.
+- A user-selected build surface defines the relevant workflow. Do not add parity, cleanup, allowlist expansion, or completion gates for an explicitly excluded build system or enclosing checkout merely because its files still exist.
 
 Re-read the contract before moving from research to planning, planning to editing, editing to verification, verification to commit, or one orchestration wave to the next.
 
@@ -43,7 +44,7 @@ When a user message arrives during active work, use `$reconcile-live-steering` b
 
 After context compaction or rollout continuation, use `$resume-strict-context` before task action. A summary locates authority; it does not replace the complete living goal.
 
-A verification failure that authorizes source changes moves the active phase back to implementation. Close the full authorized correction set before re-entering verification at the ledger's declared restart point.
+A verification failure that authorizes source changes moves the active phase back to implementation. Close the full authorized correction set before re-entering verification at the declared restart point. When the user requires complete rounds, run every applicable command once, adjudicate the whole issue batch, and implement every repair in the round before any rerun; a focused success cannot replace that barrier.
 
 ## Resolve ownership before location
 
@@ -58,6 +59,8 @@ Walk outward from the symptom:
 5. Change the owner, then converge consumers through the supported workflow.
 
 Do not infer destination architecture from an incomplete starting snapshot. Do not use physical location as proof of semantic ownership. Read [the ownership model](references/ownership-model.md) when the task crosses repository, generator, or adapter boundaries.
+
+In mixed-ownership workspaces, distinguish first-party quality from policy reach. First-party crates must satisfy the strict standard through their own lint declarations and configuration; integration into a larger workspace must not leak that policy through ancestor files, inheritance, environment, or blanket flags. Authorized toolchain, edition, and dependency alignment does not transfer lint/format ownership of upstream crates. Fix a first-party failure structurally without weakening its standard or imposing that standard on unrelated consumers.
 
 ## Use strict-owned evidence before substitutes
 

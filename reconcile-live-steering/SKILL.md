@@ -43,6 +43,8 @@ Use this precedence unless the user explicitly changes it:
 
 A later purpose-bound exception does not erase a broader prohibition outside that purpose. A formerly valid scope boundary must not survive after the user explicitly supersedes it.
 
+When the user says a clarified design was always the intention, preserve that distinction: repair the assistant's interpretation rather than presenting the original intent as a newly selected option. Retract derived pending questions, blockers, and success conditions that rest on the rejected premise. If guidance updates are authorized, correct the affected goal and procedural owners together so an old restriction cannot silently restore the same misunderstanding; do not rewrite unrelated historical evidence or expand into implementation without authority.
+
 Update the active plan or living goal before source edits when the message changes target behavior, ownership, phase order, verification, or authorization. Keep incidental diagnostics out of durable target-state text.
 
 ## Resume deliberately

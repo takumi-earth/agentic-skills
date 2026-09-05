@@ -1,4 +1,4 @@
 interface:
   display_name: "Upgrade Codex Patch"
   short_description: "Rebase Codex patches across releases"
-  default_prompt: "Use $upgrade-codex-patch to rebase a previous Codex patch onto a new release, upgrade dependencies, remediate build failures, and produce the successor patch."
+  default_prompt: "Use $upgrade-codex-patch to rebase a previous Codex patch onto a new release, run only its exact three-command Cargo sequence, remediate build failures, and produce the successor patch."

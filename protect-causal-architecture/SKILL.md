@@ -21,6 +21,8 @@ Assistant-authored goals, plans, status, and audits record authority; they do no
 
 If the user already authorized the exact architectural change, implement it. Do not require another approval, a baseline selection exercise, a causal packet, or a durable audit before starting. Pause only when the next effect would decide an owner, ordering, authority, or retirement question the user has not resolved.
 
+When the user confirms that a design was always intended, classify the conflicting implementation as remediation work, not a new tradeoff or pending choice. Existing duplicated machinery and its tests cannot move a settled owner. A backend replacement changes the execution mechanism without moving session admission, shared-state commits, callback supervision, completion, or shutdown unless the user separately requests that redesign. Engine-neutral responsibilities do not by themselves authorize interchangeable backends.
+
 ## Record only the disputed causal contract
 
 When a real causal edge is disputed or easy to lose, state the minimum facts needed to preserve it:
@@ -33,6 +35,8 @@ When a real causal edge is disputed or easy to lose, state the minimum facts nee
 - the positive behavior and forbidden-shortcut evidence.
 
 Keep this record in the existing plan, goal, issue, or code contract. Do not create a separate scratch artifact unless the user requested one or the authorized workflow intrinsically requires durable recovery state. Expand to a complete multi-stage chain only when several interacting edges would otherwise remain ambiguous.
+
+For upgrade-dependent integrations, preserve preparation as a real predecessor: dependency-tool mutation produces refreshed inputs, reviewed compatibility repairs produce the shapes that seams consume, and final convergence permits verification. Deterministic source jobs do not imply that their top-level orchestrator is forbidden to invoke the designated dependency tool. Do not discard preparation by reconstructing an older source state, carry stale indexes across external mutations, or claim that an inventory transaction rolls back earlier external command effects.
 
 ## Reject architectural lookalikes
 
