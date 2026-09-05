@@ -25,6 +25,8 @@ Own trace evidence, research methodology, and skill-opportunity synthesis. Keep 
 
 Do not scan a full corpus when a named session or a few exact evidence lines can answer the question.
 
+For optional catalog-based skill-reference evidence or current filesystem topology, read [skill-use-resources.md](references/skill-use-resources.md) only when that question arises. These helpers supplement the existing extractor; neither catalog preparation nor topology inspection is a prerequisite for session research. Keep historical transcript evidence separate from current filesystem facts.
+
 ## Define the study contract
 
 Record before scanning:
