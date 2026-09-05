@@ -1,4 +1,4 @@
 interface:
   display_name: "Maintain Living Goal"
   short_description: "Preserve living goals and user-owned status"
-  default_prompt: "Use $maintain-living-goal to reconcile this living goal, preserve its causal contract, continue independent work, and prepare a user-reviewable completion audit."
+  default_prompt: "Use `$maintain-living-goal` to answer status questions from this goal's designated authority, preserve settled decisions and verification limits, and reconcile stale facts after substantive changes."

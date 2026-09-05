@@ -1,6 +1,6 @@
 ---
 name: maintain-living-goal
-description: "Maintain a user-designated goal, plan, or specification as a minimal living implementation contract. Use before and after complete implementation slices, during pruning, when updating current status or blockers, and whenever a long-running task must keep repository-specific architecture intact without accumulating chronology."
+description: "Maintain a user-designated goal, plan, or specification as a minimal living implementation contract. Use before and after complete implementation slices, during pruning, when answering questions about current status or remaining work, when updating status or blockers, and whenever a long-running task must keep repository-specific architecture intact without accumulating chronology."
 ---
 
 # Maintain Living Goal
@@ -10,6 +10,8 @@ Keep the goal sufficient to resume correctly from the file alone. Move generic e
 ## Resolve and structure the authority
 
 When the active harness supplies an exact living-goal path, treat that path as the sole living authority for the session and read it directly. Do not enumerate, compare, timestamp, size, or select among sibling attachments because an older path appears in conversation, memory, or a compaction summary. Consult another attachment only when the user or active harness explicitly designates it as historical comparison input. If two sources are explicitly designated as active authorities, stop and ask which governs before editing either. Only when the harness supplies no active path may the user's latest explicit designation or current goal metadata resolve the living artifact; never choose a similarly named repository file by convenience.
+
+Before answering status, completion, or remaining-work questions, attribute current claims to the designated active goal, applicable user instructions, and relevant current evidence. Keep active authority, historical provenance, supporting evidence, and authorized output distinct; a historical link or generated companion does not expand the active scope, and a role label is not verified authority. Reuse already-read, unchanged authoritative material for ordinary status answers. Refresh the relevant reads when attribution is uncertain or substantive state changes, and follow the complete-read recovery requirements after compaction. This checkpoint does not require a new table, ledger, or artifact.
 
 Keep only the sections the task needs, normally:
 
@@ -34,6 +36,8 @@ Before each edit, classify every changed statement and retain its primary proven
 - **Assistant proposal:** keep it visibly proposed and non-authoritative. If it changes architecture, tests, a baseline, or an allowed mutator, route it through `$protect-causal-architecture` and wait for explicit user selection before dependent effects.
 
 Never label an assistant-derived design “decision-complete,” rewrite it as implementation fact, or use it as the premise for source/test edits unless its authority can be traced past assistant-authored goal text to an explicit user decision or protected/source-derived contract. The goal itself is not independent corroboration for a statement the assistant inserted.
+
+Keep decision, application, and verification as separate facts. A user's selection remains settled until an attributable user instruction explicitly supersedes that decision. New guard evidence, changed target bytes, Git representation changes, or stale prose may affect whether an effect can be applied or verified; they do not reopen the selection. When an application guard fails, report the mismatch and stop the dependent effect without manufacturing reassessment or renewed approval of the unchanged decision.
 
 Mutable status cannot:
 
@@ -70,6 +74,8 @@ Classify each statement before changing it:
 - **Mutable status:** rewrite to current fact.
 - **Supporting evidence:** retain only while it supports an active decision, blocker, or acceptance obligation.
 - **Protected causal contract:** preserve through `$protect-causal-architecture`; change only after explicit supersession.
+
+After a substantive change, reconcile mutable claims made stale by current user instructions, source, or external evidence, including affected contradictory statements elsewhere in the goal. Keep former statuses attributable as history when they still explain the work. Preserve each deliberately unrun check and its reason: an authorized excluded or superseded gate is not unfinished work, while a still-required check remains unverified. Application does not establish verification or user acceptance. Reconciliation requires authority to maintain the goal; a status question or a `Stop` retry alone does not authorize a rewrite, new verification, or another audit.
 
 Touch protected packets individually. Never replace a whole section when that prevents statement-for-statement attribution.
 
