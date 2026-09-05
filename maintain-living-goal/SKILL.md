@@ -13,6 +13,8 @@ When the active harness supplies an exact living-goal path, treat that path as t
 
 Before answering status, completion, or remaining-work questions, attribute current claims to the designated active goal, applicable user instructions, and relevant current evidence. Keep active authority, historical provenance, supporting evidence, and authorized output distinct; a historical link or generated companion does not expand the active scope, and a role label is not verified authority. Reuse already-read, unchanged authoritative material for ordinary status answers. Refresh the relevant reads when attribution is uncertain or substantive state changes, and follow the complete-read recovery requirements after compaction. This checkpoint does not require a new table, ledger, or artifact.
 
+For test or gate status, keep planned, written, compiled, executed, assertion results, process exit, and acceptance criteria separate. Source or a successful build does not establish that a test body ran, and exit `0` alone does not establish passing behavior or canonical acceptance. Attribute evidence to its source, configuration, scope, and run. Changed inputs can invalidate an affected current claim without erasing the earlier result; a later verification ban does not erase previously obtained evidence that still applies. State the limits of the available evidence in the existing response or authorized record. Classification grants no additional inspection, execution, or persistence authority and must not automatically create a ledger.
+
 Keep only the sections the task needs, normally:
 
 - objective and completion boundary;

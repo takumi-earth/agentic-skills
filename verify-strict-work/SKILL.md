@@ -7,9 +7,9 @@ description: "Preserve the exact verification contract for `strict*` ecosystem w
 
 Treat verification as an explicit authorization and acceptance protocol. More commands, broader scope, longer timeouts, or substitute evidence are not automatically safer.
 
-## Extract the verification ledger
+## Identify the verification contract
 
-Before running a command, record:
+Before running a command, identify in the existing task context or authorized record:
 
 - who owns verification;
 - permitted and prohibited command categories;
@@ -22,7 +22,7 @@ Before running a command, record:
 - failure iteration policy: whether the batch continues after a nonzero result or stops immediately, how corrections are batched, and the exact restart point.
 - post-format evidence policy: which symbol, stale-vocabulary, or reachability scans must be repeated after formatting shifts lines or names.
 
-A command written in a plan is not authorization to run it. Implementation authority is not verification authority.
+A command written in a plan is not authorization to run it. Implementation authority is not verification authority. Classification grants neither execution nor persistence authority: apply these distinctions in the existing response or authorized record, without automatically creating a ledger.
 
 Treat a baseline as already-established timing or behavior evidence. Do not create a historical checkout, archive, revert, or provenance comparison merely to decide whether a current failure is “pre-existing” unless the user explicitly requests baseline attribution. Classify current findings by authorized scope and structural owner, not by age.
 
@@ -34,8 +34,9 @@ If verification is prohibited or reserved to the user:
 
 - Do not run focused tests, lint commands, format checks, metadata probes, mutation tools, or “cheap gates.”
 - Do not replace commands with broad `rg`, `awk`, `find`, source audits, reachability scans, or manual completeness proofs.
-- Do not claim correctness, cleanliness, reachability, or acceptance.
-- Report implementation state and request or await the user's evidence.
+- Do not establish new correctness, cleanliness, reachability, or acceptance claims through prohibited verification.
+- Preserve previously obtained results and the current claims they still support for the relevant inputs and scope. A later ban stops new verification; it does not erase still-applicable evidence.
+- Report implementation state, distinguish prior evidence from newly unverified work, and request or await the user's evidence where verification remains required.
 
 Narrow source inspection required to implement a known edit is not verification. Inspection intended to prove absence, completeness, or correctness is.
 
@@ -58,6 +59,10 @@ Narrow source inspection required to implement a known edit is not verification.
 
 ## Separate diagnostics from acceptance
 
+Treat planned, written, compiled, and executed as separate observations. Test source does not prove compilation or execution; a successful build establishes compilation only for the tests and configuration it actually included, not that a test body ran. Report a newly written, unexecuted test as unexecuted rather than failed or behaviorally covered.
+
+Attribute execution evidence to the actual command, scope, source and configuration, timestamp, and underlying result or evidence locator available. Missing attribution limits the claim; it does not authorize another read, command, or artifact. After a source, configuration, or scope change, reconcile only the affected current claims. Preserve the earlier result as an observation of its original inputs, even when it no longer supports current acceptance.
+
 A focused nonzero command is diagnostic evidence even when its test assertions say `N pass, 0 fail`.
 
 Report independently:
@@ -68,7 +73,7 @@ Report independently:
 - artifact generation;
 - canonical gate status.
 
-Do not call exit code `1` passing, successful, clear, or green. Do not call focused checks equivalent to an unrun top-level gate. Worker or verifier summaries are not proof without the underlying authorized artifact or command result.
+Do not call exit code `1` passing, successful, clear, or green. Exit `0` alone establishes neither passing behavior nor an accepted focused or canonical gate: the observed scope and results must satisfy that gate's declared criteria, including its required assertions and policy thresholds. Close a behavioral claim only when executed evidence observes its named semantic owner and contract. Do not call focused checks equivalent to an unrun top-level gate. Worker or verifier summaries are not proof without the underlying authorized artifact or command result.
 
 ## Handle long-running commands
 

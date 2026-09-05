@@ -12,7 +12,9 @@
   ],
   "relationships": [
     {"kind": "overlap", "target": "verify-test-parity"},
-    {"kind": "complements", "target": "classify-test-evidence-state/variant-001-evidence-state-protocol"}
+    {"kind": "historical-complement", "target": "classify-test-evidence-state/variant-001-evidence-state-protocol"},
+    {"kind": "shared-guidance-owner", "target": "verify-strict-work"},
+    {"kind": "shared-guidance-owner", "target": "maintain-living-goal"}
   ],
   "schema_version": 1,
   "status": "pending",
