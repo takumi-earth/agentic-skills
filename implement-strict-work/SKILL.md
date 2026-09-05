@@ -58,6 +58,8 @@ Do not rationalize:
 
 Treat checked-in compile-diagnostic Rust source as justified only when full `rustc` integration is itself the behavior under test. Even in that narrow case, normalize or delete incidental non-idiomatic syntax that is not required to produce the diagnostic; a compile-fail label is not an exemption from the repository's structural constraints.
 
+When test setup depends on distinct artifact roles, a file or materialization boundary, or an explicit fixture contract, read [the workflow fixture guidance](references/workflow-fixtures.md). Preserve those scenario requirements while allowing parser inputs, temporary crates, and controlled fixture mutation where they fit the contract.
+
 Use a narrow exception only when the current repository contract or the user explicitly authorizes the exact lint or site category with semantic criteria. Apply it only at qualifying sites, include every required contextual justification, and do not infer adjacent exemptions.
 
 ## Preserve behavior while changing structure

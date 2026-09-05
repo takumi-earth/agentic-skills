@@ -15,10 +15,16 @@
     {"kind": "overlap", "target": "plan-strict-work"},
     {"kind": "overlap", "target": "implement-strict-work"},
     {"kind": "complements", "target": "protect-causal-architecture"},
-    {"kind": "alternative", "target": "preserve-real-workflow-fixtures/variant-002-strict-owner-reference"}
+    {"kind": "historical-alternative", "target": "preserve-real-workflow-fixtures/variant-002-strict-owner-reference"},
+    {"kind": "shared-guidance-owner", "target": "implement-strict-work/references/workflow-fixtures.md"}
+  ],
+  "review_notes": [
+    "User disposition: retain pending correction as a distinct language-neutral standalone trigger; no promotion or interface change is approved by this disposition.",
+    "The user approved integrating the corrected variant-002 guidance into an optional implementation reference with a narrow planning pointer, then pruning that draft. Its creation remains in candidate-root Git history.",
+    "Before adoption, narrow committed-file, exact-byte, valid-source, and runtime-construction rules to scenario-defining obligations. Preserve explicit dedicated-file and unchanged-starting-byte contracts while allowing parser strings, tokens, IR, temporary crates, and controlled fixture mutation when appropriate.",
+    "Preserve distinct artifact roles, source-free scenarios, independent semantic oracles, and touched-scenario scope. Require planning decisions only for load-bearing roles and identity, not every routine filename. The current package remains uncorrected pending that work."
   ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-001-standalone-fixture-contract"
 }
-

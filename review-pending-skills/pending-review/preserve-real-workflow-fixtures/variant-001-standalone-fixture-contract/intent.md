@@ -14,11 +14,11 @@ Role-specific files remain distinct even when byte-identical. The contract does 
 
 ## Relationships and uncertainty
 
-This variant overlaps `$plan-strict-work`, `$implement-strict-work`, and `$protect-causal-architecture`. Review should decide whether fixture ownership needs an independently triggered skill or should become shared guidance routed through those owners.
+Retain this language-neutral, standalone trigger pending correction. The user approved folding the corrected `variant-002-strict-owner-reference` into `implement-strict-work/references/workflow-fixtures.md`, with a narrowly scoped planning pointer from `$plan-strict-work`, and pruning that draft. The optional strict-owner guidance does not replace this broader trigger or approve its adoption.
 
-## Review questions
+## Required corrections before adoption
 
-- Should exact-byte loading be required for every workflow fixture or only scenario-defining inputs?
-- Should the valid-source rule remain language-neutral in the main skill and keep Rust examples in the reference?
-- Should promotion retain a separate reference or fold the compact role matrix into an existing strict testing contract?
-
+- Narrow blanket committed-file and runtime-construction rules to the actual scenario contract. Preserve explicit requirements for dedicated role-specific files and unchanged starting bytes without imposing them on every filesystem test.
+- Preserve small parser strings, tokens, IR, temporary crates, and controlled fixture mutation where they test the contract appropriately; distinguish valid tool-consumed source from inert invalid parser data.
+- Preserve role identity, source-free scenarios, independent semantic oracles, and touched-scenario scope. Planning must settle load-bearing identity requirements without requiring every routine filename in advance.
+- Keep the standalone trigger and its adoption pending; the package body and interface still need the scoped corrections above before promotion.

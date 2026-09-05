@@ -68,6 +68,8 @@ Name only the categories that materially affect this implementation:
 - orchestration waves, non-overlapping ownership, and handoff fields when explicitly requested;
 - commit boundaries only when the user requests commit planning.
 
+When fixture roles, file identity, materialization, or an explicit starting-byte contract are load-bearing, read [the workflow fixture guidance](../implement-strict-work/references/workflow-fixtures.md). Settle those scenario requirements and their oracle; routine fixture filenames need not be predetermined.
+
 Resolve wording ambiguity only when it would change behavior, ownership, scope, compatibility, or an external effect. Do not turn harmless conditional wording into a mechanical audit.
 
 Do not compress a selected multi-phase sequence into outcome-only wording such as “reach a fixed point,” “plan statically,” or “refresh when needed.” Final-state equivalence does not prove that information was available at the same time or that failure ordering is preserved.
