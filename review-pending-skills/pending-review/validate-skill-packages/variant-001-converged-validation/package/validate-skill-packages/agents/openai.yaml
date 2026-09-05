@@ -1,0 +1,4 @@
+interface:
+  display_name: "Validate Skill Packages"
+  short_description: "Validate packages and resolve pinned tooling"
+  default_prompt: "Use $validate-skill-packages to run the required package validators, resolve uncertain tooling when needed, and report process and assertion outcomes separately."

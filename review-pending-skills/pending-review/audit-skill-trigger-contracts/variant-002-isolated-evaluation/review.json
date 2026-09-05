@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "candidate_name": "audit-skill-trigger-contracts",
+  "variant_id": "variant-002-isolated-evaluation",
+  "status": "pending",
+  "predecessors": [
+    "review-pending-skills/pending-review/audit-skill-trigger-contracts/variant-001-entry-path-matrix",
+    "review-pending-skills/pending-review/forward-test-skill-triggers/variant-001-isolated-evaluation-protocol",
+    "review-pending-skills/pending-review/forward-test-skill-triggers/variant-002-prompt-matrix-runner",
+    "review-pending-skills/pending-review/separate-review-evidence-effects/variant-001-effect-classification-template"
+  ],
+  "relationships": [
+    {"kind": "convergence", "target": "audit-skill-trigger-contracts/variant-001-entry-path-matrix"},
+    {"kind": "convergence", "target": "forward-test-skill-triggers/variant-001-isolated-evaluation-protocol"},
+    {"kind": "convergence", "target": "forward-test-skill-triggers/variant-002-prompt-matrix-runner"},
+    {"kind": "convergence", "target": "separate-review-evidence-effects/variant-001-effect-classification-template"},
+    {"kind": "possible-merge-target", "target": "audit-skill-trigger-contracts"},
+    {"kind": "complements", "target": "validate-skill-packages"}
+  ],
+  "provenance": [
+    "Current user decision: combine trigger auditing and isolated evaluation under the existing audit owner.",
+    "Current user instruction: I agree with all of your recommended dispositions and required corrections.",
+    "Current review reproduced exposed evaluation labels, a manifest filename collision, and malformed-matrix tracebacks in the predecessor runner.",
+    "User instruction: I also want you to delete/prune things as you do the consolidations, so we don't have to keep track of a bunch of stale skills."
+  ],
+  "activation_effects": [
+    "future explicitly approved merge into the official audit-skill-trigger-contracts package",
+    "future synchronization or other enablement under separate authority",
+    "future isolated agent evaluation only with explicit delegation and context-isolation authority"
+  ]
+}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Audit Skill Trigger Contracts"
+  short_description: "Audit and evaluate skill entry paths"
+  default_prompt: "Use $audit-skill-trigger-contracts to audit skill entry paths and evaluate changed behavior while separating activation, evidence, effect authority, and execution."
+policy:
+  allow_implicit_invocation: true

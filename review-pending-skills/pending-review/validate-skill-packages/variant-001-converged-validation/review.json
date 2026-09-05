@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "candidate_name": "validate-skill-packages",
+  "variant_id": "variant-001-converged-validation",
+  "status": "pending",
+  "predecessors": [
+    "review-pending-skills/pending-review/bootstrap-skills-ref-validation/variant-001-instruction-bootstrap",
+    "review-pending-skills/pending-review/bootstrap-skills-ref-validation/variant-002-resolver-script",
+    "review-pending-skills/pending-review/bootstrap-skills-ref-validation/variant-003-validation-driver"
+  ],
+  "relationships": [
+    {"kind": "convergence", "target": "bootstrap-skills-ref-validation/variant-001-instruction-bootstrap"},
+    {"kind": "convergence", "target": "bootstrap-skills-ref-validation/variant-002-resolver-script"},
+    {"kind": "convergence", "target": "bootstrap-skills-ref-validation/variant-003-validation-driver"},
+    {"kind": "complements", "target": "audit-skill-trigger-contracts"},
+    {"kind": "overlap", "target": "system/skill-creator"},
+    {"kind": "complements", "target": "review-pending-skills"}
+  ],
+  "provenance": [
+    "Current user decision: converge the three bootstrap variants into a separate validation package.",
+    "Current user instruction: I agree with all of your recommended dispositions and required corrections.",
+    "Current review reproduced an aggregate pass with failed assertions and a non-UTF-8 output crash, and identified missing installed-to-pinned version comparison.",
+    "User instruction: I also want you to delete/prune things as you do the consolidations, so we don't have to keep track of a bunch of stale skills."
+  ],
+  "activation_effects": [
+    "future explicitly approved promotion as the validate-skill-packages official package",
+    "future synchronization or other enablement under separate authority",
+    "future tool installation only with explicit environment-mutation authority"
+  ]
+}
