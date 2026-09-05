@@ -1,6 +1,6 @@
 ---
 name: design-command-observability
-description: "Design progress and decision observability for CLI and workflow commands. Use when a command blocks, fans out, performs multiple phases, makes policy decisions, waits on network or child processes, appears hung, needs elapsed-time reporting, or must keep Markdown, JSON, or other machine-readable stdout exact."
+description: "Design progress, decision, and outcome reporting for CLI and workflow commands. Use when a command blocks, fans out, performs multiple phases, makes policy decisions, waits on network or child processes, appears hung, needs elapsed-time reporting, must keep machine-readable stdout exact, or needs an explanation of a guarded no-op or partial failure."
 ---
 
 # Design Command Observability
@@ -39,6 +39,19 @@ Before blocking work, report the smallest useful typed facts:
 
 Preserve failure ordering. Emit an event before the effect it names, never as a post-hoc reconstruction after later mutations.
 
+## Explain guarded outcomes
+
+A successful guarded `no-op` requires a named guard that matched, positive proof that the exact desired state was already present, and zero writes. State the operation, target, checked condition, expected and received values, desired state, and write count. Explain those facts in plain language before using shorthand.
+
+Keep neighboring application outcomes distinct:
+
+- `write`: the guard matched and the operation completed one or more writes;
+- `blocked`: a required guard failed, so the dependent write was not attempted;
+- `skipped`: the operation was not attempted for the stated reason;
+- `failed`: the operation encountered an error; report any observed partial effects and write count rather than implying nothing changed.
+
+Report verification separately as `not-run`, `passed`, or `failed`, with the check's scope and any reason it was deliberately unrun. Keep the application outcome and its actual effects visible after verification. Zero writes alone prove neither guard success nor a passed build, test, or repository gate.
+
 ## Preserve output contracts
 
 - Keep requested Markdown, JSON, or text payloads byte-exact on stdout. Send progress to a payload-safe diagnostic stream.
@@ -55,6 +68,7 @@ Pin:
 - monotonic cumulative elapsed rendering through injected time;
 - event-before-effect and failure short-circuit behavior;
 - phase, fan-out, no-op, and blocking-wait polarities;
+- matched guards, desired-state proof, actual write counts, partial failure, and separate verification results;
 - payload stdout remaining exact;
 - help and parse-error silence;
 - nested supplement silence and no duplicate owner output.

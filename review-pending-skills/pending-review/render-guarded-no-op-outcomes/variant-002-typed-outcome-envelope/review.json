@@ -13,7 +13,7 @@
   ],
   "relationships": [
     {
-      "kind": "alternative",
+      "kind": "historical-alternative",
       "target": "variant-001-no-op-reporting-vocabulary"
     },
     {
@@ -21,7 +21,7 @@
       "target": "filesystem-git-observability"
     },
     {
-      "kind": "overlap",
+      "kind": "shared-guidance-owner",
       "target": "design-command-observability"
     }
   ],
