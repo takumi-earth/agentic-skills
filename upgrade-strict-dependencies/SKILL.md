@@ -69,6 +69,8 @@ Do not revert the upgrade, pin an older version, add a compatibility shim, remov
 
 Treat “upstream does not support it” differently when the dependency is an owned fork: the fork is an authorized refactoring surface within the task scope.
 
+When integration depends on upgraded and repaired dependency shapes, read [the integration preparation guidance](references/integration-preparation.md). It preserves the selected public workflow, predecessor states, and fresh planning inputs across dependency-tool effects.
+
 ## Preserve stage and policy boundaries
 
 - An edition/dependency stage does not authorize lint-policy promotion, unrelated feature redesign, or downstream cleanup.

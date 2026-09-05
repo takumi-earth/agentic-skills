@@ -79,6 +79,8 @@ Public API additions, removals, re-exports, compatibility surfaces, and ownershi
 
 ## Converge generated and multi-repository surfaces
 
+When integration must consume upgraded and repaired dependency shapes, use `$upgrade-strict-dependencies` and its [integration preparation guidance](../upgrade-strict-dependencies/references/integration-preparation.md) for the required predecessor states and dependency-tool effects.
+
 - Edit the fragment, generator, schema, template, or workflow owner.
 - Run the owning generation path only when generation is authorized.
 - Accept and report normal generated fallout; do not hand-copy or imitate missing tooling.

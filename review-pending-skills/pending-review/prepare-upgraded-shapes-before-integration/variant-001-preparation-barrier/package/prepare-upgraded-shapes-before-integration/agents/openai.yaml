@@ -1,4 +1,0 @@
-interface:
-  display_name: "Prepare Upgraded Integration Shapes"
-  short_description: "Prepare dependencies before integration and verification"
-  default_prompt: "Use `$prepare-upgraded-shapes-before-integration` to keep dependency preparation, compatibility repairs, integration seams, and verification in their required order."
