@@ -40,6 +40,8 @@ For a compile error, lint, mutant, coverage gap, duplicate, generated failure, o
 
 The diagnostic is acceptance evidence, not architecture.
 
+When a test creates the only local call to a production accessor or a test-only classifier is being considered, read [the typed outcome assertion guidance](references/typed-outcome-assertions.md). It covers equality semantics, real consumers, and expected-value helpers without expanding API or verification authority.
+
 ## Reject local carve-outs
 
 Do not rationalize:

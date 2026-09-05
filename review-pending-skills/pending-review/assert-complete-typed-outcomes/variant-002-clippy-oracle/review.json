@@ -14,7 +14,8 @@
   "relationships": [
     {"kind": "overlap", "target": "rstriage"},
     {"kind": "overlap", "target": "implement-strict-work"},
-    {"kind": "alternative", "target": "assert-complete-typed-outcomes/variant-001-implement-strict-pattern"}
+    {"kind": "historical-alternative", "target": "assert-complete-typed-outcomes/variant-001-implement-strict-pattern"},
+    {"kind": "shared-guidance-owner", "target": "implement-strict-work/references/typed-outcome-assertions.md"}
   ],
   "schema_version": 1,
   "status": "pending",

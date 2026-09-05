@@ -14,11 +14,12 @@ The skill does not assume every `single_call_fn` is a test problem, every public
 
 ## Relationships and uncertainty
 
-This variant overlaps `$rstriage` and `$implement-strict-work` but has a narrower automatic trigger. Review should decide whether one concrete warning justifies a standalone skill or should remain an implementation reference.
+Retain this variant pending as a distinct general Rust automatic diagnostic alternative. Its trigger includes test-created `single_call_fn`, `dead_code`, and analogous warnings beyond the strict ecosystem. Folding the shared assertion pattern into `$implement-strict-work` does not adopt or replace that broader trigger. `$rstriage` has a different invocation and mutation contract and is not an equivalent owner without further review.
 
-## Review questions
+The approved `variant-001-implement-strict-pattern` was folded into `implement-strict-work/references/typed-outcome-assertions.md` and pruned. Its alternative relationship is historical; the optional owner reference preserves the shared equality, consumer, and helper guidance.
 
-- Should the trigger include only `single_call_fn`, or analogous dead-code warnings caused by tests?
-- Should the skill route strict repositories through `$guard-strict-work` explicitly?
-- Is the public extension-seam distinction clear enough without a packaged reference?
+## Review requirements before adoption
 
+- Resolve public API authority explicitly before introducing a new comparison contract; the preference order is not permission to add one.
+- Route strict work through `$guard-strict-work`, `$implement-strict-work`, and `$verify-strict-work` with their API, exception, and execution boundaries intact.
+- Preserve the distinction between a supported public extension seam and test convenience without inferring deletion authority from local reachability. Keep the standalone trigger and invocation contract pending user selection.
