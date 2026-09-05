@@ -1,4 +1,0 @@
-interface:
-  display_name: "Preserve Session Ownership"
-  short_description: "Replace runtimes without duplicating session owners"
-  default_prompt: "Use `$preserve-session-owner-during-backend-replacement` to replace the selected execution backend while retaining the host's session and lifecycle owner."

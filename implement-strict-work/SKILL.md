@@ -64,6 +64,8 @@ Use a narrow exception only when the current repository contract or the user exp
 
 ## Preserve behavior while changing structure
 
+When replacing an execution backend while retaining its session or cell owner, read [the retained session ownership guidance](references/retained-session-ownership.md). It covers lifecycle evidence and subordinate runtime bookkeeping without duplicating session authority.
+
 - Identify affected public and internal capabilities while migrating the owner; do not require a repository-wide inventory unless the user requested one or the change cannot otherwise be bounded safely.
 - Treat strict-owned forks and local product crates as refactoring surfaces, not immutable external limitations.
 - Do not reduce lifecycle, schema, protocol, output, error, macro, or test-support behavior merely to align with upstream or make a new abstraction compile.
