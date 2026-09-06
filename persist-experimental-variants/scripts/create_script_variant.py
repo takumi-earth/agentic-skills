@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import ctypes
+import errno
 import hashlib
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import sys
 import tempfile
 from typing import Any
 
@@ -40,6 +43,57 @@ def render_path(path: Path, home: Path | None = None) -> str:
     if relative == Path("."):
         return "~"
     return f"~/{relative.as_posix()}"
+
+
+def render_operational_error(error: BaseException) -> str:
+    """Keep operating-system detail while rendering its path fields portably."""
+
+    message = str(error)
+    if isinstance(error, OSError):
+        for filename in (error.filename, error.filename2):
+            if filename is not None:
+                message = message.replace(
+                    repr(filename), repr(render_path(Path(os.fsdecode(filename))))
+                )
+    home = Path.home()
+    prefixes = {str(home), str(home.resolve(strict=False))}
+    for prefix in sorted(prefixes, key=len, reverse=True):
+        message = re.sub(re.escape(prefix) + r"(?=$|[/\\]|['\"])", "~", message)
+    return message
+
+
+def publish_without_replacement(prepared: Path, target: Path) -> None:
+    """Atomically publish a complete directory or preserve an existing target."""
+
+    if sys.platform == "win32":
+        # Windows rename rejects every existing destination.
+        prepared.rename(target)
+        return
+
+    library = ctypes.CDLL(None, use_errno=True)
+    if sys.platform.startswith("linux"):
+        rename = getattr(library, "renameat2", None)
+        argument_types = [
+            ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint
+        ]
+        # AT_FDCWD and RENAME_NOREPLACE from the Linux userspace ABI.
+        arguments = (-100, os.fsencode(prepared), -100, os.fsencode(target), 1)
+    elif sys.platform == "darwin":
+        rename = getattr(library, "renamex_np", None)
+        argument_types = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint]
+        # RENAME_EXCL from Darwin's sys/stdio.h.
+        arguments = (os.fsencode(prepared), os.fsencode(target), 0x00000004)
+    else:
+        rename = None
+    if rename is None:
+        raise OSError(errno.ENOTSUP, "atomic no-replace directory publication is unavailable")
+    rename.argtypes = argument_types
+    rename.restype = ctypes.c_int
+    if rename(*arguments) != 0:
+        error_number = ctypes.get_errno()
+        raise OSError(
+            error_number, os.strerror(error_number), str(prepared), None, str(target)
+        )
 
 
 def sha256_file(path: Path) -> str:
@@ -144,7 +198,7 @@ def require_predecessor(root: Path, predecessor_id: str) -> None:
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
         raise VariantError(
             "predecessor-malformed",
-            f"cannot read predecessor metadata for {predecessor_id}: {error}",
+            f"cannot read predecessor metadata for {predecessor_id}: {render_operational_error(error)}",
         ) from error
     if not isinstance(manifest, dict) or not intent_text.strip():
         raise VariantError(
@@ -228,7 +282,7 @@ def require_predecessor(root: Path, predecessor_id: str) -> None:
     except OSError as error:
         raise VariantError(
             "predecessor-malformed",
-            f"cannot hash predecessor payload for {predecessor_id}: {error}",
+            f"cannot hash predecessor payload for {predecessor_id}: {render_operational_error(error)}",
         ) from error
     if actual_digest != digest:
         raise VariantError(
@@ -337,7 +391,14 @@ def _create_variant(
             json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
-        temporary.rename(target)
+        try:
+            publish_without_replacement(temporary, target)
+        except FileExistsError as error:
+            raise VariantError(
+                "variant-exists",
+                "variant already exists and will not be overwritten: "
+                f"{render_path(target)}",
+            ) from error
         return target
     finally:
         os.close(claim_descriptor)
@@ -372,7 +433,7 @@ def create_variant(
     except (OSError, RuntimeError, ValueError) as error:
         raise VariantError(
             "filesystem-failure",
-            f"cannot create variant {variant_id!r}: {error}",
+            f"cannot create variant {variant_id!r}: {render_operational_error(error)}",
         ) from error
 
 

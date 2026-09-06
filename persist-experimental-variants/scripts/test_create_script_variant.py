@@ -4,13 +4,20 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import redirect_stdout
+import ctypes
+import errno
+import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import threading
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock, patch
 
 import create_script_variant
 
@@ -279,6 +286,167 @@ class CreateVariantTests(unittest.TestCase):
                 create_script_variant.sha256_file(payload),
             )
             self.assertFalse((notebook / ".variant-001.claim").exists())
+
+    def test_targets_created_during_copy_are_preserved(self) -> None:
+        for kind in ("empty-directory", "nonempty-directory", "file", "symlink"):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                source = root / "experiment.py"
+                source.write_bytes(b"original payload\n")
+                notebook = root / "notebook"
+                target = notebook / "variant-001"
+                other_file = root / "other.txt"
+                other_file.write_bytes(b"unrelated bytes\n")
+                copy_file = create_script_variant.shutil.copyfile
+                inserted_identity = []
+
+                def copy_then_create_target(src: Path, dst: Path) -> Path:
+                    result = copy_file(src, dst)
+                    if kind.endswith("directory"):
+                        target.mkdir()
+                        if kind == "nonempty-directory":
+                            (target / "other.txt").write_bytes(b"unrelated bytes\n")
+                    elif kind == "file":
+                        target.write_bytes(b"unrelated bytes\n")
+                    else:
+                        target.symlink_to(other_file)
+                    inserted_identity.append(target.lstat())
+                    return result
+
+                with patch.object(
+                    create_script_variant.shutil, "copyfile", copy_then_create_target
+                ):
+                    with self.assertRaises(create_script_variant.VariantError) as raised:
+                        create_script_variant.create_variant(
+                            source=source,
+                            notebook_root=notebook,
+                            variant_id="variant-001",
+                            intent="Preserve a destination created by another writer",
+                            predecessors=[],
+                        )
+
+                self.assertEqual(raised.exception.code, "variant-exists")
+                self.assertEqual(target.lstat().st_ino, inserted_identity[0].st_ino)
+                self.assertEqual(target.lstat().st_dev, inserted_identity[0].st_dev)
+                self.assertEqual(set(notebook.iterdir()), {target})
+                if kind == "empty-directory":
+                    self.assertEqual(list(target.iterdir()), [])
+                elif kind == "nonempty-directory":
+                    self.assertEqual(
+                        (target / "other.txt").read_bytes(), b"unrelated bytes\n"
+                    )
+                else:
+                    self.assertEqual(target.read_bytes(), b"unrelated bytes\n")
+                self.assertEqual(other_file.read_bytes(), b"unrelated bytes\n")
+                self.assertEqual(source.read_bytes(), b"original payload\n")
+
+    def test_native_adapters_preserve_conflict_errors(self) -> None:
+        source = Path("prepared")
+        target = Path("target")
+        for platform, symbol, arguments in (
+            ("linux", "renameat2", (-100, b"prepared", -100, b"target", 1)),
+            ("darwin", "renamex_np", (b"prepared", b"target", 4)),
+        ):
+            with self.subTest(platform=platform):
+                def conflict(*args: object) -> int:
+                    ctypes.set_errno(errno.EEXIST)
+                    return -1
+
+                rename = Mock(side_effect=conflict)
+                library = SimpleNamespace(**{symbol: rename})
+                with patch.object(create_script_variant.sys, "platform", platform), patch.object(
+                    create_script_variant.ctypes, "CDLL", return_value=library
+                ):
+                    with self.assertRaises(FileExistsError) as raised:
+                        create_script_variant.publish_without_replacement(source, target)
+                rename.assert_called_once_with(*arguments)
+                self.assertEqual(raised.exception.filename, str(source))
+                self.assertEqual(raised.exception.filename2, str(target))
+
+        with patch.object(create_script_variant.sys, "platform", "win32"), patch.object(
+            Path, "rename", side_effect=FileExistsError(errno.EEXIST, "target exists")
+        ):
+            with self.assertRaises(FileExistsError):
+                create_script_variant.publish_without_replacement(source, target)
+
+    def test_unavailable_publication_does_not_fall_back_to_replacement(self) -> None:
+        for platform in ("linux", "unsupported-platform"):
+            with self.subTest(platform=platform), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                source = root / "experiment.py"
+                source.write_bytes(b"payload\n")
+                notebook = root / "notebook"
+                with patch.object(create_script_variant.sys, "platform", platform), patch.object(
+                    create_script_variant.ctypes, "CDLL", return_value=SimpleNamespace()
+                ):
+                    with self.assertRaises(create_script_variant.VariantError) as raised:
+                        create_script_variant.create_variant(
+                            source=source,
+                            notebook_root=notebook,
+                            variant_id="variant-001",
+                            intent="Require non-replacing publication",
+                            predecessors=[],
+                        )
+                self.assertEqual(raised.exception.code, "filesystem-failure")
+                self.assertEqual(list(notebook.iterdir()), [])
+                self.assertEqual(source.read_bytes(), b"payload\n")
+
+    def test_copy_failure_keeps_cli_status_and_normalizes_error_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "experiment.py"
+            source.write_bytes(b"payload\n")
+            notebook = root / "notebook"
+            error_source = Path.home() / "input files" / "experiment.py"
+            error_target = Path.home() / "output files" / "experiment.py"
+            failure = OSError(
+                errno.EIO, "Injected copy failure", str(error_source), None, str(error_target)
+            )
+            arguments = [
+                "create_script_variant.py", "--source", str(source),
+                "--notebook-root", str(notebook), "--external-deliverable",
+                "--variant-id", "variant-001", "--intent", "Report a copy failure",
+            ]
+            output = io.StringIO()
+            with patch.object(sys, "argv", arguments), patch.object(
+                create_script_variant.shutil, "copyfile", side_effect=failure
+            ), redirect_stdout(output):
+                status = create_script_variant.main()
+
+            self.assertEqual(status, 3)
+            self.assertTrue(
+                output.getvalue().startswith("VARIANT_ERROR[filesystem-failure]:")
+            )
+            self.assertIn("~/input files/experiment.py", output.getvalue())
+            self.assertIn("~/output files/experiment.py", output.getvalue())
+            self.assertNotIn(str(Path.home()), output.getvalue())
+            self.assertEqual(list(notebook.iterdir()), [])
+            self.assertEqual(source.read_bytes(), b"payload\n")
+
+    def test_diagnostic_normalization_preserves_neighboring_home_names(self) -> None:
+        home = Path.home()
+        neighbor = home.with_name(home.name + "-neighbor") / "file.txt"
+        error = OSError(
+            errno.EIO, "Failure", str(neighbor), None, str(home / "file.txt")
+        )
+        diagnostic = create_script_variant.render_operational_error(error)
+        self.assertIn(repr(str(neighbor)), diagnostic)
+        self.assertIn("~/file.txt", diagnostic)
+
+    def test_payload_home_paths_remain_exact_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "experiment.py"
+            payload = b"source path: " + os.fsencode(Path.home()) + b"\n\x00\xff"
+            source.write_bytes(payload)
+            target = create_script_variant.create_variant(
+                source=source,
+                notebook_root=root / "notebook",
+                variant_id="variant-001",
+                intent="Normalize diagnostics without rewriting payload bytes",
+                predecessors=[],
+            )
+            self.assertEqual((target / "artifact" / "experiment.py").read_bytes(), payload)
 
     def test_canonical_default_and_external_destination_authority(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

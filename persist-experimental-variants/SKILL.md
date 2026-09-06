@@ -30,6 +30,8 @@ The helper resolves the canonical Agentic Skills repository and defaults the not
 
 The helper refuses symlink sources and existing variant identifiers, uses an exclusive claim so concurrent creators cannot replace one another or a pre-existing empty target, copies exact source bytes beneath `artifact/<source-name>`, and records the payload-relative path and SHA-256 digest in `variant.json`. This keeps sources named `intent.md` or `variant.json` separate from notebook metadata. It never edits a prior variant.
 
+The complete prepared directory is published with an atomic no-replace operation, preserving any destination that appears during preparation. Linux, macOS, and Windows use their native non-replacing rename behavior; an unavailable platform or filesystem operation returns `filesystem-failure` without falling back to an overwriting rename.
+
 Use `--notebook-root <path> --external-deliverable` instead of `--notebook-id` only when the user explicitly selected that external directory as a task deliverable. The flag is an authority assertion, not a convenience override. Without it, external destinations fail closed. Diagnostic fixtures and workflow bookkeeping still belong beneath the canonical repository scratchpad.
 
 On success, stdout remains one human-readable path and renders destinations beneath the user home as `~/...`; `~` expands only internally for filesystem I/O. Expected validation and filesystem failures emit `VARIANT_ERROR[<stable-code>]: ...` and exit with status `3` rather than a traceback.
