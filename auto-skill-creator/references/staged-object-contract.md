@@ -1,6 +1,6 @@
 # Staged object contract
 
-Load this reference when creating, verifying, or completing a `variant-004-write-ahead-single-invocation-commit` batch.
+Load this reference when creating, verifying, or completing an automatic skill-creation batch.
 
 ## Index authority
 
@@ -16,7 +16,7 @@ Reject unmerged stages, unsupported object modes, roots without staged transitio
 
 ## Transition authority
 
-Require `HEAD` to equal the manifest's `precommit_oid` through `verify-precommit`. After the caller commits, require exactly one transition from that OID, require every declared root and no unrelated path in the transition, and require the resulting commit's tree entries to equal the manifest snapshot.
+Require `HEAD` to equal the manifest's `precommit_oid` through `verify-precommit`. After the caller commits, require exactly one transition whose first parent is that OID; an unborn repository instead requires a root commit with no parents. Require every declared root and no unrelated path in the transition, and require the resulting commit's tree entries to equal the manifest snapshot.
 
 ## Mutation boundary
 

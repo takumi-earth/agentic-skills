@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from typing import Any
 
@@ -495,7 +496,7 @@ def validate_staged_entry(value: Any, index: int) -> dict[str, str | None]:
     if not isinstance(value, dict) or set(value) != required:
         raise ValueError(f"{location} keys must equal {sorted(required)}")
     mode = value["mode"]
-    if mode not in SUPPORTED_MODES:
+    if not isinstance(mode, str) or mode not in SUPPORTED_MODES:
         raise ValueError(f"{location}.mode is unsupported: {mode!r}")
     target = value["symlink_target"]
     if mode == "120000":
@@ -526,7 +527,12 @@ def load_manifest(path: Path) -> dict[str, Any]:
     }
     if not isinstance(value, dict) or set(value) != required:
         raise ValueError(f"manifest keys must equal {sorted(required)}")
-    if value["schema_version"] != SCHEMA_VERSION:
+    version = value["schema_version"]
+    if (
+        isinstance(version, bool)
+        or not isinstance(version, (int, float))
+        or version != SCHEMA_VERSION
+    ):
         raise ValueError(f"schema_version must equal {SCHEMA_VERSION}")
     roots_value = value["candidate_roots"]
     if not isinstance(roots_value, list) or not roots_value:
@@ -590,7 +596,7 @@ def evidence_drift(repo: Path, manifest: dict[str, Any]) -> list[dict[str, str]]
         try:
             received = sha256_file(evidence_path(repo, declaration["path"]))
         except (OSError, ValueError) as error:
-            received = f"unavailable: {error}"
+            received = f"unavailable: {normalize_home_text(str(error))}"
         if received != declaration["sha256"]:
             drift.append(
                 {
@@ -695,6 +701,14 @@ def verify_postcommit(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
 
     roots = manifest["candidate_roots"]
     head = current_head(repo)
+    parents = (
+        []
+        if head is None
+        else run_git(repo, "show", "--no-patch", "--format=%P", head).decode("ascii").split()
+    )
+    first_parent = parents[0] if parents else None
+    # An unborn repository requires a root commit; otherwise preserve its first parent.
+    parent_matches = first_parent == manifest["precommit_oid"]
     count = 0 if head is None else transition_count(repo, manifest["precommit_oid"])
     records = [] if head is None else transition_records(repo, manifest["precommit_oid"])
     paths = [path for record in records for path in affected_paths(record)]
@@ -708,6 +722,7 @@ def verify_postcommit(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
     drift = evidence_drift(repo, manifest)
     success = (
         count == 1
+        and parent_matches
         and not outside
         and not missing_coverage
         and not missing_roots
@@ -718,11 +733,12 @@ def verify_postcommit(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
     return {
         "status": "success" if success else "failure",
         "condition": (
-            "one commit contains every declared root and the exact staged objects from "
-            "the immutable manifest"
+            "one commit directly follows the recorded first-parent boundary and contains "
+            "every declared root and the exact staged objects from the immutable manifest"
         ),
         "expected": {
             "commit_count": 1,
+            "first_parent": manifest["precommit_oid"],
             "outside": [],
             "missing_coverage": [],
             "missing_roots": [],
@@ -732,6 +748,7 @@ def verify_postcommit(repo: Path, manifest: dict[str, Any]) -> dict[str, Any]:
         },
         "received": {
             "commit_count": count,
+            "first_parent": first_parent,
             "outside": outside,
             "missing_coverage": missing_coverage,
             "missing_roots": missing_roots,
@@ -806,7 +823,7 @@ def write_candidate(repo: Path, root: str) -> tuple[Path, Path, Path]:
     return intent, executable, link
 
 
-def fixture_commit(repo: Path, message: str) -> None:
+def fixture_commit(repo: Path, message: str, *, allow_empty: bool = False) -> None:
     """Commit disposable fixture state without invoking external hooks."""
 
     run_git(
@@ -819,6 +836,7 @@ def fixture_commit(repo: Path, message: str) -> None:
         "core.hooksPath=/dev/null",
         "commit",
         "--quiet",
+        *(["--allow-empty"] if allow_empty else []),
         "-m",
         message,
     )
@@ -837,6 +855,11 @@ def expect_value_error(operation: Any, message: str) -> None:
 def self_test() -> dict[str, Any]:
     """Exercise staged-object evidence and every load-bearing failure path."""
 
+    from contextlib import redirect_stdout
+    import errno
+    import io
+    from unittest.mock import patch
+
     assertions = 0
     with tempfile.TemporaryDirectory() as temporary:
         repo = Path(temporary)
@@ -844,6 +867,8 @@ def self_test() -> dict[str, Any]:
         (repo / "baseline.txt").write_text("baseline\n", encoding="utf-8")
         run_git(repo, "add", "baseline.txt")
         fixture_commit(repo, "baseline")
+        earlier_parent = current_head(repo)
+        fixture_commit(repo, "record the precommit boundary", allow_empty=True)
 
         scratch = repo / ".scratchpad" / "batch"
         scratch.mkdir(parents=True)
@@ -993,6 +1018,79 @@ def self_test() -> dict[str, Any]:
         )
         assertions += 1
 
+        malformed_manifests = [
+            {**first, "schema_version": True},
+            {**first, "schema_version": [SCHEMA_VERSION]},
+            {
+                **first,
+                "staged_entries": [
+                    {**first["staged_entries"][0], "mode": []},
+                    *first["staged_entries"][1:],
+                ],
+            },
+            {
+                **first,
+                "staged_entries": [
+                    {**first["staged_entries"][0], "mode": {}},
+                    *first["staged_entries"][1:],
+                ],
+            },
+        ]
+        for malformed in malformed_manifests:
+            invalid_path.write_text(canonical_json(malformed), encoding="utf-8")
+            completed = subprocess.run(
+                [
+                    sys.executable, "-B", str(Path(__file__).resolve()),
+                    "verify-precommit", "--repo", str(repo),
+                    "--manifest", str(invalid_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            failure = json.loads(completed.stdout)
+            assert completed.returncode == 2 and completed.stderr == ""
+            assert failure["status"] == "failure"
+            assert {"condition", "expected", "received", "mode"} <= set(failure)
+            assertions += 1
+
+        # JSON Schema's numeric constant also accepts the equivalent JSON number 1.0.
+        invalid_path.write_text(
+            canonical_json({**first, "schema_version": float(SCHEMA_VERSION)}),
+            encoding="utf-8",
+        )
+        assert load_manifest(invalid_path) == first
+        assertions += 1
+
+        validation_bytes = validation.read_bytes()
+        hash_file = sha256_file
+
+        def fail_validation_read(path: Path) -> str:
+            if path == validation:
+                raise OSError(
+                    errno.EIO,
+                    "Injected evidence read failure",
+                    str(Path.home() / "creation-batch-evidence" / "validation.json"),
+                )
+            return hash_file(path)
+
+        captured = io.StringIO()
+        with patch.dict(globals(), sha256_file=fail_validation_read), patch.object(
+            sys, "argv", [
+                str(Path(__file__)), "verify-precommit", "--repo", str(repo),
+                "--manifest", str(manifest_path),
+            ],
+        ), redirect_stdout(captured):
+            failure_status = main()
+        failure = json.loads(captured.getvalue())
+        drift_diagnostic = failure["received"]["evidence_drift"][0]["received"]
+        assert failure_status == 1 and failure["status"] == "failure"
+        assert "~/creation-batch-evidence/validation.json" in drift_diagnostic
+        assert str(Path.home()) not in drift_diagnostic
+        assert failure["expected"]["staged_entries"] == first["staged_entries"]
+        assert validation.read_bytes() == validation_bytes
+        assertions += 1
+
         fixture_commit(repo, "one creation batch")
         postcommit = verify_postcommit(repo, loaded)
         assert postcommit["status"] == "success"
@@ -1008,6 +1106,38 @@ def self_test() -> dict[str, Any]:
             lambda: append_result(result_path, record),
             "a duplicate result record was appended",
         )
+        assertions += 1
+
+        committed_head = current_head(repo)
+        committed_tree = run_git(repo, "rev-parse", "HEAD^{tree}").decode().strip()
+        wrong_parent_commit = run_git(
+            repo,
+            "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+            "commit-tree", committed_tree, "-p", str(earlier_parent),
+            "-m", "skip the recorded precommit boundary",
+        ).decode().strip()
+        run_git(repo, "update-ref", "HEAD", wrong_parent_commit)
+        rejected_result = scratch / "rejected-result.jsonl"
+        completed = subprocess.run(
+            [
+                sys.executable, "-B", str(Path(__file__).resolve()),
+                "record-postcommit", "--repo", str(repo),
+                "--manifest", str(manifest_path), "--result", str(rejected_result),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        rejected = json.loads(completed.stdout)
+        assert completed.returncode == 1 and completed.stderr == ""
+        assert rejected["status"] == "failure"
+        assert rejected["received"]["commit_count"] == 1
+        assert rejected["received"]["committed_entries"] == first["staged_entries"]
+        assert rejected["expected"]["first_parent"] == first["precommit_oid"]
+        assert rejected["received"]["first_parent"] == earlier_parent
+        assert not rejected_result.exists()
+        run_git(repo, "update-ref", "HEAD", str(committed_head))
+        assert verify_postcommit(repo, loaded)["status"] == "success"
         assertions += 1
 
         split_inventory = scratch / "split-inventory.json"
@@ -1032,6 +1162,29 @@ def self_test() -> dict[str, Any]:
         split_postcommit = verify_postcommit(repo, split_manifest)
         assert split_postcommit["status"] == "failure"
         assert split_postcommit["received"]["commit_count"] == 2
+        assertions += 1
+
+    with tempfile.TemporaryDirectory() as temporary:
+        repo = Path(temporary)
+        run_git(repo, "init", "--quiet", "--initial-branch=main")
+        scratch = repo / ".scratchpad" / "batch"
+        scratch.mkdir(parents=True)
+        inventory = scratch / "inventory.json"
+        validation = scratch / "validation.json"
+        inventory.write_text('{"candidate_count": 1}\n', encoding="utf-8")
+        validation.write_text('{"status": "passed"}\n', encoding="utf-8")
+        roots = ["review-pending-skills/pending-review/initial"]
+        write_candidate(repo, roots[0])
+        run_git(repo, "add", "--", *roots)
+        initial = build_manifest(
+            repo=repo, inventory=inventory, roots=roots, validation_reports=[validation],
+        )
+        assert initial["precommit_oid"] is None
+        assert verify_precommit(repo, initial)["status"] == "success"
+        fixture_commit(repo, "initial creation batch")
+        initial_result = verify_postcommit(repo, initial)
+        assert initial_result["status"] == "success"
+        assert initial_result["received"]["first_parent"] is None
         assertions += 1
 
     return {"status": "passed", "assertions": assertions, "mode": MODE}
