@@ -15,10 +15,18 @@
     {"kind": "overlap", "target": "resume-strict-context"},
     {"kind": "overlap", "target": "plan-strict-work"},
     {"kind": "complements", "target": "guard-strict-work"},
-    {"kind": "alternative", "target": "read-complete-owner-files/variant-002-strict-owner-integration"}
+    {"kind": "historical-alternative", "target": "read-complete-owner-files/variant-002-strict-owner-integration"},
+    {"kind": "shared-guidance-owner", "target": "guard-strict-work/references/complete-source-reads.md"}
+  ],
+  "review_notes": [
+    "User disposition: retain pending correction as a standalone source-reading alternative; do not promote the planner or adopt it into another workflow.",
+    "The user approved folding the proportional guidance from `variant-002-strict-owner-integration` into an optional reference under `guard-strict-work` and pruning that draft. Candidate-root Git history preserves the historical alternative.",
+    "Before adoption, reconcile duplicated mechanics with `resume-strict-context/scripts/plan_instruction_reads.py` and define line addressing against the consuming reader. Both planners split bare carriage returns differently from `sed`, producing mismatched byte counts and an empty final range in the reviewed probe.",
+    "Normalize path-bearing error diagnostics as well as successful output. Missing-file and symlink-loop errors must not expose expanded home paths instead of `~/...`.",
+    "Describe alias handling accurately: duplicate resolved paths are rejected, a single symlink is accepted, and hard links are not deduplicated.",
+    "Permit initial navigation searches, distinguish source-evidence reuse from mandatory goal and skill reloads, and define empty-file completion without a body range. Reuse a prior EOF read plus an exact narrow owned edit when sufficient, and keep bookkeeping proportional. The executable package remains uncorrected and pending."
   ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-001-source-read-planner"
 }
-

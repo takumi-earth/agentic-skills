@@ -70,6 +70,8 @@ When integration, configuration placement, or validation-command changes can alt
 - Treat Cargo caches, generated metadata, web documentation, and neighboring consumers as secondary evidence when the owning checkout is available. Resolve contradictions at the owner instead of selecting the source that makes the smallest edit easier.
 - Read access to a neighboring checkout does not grant write, dependency-revision, verification, commit, push, or publication authority there.
 
+When the user requires whole-file source reads, or a disputed ownership or lifecycle conclusion needs complete owner context, read [the complete source reading guidance](references/complete-source-reads.md).
+
 ## Challenge apparent blockers
 
 Before reporting that a user decision, external constraint, or another owner blocks progress, inspect the applicable guidance, manifests, comments, source, lockfile, feature and patch tables, generators, consumers, and canonical command surfaces; trace the symptom to its upstream owner; distinguish repository policy from an actual external limitation; and exhaust safe alternatives inside the current authority. Record a decision that stops one dependent lane as a local boundary and continue independent authorized work. For an active living goal, use `$maintain-living-goal` before any whole-goal `blocked` transition; do not turn a review request or incomplete slice into an early exit.
