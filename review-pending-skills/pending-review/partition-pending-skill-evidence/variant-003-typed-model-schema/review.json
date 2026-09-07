@@ -24,6 +24,12 @@
       "target": "review-pending-skills"
     }
   ],
+  "review_notes": [
+    "User disposition: retain pending correction as a distinct typed-model and schema-generation alternative. The executable package remains uncorrected and pending.",
+    "The user approved folding the narrow known-owner direct-emission preference from `variant-002-direct-owner-emission` into `auto-skill-creator/SKILL.md` and pruning that draft. Candidate-root Git history preserves the historical alternative. Preserve the existing move workflow for reusable resources received in scratch and authorized diagnostic fixtures and run-specific context in scratch; a declared storage owner does not verify placement or authorize execution or persistence.",
+    "Before adoption, make the declared typed model authoritative for schema generation, define actual evidence-instance validation, and make drift checks attributable to that model. The reviewed generator emits a handwritten schema dictionary; deterministic output and generated-file drift checks do not establish the promised model-to-schema relationship.",
+    "Define path-bearing evidence fields and implement the promised home-path contract. The reviewed schema accepted expanded home paths in `evidence`, and the CLI printed expanded home paths. Normalize command output and path-bearing diagnostics to `~/...` while preserving evidence contents, legitimate non-path strings, and valid paths outside the home directory."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-003-typed-model-schema"

@@ -22,6 +22,15 @@
       "target": "review-pending-skills"
     }
   ],
+  "review_notes": [
+    "User disposition: retain pending correction as a distinct executable mover and guard-adapter alternative. The executable package remains uncorrected and pending.",
+    "The user approved folding the narrow known-owner direct-emission preference from `variant-002-direct-owner-emission` into `auto-skill-creator/SKILL.md` and pruning that draft. Candidate-root Git history preserves the historical alternative. Preserve the existing move workflow for reusable resources received in scratch and authorized diagnostic fixtures and run-specific context in scratch; a declared storage owner does not verify placement or authorize execution or persistence.",
+    "Before adoption, validate the actual owning candidate and variant destination rather than only containment beneath `pending-review/`. The reviewed mover accepted `pending-review/unowned.json` outside every variant.",
+    "Preserve the selected source's identity before path resolution changes the selected object. The reviewed mover followed a source symlink, moved its referent, and left the declared source alias dangling.",
+    "Refuse destination replacement at the publication boundary. The reviewed mover overwrote a destination created after validation. Report completed moves and remaining work on partial failure so recovery does not repeat completed effects; the reviewed second-move failure lost the completed-move list.",
+    "Validate manifest field types before use and return consistent structured failures for malformed inputs and operational errors. A null `source` produced an unhandled `TypeError`, exit `1`, and empty structured output.",
+    "Reconcile the guard adapter with `auto-skill-creator/scripts/skill_change_guard.py`, which already normalizes home paths. Preserve the adapter's distinct exclusive snapshot publication while accepting supported invocation forms such as `--output=...` and normalizing its own conflict diagnostics to `~/...`. Preserve native guard status semantics."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-001-owner-move-manifest"

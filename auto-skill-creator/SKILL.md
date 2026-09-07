@@ -61,6 +61,7 @@ Keep run evidence separate from reusable candidate resources:
 
 - Leave concrete investigation evidence, raw conversation context, memory context, source context, diagnostic output, and append-only run records beneath the resolver-selected `.scratchpad/` run. Those are evidence instances, not draft package resources.
 - Put reusable JSON schemas, schema-producing or schema-consuming product scripts, reusable instructions, and references inside the variant that owns them. Do not use a multi-candidate scratch directory as their long-term source location.
+- When a reusable resource's owning candidate and variant are already known, create that variant first and generate the resource directly into it. Use the existing move workflow for reusable resources received in scratch; keep authorized diagnostic fixtures and run-specific context in scratch.
 - When a handoff already placed a reusable schema or product resource in scratch, declare one source-to-destination move manifest, create every owning pending variant directory first, then move each declared resource exactly once. Do not copy the whole run tree, leave a duplicate original, or move the run-specific evidence instances merely because a candidate owns their schema.
 - Give a resource shared by several candidates one canonical owning variant and record explicit relationships from the consumers. Do not create a non-candidate shared directory directly beneath `pending-review/` or duplicate the resource to evade ownership.
 
