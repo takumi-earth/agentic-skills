@@ -166,7 +166,27 @@ def matching_brace(masked: str, open_index: int) -> int:
     raise InventoryError(f"owner body at offset {open_index} has no closing brace")
 
 
+def owner_body_open(masked: str, start: int, owner: str) -> int:
+    """Find this declaration's body without borrowing a later item's brace."""
+    stack: list[str] = []
+    pairs = {"(": ")", "[": "]"}
+    for index in range(start, len(masked)):
+        character = masked[index]
+        if character in pairs:
+            stack.append(pairs[character])
+        elif stack and character == stack[-1]:
+            stack.pop()
+        elif not stack:
+            if character == "{":
+                return index
+            if character in ";}":
+                break
+    raise InventoryError(f"owner {owner} has no braced body before its declaration boundary")
+
+
 def split_arguments(source: str, masked: str, start: int, end: int) -> list[str]:
+    if re.search(r"::\s*<", masked[start:end]):
+        raise InventoryError("unsupported generic syntax in reviewed call arguments")
     arguments: list[str] = []
     stack: list[str] = []
     pairs = {"(": ")", "[": "]", "{": "}"}
@@ -246,9 +266,7 @@ def collect(spec_path: Path) -> dict[str, Any]:
         if parameter_open == -1:
             raise InventoryError(f"owner {owner_groups['owner']} has no parameter list")
         parameter_close = matching_parenthesis(masked, parameter_open)
-        body_open = masked.find("{", parameter_close + 1)
-        if body_open == -1:
-            raise InventoryError(f"owner {owner_groups['owner']} has no braced body")
+        body_open = owner_body_open(masked, parameter_close + 1, owner_groups["owner"])
         body_close = matching_brace(masked, body_open)
         owner_spans.append((body_open, body_close, owner_match))
     call_specs = require_list(spec.get("calls"), "calls")
@@ -268,7 +286,10 @@ def collect(spec_path: Path) -> dict[str, Any]:
             if isinstance(raw_identity_index, bool) or not isinstance(raw_identity_index, int) or raw_identity_index < 0:
                 raise InventoryError(f"calls[{index}].identity_args[{identity_index}] must be a non-negative integer")
             indices.append(raw_identity_index)
-            labels.append(require_string(raw_labels[identity_index], f"calls[{index}].identity_labels[{identity_index}]"))
+            label = require_string(raw_labels[identity_index], f"calls[{index}].identity_labels[{identity_index}]")
+            if label in labels:
+                raise InventoryError(f"calls[{index}] has duplicate identity label: {label}")
+            labels.append(label)
         if callee in configured:
             raise InventoryError(f"duplicate call specification: {callee}")
         configured[callee] = (indices, labels)
@@ -276,11 +297,14 @@ def collect(spec_path: Path) -> dict[str, Any]:
     line_starts.extend(match.end() for match in re.finditer("\n", source))
     records: list[dict[str, Any]] = []
     for callee, (indices, labels) in configured.items():
-        pattern = re.compile(rf"\b{re.escape(callee)}\s*\(")
+        pattern = re.compile(rf"\b{re.escape(callee)}\s*(?P<invocation>\(|::\s*<)")
         for match in pattern.finditer(masked):
             line_start = source.rfind("\n", 0, match.start()) + 1
             if re.search(r"\bfn\s*$", source[line_start : match.start()]):
                 continue
+            if match.group("invocation") != "(":
+                line_number = bisect_right(line_starts, match.start())
+                raise InventoryError(f"unsupported generic invocation of {callee} at line {line_number}")
             open_index = masked.find("(", match.start(), match.end())
             close_index = matching_parenthesis(masked, open_index)
             arguments = split_arguments(source, masked, open_index + 1, close_index)
@@ -362,8 +386,8 @@ def main() -> int:
         inventory = collect(arguments.spec)
         atomic_write(arguments.output_json, json.dumps(inventory, indent=2) + "\n")
         atomic_write(arguments.output_markdown, render_markdown(inventory))
-    except InventoryError as error:
-        print(f"error: {error}", file=sys.stderr)
+    except (InventoryError, OSError) as error:
+        print(f"error: {normalize_home(str(error))}", file=sys.stderr)
         return 1
     return 0
 

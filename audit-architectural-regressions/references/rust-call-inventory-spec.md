@@ -29,10 +29,12 @@ Use schema version `1`:
 - `scope_end_pattern` is optional. Use it to exclude an in-file test module when production call count is the contract.
 - `owner_pattern` must define a named `owner` capture and must match declarations with braced bodies that own the reviewed calls. A preceding declaration is not an owner unless its balanced body contains the call.
 - Each `callee` is matched only in executable Rust code; occurrences in comments, ordinary strings, raw strings, and the callee's own function definition are excluded.
+- The collector is a bounded lexical inventory. Generic invocations such as `helper::<T>(...)` and turbofish expressions inside reviewed call arguments are unsupported and fail explicitly instead of producing an incomplete successful inventory.
 - `identity_args` contains zero-based top-level call-argument indexes. `identity_labels` gives those arguments stable names in JSON and Markdown output.
 - The collector preserves the raw identity expression with whitespace normalized. This permits literal selectors, dynamic selector variables, and composite selector expressions without pretending to evaluate Rust.
 - Each record also carries a stable `site_key` formed from the enclosing owner and ordered identity arguments, such as `patch_one::function=first` or `patch_two::trait=Trait;self_type=Type;method=method`. Literal string quotes are removed in the key; dynamic selector expressions remain intact.
 - A missing owner, missing requested argument, duplicate callee specification, unbalanced call, or missing requested scope boundary is an error.
+- Owner-body discovery stops at the declaration boundary; a bodyless declaration cannot acquire a later item's body. Identity labels within one call specification must be unique so no selected argument is silently discarded.
 - Two calls that resolve to the same stable site key are an error. Add another discriminating identity argument, such as a selector marker, rather than accepting an ambiguous inventory.
 
 Run:

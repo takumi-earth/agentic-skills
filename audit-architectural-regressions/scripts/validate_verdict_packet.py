@@ -10,6 +10,8 @@ import re
 import sys
 from typing import Any
 
+from collect_source_evidence import normalize_home
+
 
 SCHEMA_VERSION = 1
 FINDING_HEADING = re.compile(r"^## Finding `(?P<id>[^`]+)`:")
@@ -58,30 +60,33 @@ def load_json(path: Path, label: str) -> dict[str, Any]:
     return require_mapping(value, label)
 
 
-def markdown_fence(line: str) -> str | None:
-    match = re.match(r"^\s*(`{3,}|~{3,})", line)
-    return match.group(1)[0] if match else None
+def decision_lines(lines: list[str]) -> list[str]:
+    """Hide fenced examples and evidence without changing source line numbers."""
+    visible: list[str] = []
+    fence: str | None = None
+    for line in lines:
+        if fence is not None:
+            if re.fullmatch(rf" {{0,3}}{re.escape(fence[0])}{{{len(fence)},}}[ \t]*", line):
+                fence = None
+            visible.append("")
+            continue
+        opening = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if opening is not None and not (opening.group(1)[0] == "`" and "`" in opening.group(2)):
+            fence = opening.group(1)
+            visible.append("")
+        else:
+            visible.append(line)
+    return visible
 
 
 def hardwrapped_lines(lines: list[str]) -> list[int]:
     violations: list[int] = []
-    fence_character: str | None = None
     frontmatter = bool(lines and lines[0] == "---")
     previous_nonblank = False
-    for index, line in enumerate(lines, start=1):
+    for index, line in enumerate(decision_lines(lines), start=1):
         if frontmatter:
             if index > 1 and line == "---":
                 frontmatter = False
-            continue
-        fence = markdown_fence(line)
-        if fence is not None:
-            if fence_character is None:
-                fence_character = fence
-            elif fence == fence_character:
-                fence_character = None
-            previous_nonblank = True
-            continue
-        if fence_character is not None:
             continue
         heading = bool(re.match(r"^#{1,6} ", line))
         table = line.startswith("|")
@@ -185,7 +190,8 @@ def validate(
     errors: list[str] = []
     if contract.get("schema_version") != SCHEMA_VERSION:
         raise PacketError(f"contract schema_version must be {SCHEMA_VERSION}")
-    lines = packet.splitlines()
+    lines = decision_lines(packet.splitlines())
+    decision_text = "\n".join(lines)
     if contract.get("require_unwrapped_prose", True):
         wrapped = hardwrapped_lines(lines)
         if wrapped:
@@ -212,7 +218,7 @@ def validate(
         for index, value in enumerate(require_list(contract.get("forbidden_phrases", []), "forbidden_phrases"))
     ]
     for phrase in global_forbidden:
-        if phrase.casefold() in packet.casefold():
+        if phrase.casefold() in decision_text.casefold():
             errors.append(f"packet contains forbidden deferral: {phrase!r}")
     for index, raw_finding in enumerate(raw_findings):
         finding = require_mapping(raw_finding, f"findings[{index}]")
@@ -353,7 +359,7 @@ def main() -> int:
         rust_call_inventory = load_json(arguments.rust_call_inventory_json, "Rust call inventory") if arguments.rust_call_inventory_json is not None else None
         errors = validate(packet, contract, evidence_queries_by_id(evidence), rust_call_inventory)
     except (OSError, PacketError) as error:
-        print(json.dumps({"status": "invalid-input", "errors": [str(error)]}, indent=2), file=sys.stderr)
+        print(json.dumps({"status": "invalid-input", "errors": [normalize_home(str(error))]}, indent=2), file=sys.stderr)
         return 2
     result = {"status": "passed" if not errors else "failed", "errors": errors}
     stream = sys.stdout if not errors else sys.stderr

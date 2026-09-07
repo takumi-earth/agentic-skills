@@ -38,6 +38,7 @@ Use schema version `1`:
 - Use `scope_start_pattern` and `scope_end_pattern` to bound a production inventory before matching, such as excluding an in-file `#[cfg(test)] mod tests` section. A missing requested boundary is an evidence error, and the generated record includes the resolved scope line range.
 - Set `required` to `true` for evidence that must exist; a missing required match fails collection.
 - Increase context only enough to make the operation understandable. Read the complete blob separately for semantic classification.
+- Line numbers use LF boundaries consistently for matching, scope offsets, and snippets. CRLF terminators are removed from displayed lines; a bare carriage return remains part of its line. Source hashes always cover the original bytes.
 
 ## Packet contract
 
@@ -79,5 +80,6 @@ Use schema version `1`:
 - A source locator is a backticked `path:line` or `path:start-end` reference, optionally prefixed by a checkpoint and colon.
 - Each verdict-unit heading must be a fourth-level heading containing a backticked ID such as `R1-A`.
 - Each verdict unit must contain bold labels for `Evidence`, `Change`, `Approval means`, `Rejection means`, `User verdict`, and `User comment`.
+- Fenced source and examples do not satisfy required findings, sections, citations, or verdict fields. Their literal contents are excluded from unresolved-placeholder and deferral checks; those checks apply to the decision content outside fences.
 - Keep `User verdict` values explicit, such as `approve / reject / question`; do not use underscore blanks or `TBD` markers.
 - When `rust_call_inventory` is present, pass the generated inventory with `--rust-call-inventory-json`. The validator pins its source, call count, owner count, and—when `require_site_keys` is true—requires every stable call-site key to appear inside that finding.

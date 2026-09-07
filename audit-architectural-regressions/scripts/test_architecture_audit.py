@@ -3,12 +3,16 @@
 
 from __future__ import annotations
 
+from contextlib import redirect_stderr, redirect_stdout
+import hashlib
+import io
 import json
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 
 SCRIPT_DIRECTORY = Path(__file__).resolve().parent
@@ -169,6 +173,43 @@ class SourceEvidenceTests(unittest.TestCase):
         evidence = collector.collect(self.spec_path)
         self.assertEqual(evidence["queries"][0]["repository"], collector.normalize_home(str(external)))
 
+    def test_line_and_source_matches_share_lf_anchors_and_original_hashes(self) -> None:
+        source = self.repository / "src" / "policy.rs"
+        spec = json.loads(self.spec_path.read_text(encoding="utf-8"))
+        for content in (b"alpha\nTARGET\n", b"alpha\r\nTARGET\r\n", b"alpha\rbravo\nTARGET\n"):
+            for mode in ("line", "source"):
+                with self.subTest(content=content, mode=mode):
+                    source.write_bytes(content)
+                    spec["queries"] = [{
+                        "id": "target", "checkpoint": "current", "path": "src/policy.rs",
+                        "patterns": ["TARGET"], "match_mode": mode,
+                        "context_before": 0, "context_after": 0,
+                    }]
+                    self.spec_path.write_text(json.dumps(spec), encoding="utf-8")
+                    query = collector.collect(self.spec_path)["queries"][0]
+                    self.assertEqual(query["captures"][0]["line_start"], 2)
+                    self.assertEqual(query["snippets"][0]["lines"], [{"number": 2, "text": "TARGET"}])
+                    self.assertEqual(query["source_sha256"], hashlib.sha256(content).hexdigest())
+
+    def test_scoped_capture_preserves_bare_cr_and_an_unterminated_final_line(self) -> None:
+        source = self.repository / "src" / "policy.rs"
+        content = b"prefix\nalpha\rbravo\nTARGET"
+        source.write_bytes(content)
+        spec = json.loads(self.spec_path.read_text(encoding="utf-8"))
+        spec["queries"] = [{
+            "id": "target", "checkpoint": "current", "path": "src/policy.rs",
+            "scope_start_pattern": "alpha", "patterns": ["bravo", "TARGET"],
+            "match_mode": "source", "context_before": 0, "context_after": 0,
+        }]
+        self.spec_path.write_text(json.dumps(spec), encoding="utf-8")
+        query = collector.collect(self.spec_path)["queries"][0]
+        self.assertEqual([capture["line_start"] for capture in query["captures"]], [2, 3])
+        self.assertEqual(query["snippets"][0]["lines"], [
+            {"number": 2, "text": "alpha\rbravo"}, {"number": 3, "text": "TARGET"},
+        ])
+        self.assertEqual(query["scope"]["line_start"], 2)
+        self.assertEqual(query["source_sha256"], hashlib.sha256(content).hexdigest())
+
 
 class RustCallInventoryTests(unittest.TestCase):
     def test_collects_owner_and_identity_arguments_without_matching_fragments_or_definitions(self) -> None:
@@ -273,6 +314,56 @@ fn unrelated() {
             )
             with self.assertRaisesRegex(call_inventory.InventoryError, "not contained by a configured owner body"):
                 call_inventory.collect(spec)
+
+    def test_cli_rejects_unsupported_or_ambiguous_inventory_without_outputs(self) -> None:
+        cases = [
+            ('fn patch_one() { helper::<u8, u16>("target"); }', [0], ["selector"], "unsupported generic invocation"),
+            ('fn patch_one() { helper(make::<u8, u16>(), "target"); }', [1], ["selector"], "unsupported generic syntax"),
+            ('fn patch_one() { helper :: /* gap */ <u8>("target"); }', [0], ["selector"], "unsupported generic invocation"),
+            ('unsafe extern "C" {\nfn patch_decl();\n}\nfn unrelated() { helper("outside"); }', [0], ["selector"], "declaration boundary"),
+            ('fn patch_one() { helper("first", "second"); }', [0, 1], ["selector", "selector"], "duplicate identity label"),
+        ]
+        for content, indices, labels, diagnostic in cases:
+            with self.subTest(diagnostic=diagnostic, content=content):
+                with tempfile.TemporaryDirectory(prefix="rust-inventory-rejection-") as temporary:
+                    root = Path(temporary)
+                    (root / "calls.rs").write_text(content, encoding="utf-8")
+                    spec = root / "spec.json"
+                    spec.write_text(json.dumps({
+                        "schema_version": 1, "source": "calls.rs",
+                        "owner_pattern": r"(?m)^fn (?P<owner>patch_[a-z0-9_]+)\s*\(",
+                        "calls": [{"callee": "helper", "identity_args": indices, "identity_labels": labels}],
+                    }), encoding="utf-8")
+                    output_json, output_markdown = root / "inventory.json", root / "inventory.md"
+                    result = subprocess.run([
+                        sys.executable, "-B", str(SCRIPT_DIRECTORY / "collect_rust_call_inventory.py"),
+                        "--spec", str(spec), "--output-json", str(output_json), "--output-markdown", str(output_markdown),
+                    ], capture_output=True, text=True, check=False)
+                    self.assertEqual(result.returncode, 1, result.stderr)
+                    self.assertEqual(result.stdout, "")
+                    self.assertIn(diagnostic, result.stderr)
+                    self.assertFalse(output_json.exists())
+                    self.assertFalse(output_markdown.exists())
+
+    def test_preserves_array_return_types_and_unrelated_generic_syntax(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="rust-inventory-supported-") as temporary:
+            root = Path(temporary)
+            (root / "calls.rs").write_text('''fn patch_one() -> [u8; 2] {
+    unrelated::<u8, u16>();
+    helper("::<literal>");
+    [0, 0]
+}
+''', encoding="utf-8")
+            spec = root / "spec.json"
+            spec.write_text(json.dumps({
+                "schema_version": 1, "source": "calls.rs",
+                "owner_pattern": r"(?m)^fn (?P<owner>patch_[a-z0-9_]+)\s*\(",
+                "calls": [{"callee": "helper", "identity_args": [0], "identity_labels": ["selector"]}],
+            }), encoding="utf-8")
+            inventory = call_inventory.collect(spec)
+            self.assertEqual(inventory["call_count"], 1)
+            self.assertEqual(inventory["calls"][0]["owner"], "patch_one")
+            self.assertEqual(inventory["calls"][0]["identity"], {"selector": '"::<literal>"'})
 
 
 class VerdictPacketTests(unittest.TestCase):
@@ -547,6 +638,147 @@ This uncontracted finding remains ____________________________.
         self.assertEqual(validator.validate(packet, contract, {}, inventory), [])
         errors = validator.validate("## Finding `R5`: whole-item review\n", contract, {}, inventory)
         self.assertTrue(any("does not disposition Rust call site" in error for error in errors))
+
+
+class FencedPacketTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.contract = {
+            "schema_version": 1,
+            "forbidden_phrases": ["build an explicit review table"],
+            "findings": [{
+                "id": "R1", "required_sections": ["Verdict"],
+                "required_evidence_queries": ["q1"], "minimum_source_locators": 1,
+                "minimum_verdict_units": 1,
+            }],
+        }
+        self.packet = """## Finding `R1`: selected ownership
+
+### Verdict
+
+Keep the selected owner; `q1` captures `current:src/owner.rs:1-4`.
+
+#### `R1-A` Keep the owner
+
+**Evidence:** `q1` and `current:src/owner.rs:1-4`.
+
+**Change:** Retain the named owner.
+
+**Approval means:** Retain the named ownership boundary.
+
+**Rejection means:** Reconsider the stated ownership choice.
+
+**User verdict:** `approve / reject / question`
+
+**User comment:** Add any qualification.
+"""
+
+    def test_fenced_examples_do_not_supply_findings_or_verdict_units(self) -> None:
+        self.assertEqual(validator.validate(self.packet, self.contract, {"q1"}), [])
+        for opening, closing in (("```", "```"), ("````", "`````"), ("~~~", "~~~~")):
+            with self.subTest(opening=opening):
+                example = f"{opening}markdown\n{self.packet}{closing}\n"
+                errors = validator.validate(example, self.contract, {"q1"})
+                self.assertIn("missing finding heading: R1", errors)
+                prefix, unit = self.packet.split("####", maxsplit=1)
+                example_unit = f"{prefix}{opening}markdown\n####{unit}{closing}\n"
+                errors = validator.validate(example_unit, self.contract, {"q1"})
+                self.assertIn("finding R1 has 0 verdict units; requires 1", errors)
+
+    def test_fenced_source_words_and_nested_shorter_fences_are_not_decisions(self) -> None:
+        for opening, body, closing in (
+            ("```rust", 'const LABEL: &str = "TBD";', "```"),
+            ("~~~text", "TODO: build an explicit review table\n## Finding `R2`: example", "~~~~"),
+            ("````text", "```\nTBD\n#### `R2-A` example", "````"),
+            ("~~~text", "```\nTBD", "~~~"),
+        ):
+            with self.subTest(opening=opening, body=body):
+                packet = f"{self.packet}\n{opening}\n{body}\n{closing}\n"
+                self.assertEqual(validator.validate(packet, self.contract, {"q1"}), [])
+        errors = validator.validate(self.packet + "\nTBD\n", self.contract, {"q1"})
+        self.assertIn("finding R1 contains an unresolved placeholder marker", errors)
+        errors = validator.validate(self.packet + "\nbuild an explicit review table\n", self.contract, {"q1"})
+        self.assertTrue(any("forbidden deferral" in error for error in errors))
+
+    def test_fenced_sections_citations_and_field_values_do_not_fill_requirements(self) -> None:
+        cases = [
+            (self.packet.replace("### Verdict", "```markdown\n### Verdict\n```"), "missing subsection: Verdict"),
+            (self.packet.replace("`q1`", "the source query") + "\n```text\n`q1`\n```\n", "does not cite evidence query: q1"),
+            (self.packet.replace("**Change:** Retain the named owner.", "**Change:**\n\n```text\nRetain the named owner.\n```"), "blank field: Change"),
+        ]
+        for packet, diagnostic in cases:
+            with self.subTest(diagnostic=diagnostic):
+                errors = validator.validate(packet, self.contract, {"q1"})
+                self.assertTrue(any(diagnostic in error for error in errors), errors)
+
+    def test_cli_preserves_passed_and_failed_packet_results(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="packet-fence-cli-") as temporary:
+            root = Path(temporary)
+            packet, contract, evidence = root / "packet.md", root / "contract.json", root / "evidence.json"
+            contract.write_text(json.dumps(self.contract), encoding="utf-8")
+            evidence.write_text(json.dumps({"schema_version": 1, "queries": [{"id": "q1"}]}), encoding="utf-8")
+            for content, expected_exit, expected_status in (
+                (self.packet + '\n```rust\nconst LABEL: &str = "TBD";\n```\n', 0, "passed"),
+                ("```markdown\n" + self.packet + "```\n", 1, "failed"),
+            ):
+                with self.subTest(expected_status=expected_status):
+                    packet.write_text(content, encoding="utf-8")
+                    result = subprocess.run([
+                        sys.executable, "-B", str(SCRIPT_DIRECTORY / "validate_verdict_packet.py"),
+                        "--packet", str(packet), "--contract", str(contract), "--evidence-json", str(evidence),
+                    ], capture_output=True, text=True, check=False)
+                    self.assertEqual(result.returncode, expected_exit, result.stderr)
+                    report = json.loads(result.stdout if expected_exit == 0 else result.stderr)
+                    self.assertEqual(report["status"], expected_status)
+
+
+class OperationalDiagnosticTests(unittest.TestCase):
+    def test_inventory_read_and_write_failures_normalize_home_paths(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="inventory-diagnostic-") as temporary:
+            root = Path(temporary)
+            spec = root / "spec.json"
+            source = root / "calls.rs"
+            source.write_text('fn patch_one() { helper("target"); }', encoding="utf-8")
+            blocked = root / "blocked"
+            blocked.write_text("preserve this file", encoding="utf-8")
+            for source_name, output, expected_path in (
+                ("missing.rs", root / "inventory.json", "~/missing.rs"),
+                ("calls.rs", blocked / "inventory.json", "~/blocked"),
+            ):
+                with self.subTest(source_name=source_name):
+                    spec.write_text(json.dumps({
+                        "schema_version": 1, "source": source_name,
+                        "owner_pattern": r"(?m)^fn (?P<owner>patch_[a-z0-9_]+)\s*\(",
+                        "calls": [{"callee": "helper", "identity_args": [0], "identity_labels": ["selector"]}],
+                    }), encoding="utf-8")
+                    stdout, stderr = io.StringIO(), io.StringIO()
+                    with mock.patch.object(Path, "home", return_value=root), mock.patch.object(sys, "argv", [
+                        "collect_rust_call_inventory.py", "--spec", str(spec), "--output-json", str(output),
+                        "--output-markdown", str(root / "inventory.md"),
+                    ]), redirect_stdout(stdout), redirect_stderr(stderr):
+                        exit_status = call_inventory.main()
+                    self.assertEqual(exit_status, 1)
+                    self.assertEqual(stdout.getvalue(), "")
+                    self.assertIn(expected_path, stderr.getvalue())
+                    self.assertNotIn(str(root), stderr.getvalue())
+                    self.assertNotIn("Traceback", stderr.getvalue())
+                    self.assertEqual(blocked.read_text(encoding="utf-8"), "preserve this file")
+
+    def test_packet_invalid_input_preserves_structure_and_normalizes_home_paths(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="packet-diagnostic-") as temporary:
+            root = Path(temporary)
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with mock.patch.object(Path, "home", return_value=root), mock.patch.object(sys, "argv", [
+                "validate_verdict_packet.py", "--packet", str(root / "missing.md"),
+                "--contract", str(root / "contract.json"), "--evidence-json", str(root / "evidence.json"),
+            ]), redirect_stdout(stdout), redirect_stderr(stderr):
+                exit_status = validator.main()
+            self.assertEqual(exit_status, 2)
+            self.assertEqual(stdout.getvalue(), "")
+            report = json.loads(stderr.getvalue())
+            self.assertEqual(report["status"], "invalid-input")
+            self.assertEqual(len(report["errors"]), 1)
+            self.assertIn("~/missing.md", report["errors"][0])
+            self.assertNotIn(str(root), stderr.getvalue())
 
 
 class MarkdownStyleTests(unittest.TestCase):

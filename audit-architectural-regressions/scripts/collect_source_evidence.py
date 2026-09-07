@@ -204,6 +204,12 @@ def normalized_groups(match: re.Match[str]) -> dict[str, str | None]:
     }
 
 
+def source_lines(source: str) -> list[str]:
+    """Use LF boundaries, remove paired CR terminators, and retain bare CR text."""
+    parts = source.split("\n")
+    return [line.removesuffix("\r") for line in parts[:-1]] + ([parts[-1]] if parts[-1] else [])
+
+
 def line_matches(lines: list[str], patterns: list[re.Pattern[str]]) -> tuple[list[tuple[int, int]], list[dict[str, Any]]]:
     spans: list[tuple[int, int]] = []
     captures: list[dict[str, Any]] = []
@@ -271,9 +277,9 @@ def capture_query(checkpoints: dict[str, tuple[dict[str, str], Path]], raw_query
         source = source_bytes.decode("utf-8")
     except UnicodeDecodeError as error:
         raise EvidenceError(f"query {query_id} source is not UTF-8: {relative_path}") from error
-    lines = source.splitlines()
+    lines = source_lines(source)
     selected_source, line_offset, scope = scoped_source(source, query, query_id)
-    selected_lines = selected_source.splitlines()
+    selected_lines = source_lines(selected_source)
     matches, captures = line_matches(selected_lines, patterns) if match_mode == "line" else source_matches(selected_source, patterns)
     if line_offset:
         matches = [(start + line_offset, end + line_offset) for start, end in matches]
