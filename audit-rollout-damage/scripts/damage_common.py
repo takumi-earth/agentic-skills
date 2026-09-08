@@ -68,20 +68,32 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
+def load_json_snapshot(path: Path) -> tuple[Any, str]:
+    """Parse and hash the same original bytes of one JSON document."""
+    try:
+        data = path.read_bytes()
+        value = json.loads(data.decode("utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise AssessmentInputError(
+            normalize_home_text(f"cannot read JSON {display_path(path)}: {error}")
+        ) from error
+    return value, sha256_bytes(data)
+
+
 def load_json(path: Path) -> Any:
     """Load one JSON document with a path-qualified error."""
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError) as error:
-        raise AssessmentInputError(f"cannot read JSON {display_path(path)}: {error}") from error
+    return load_json_snapshot(path)[0]
 
 
-def load_jsonl(path: Path) -> list[dict[str, Any]]:
-    """Load object-valued JSONL records with line-qualified errors."""
+def load_jsonl_snapshot(path: Path) -> tuple[list[dict[str, Any]], str]:
+    """Parse object-valued JSONL and hash the same original byte snapshot."""
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
+        data = path.read_bytes()
+        lines = data.decode("utf-8").splitlines()
     except (OSError, UnicodeError) as error:
-        raise AssessmentInputError(f"cannot read JSONL {display_path(path)}: {error}") from error
+        raise AssessmentInputError(
+            normalize_home_text(f"cannot read JSONL {display_path(path)}: {error}")
+        ) from error
     records: list[dict[str, Any]] = []
     for line_number, line in enumerate(lines, 1):
         if not line.strip():
@@ -90,14 +102,19 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
             value = json.loads(line)
         except json.JSONDecodeError as error:
             raise AssessmentInputError(
-                f"invalid JSONL at {display_path(path)}:{line_number}: {error}"
+                normalize_home_text(f"invalid JSONL at {display_path(path)}:{line_number}: {error}")
             ) from error
         if not isinstance(value, dict):
             raise AssessmentInputError(
                 f"invalid JSONL at {display_path(path)}:{line_number}: expected object"
             )
         records.append(value)
-    return records
+    return records, sha256_bytes(data)
+
+
+def load_jsonl(path: Path) -> list[dict[str, Any]]:
+    """Load object-valued JSONL records with line-qualified errors."""
+    return load_jsonl_snapshot(path)[0]
 
 
 def canonical_json(value: Any) -> str:

@@ -13,8 +13,8 @@ from damage_common import (
     atomic_write_text,
     canonical_json,
     display_path,
-    load_json,
-    load_jsonl,
+    load_json_snapshot,
+    load_jsonl_snapshot,
     normalize_home_text,
     require_exact_keys,
     require_list,
@@ -22,7 +22,6 @@ from damage_common import (
     require_string,
     require_unique,
     sha256_bytes,
-    sha256_file,
 )
 
 
@@ -220,7 +219,8 @@ def main() -> int:
     arguments = parse_args()
     try:
         selection_path = arguments.selection.expanduser().resolve(strict=True)
-        selection = require_object(load_json(selection_path), "selection")
+        selection_value, selection_hash = load_json_snapshot(selection_path)
+        selection = require_object(selection_value, "selection")
         require_exact_keys(selection, {"schema_version", "defaults", "anchors"}, set(), "selection")
         if selection["schema_version"] != 1:
             raise AssessmentInputError("selection.schema_version: expected 1")
@@ -235,7 +235,7 @@ def main() -> int:
         semantic_events: list[list[dict[str, Any]]] = []
         for session_index, source in enumerate(arguments.session):
             path = source.expanduser().resolve(strict=True)
-            records = load_jsonl(path)
+            records, session_hash = load_jsonl_snapshot(path)
             semantic = [
                 event
                 for ordinal, record in enumerate(records)
@@ -247,7 +247,7 @@ def main() -> int:
                 {
                     "session_index": session_index,
                     "session": display_path(path),
-                    "session_sha256": sha256_file(path),
+                    "session_sha256": session_hash,
                     "rollout_id": session_rollout_id(records),
                     "record_count": len(records),
                     "semantic_event_count": len(semantic),
@@ -304,13 +304,13 @@ def main() -> int:
         require_unique(identifiers, "selection.anchors")
         result = {
             "schema_version": 1,
-            "selection": {"path": display_path(selection_path), "sha256": sha256_file(selection_path)},
+            "selection": {"path": display_path(selection_path), "sha256": selection_hash},
             "sessions": session_documents,
             "anchors": anchors,
         }
         atomic_write_text(arguments.output.expanduser(), canonical_json(result))
     except (AssessmentInputError, OSError) as error:
-        raise SystemExit(str(error)) from error
+        raise SystemExit(normalize_home_text(str(error))) from error
     return 0
 
 

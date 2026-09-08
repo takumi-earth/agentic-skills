@@ -58,7 +58,7 @@ Use `$design-semantic-source-transforms` to describe the durable production repl
 When persistence is authorized, create one incident manifest conforming to `references/assessment-manifest.schema.json`.
 
 - Put incident names, paths, ordinals, classifications, qualitative explanations, limits, and remediation options only in the manifest.
-- Hash every evidence input and give each one a stable identifier. The renderer refuses a stale or missing input.
+- Hash every evidence input and give each one a stable identifier. Hash and parse each input from the same captured bytes, preserving original-byte hashes separately from presentation normalization. The renderer refuses a stale or missing input.
 - Define each qualification level as remediation-confidence evidence, behavioral severity, or another explicit dimension. Never silently mix dimensions.
 - Give each statistical record a generic measurement expression that selects and aggregates source evidence. Do not paste a precomputed size into renderer code.
 - Cite every record and qualitative example to one or more evidence inputs and locators.
@@ -94,7 +94,7 @@ python3 scripts/verify_damage_assessment.py \
   --output <reproducibility.json>
 ```
 
-Require two fresh runs to produce byte-identical Markdown and JSON. Reproducibility proves deterministic rendering against frozen evidence; it does not prove semantic correctness, authority, or that a remediation should be applied.
+Require two successful fresh runs to produce both Markdown and JSON before comparing their hashes; absent outputs cannot establish equality. Reproducibility proves deterministic rendering against frozen evidence; it does not prove semantic correctness, authority, or that a remediation should be applied.
 
 ## Review the generated report
 

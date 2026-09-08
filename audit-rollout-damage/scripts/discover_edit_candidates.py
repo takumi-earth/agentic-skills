@@ -17,6 +17,7 @@ from damage_common import (
     load_json,
     normalize_home_text,
     normalize_home_value,
+    resolve_path,
 )
 
 
@@ -159,13 +160,10 @@ def reported_success(events: list[dict[str, Any]]) -> bool | None:
     """Return success or failure only when structured result semantics agree."""
     if not events:
         return None
-    decisive: list[bool] = []
-    transport: list[bool] = []
+    signals: list[bool] = []
     for event in events:
-        event_decisive, event_transport = result_signals(event)
-        decisive.extend(event_decisive)
-        transport.extend(event_transport)
-    signals = decisive or transport
+        event_decisive, _transport = result_signals(event)
+        signals.extend(event_decisive)
     if not signals or len(set(signals)) != 1:
         return None
     return signals[0]
@@ -285,8 +283,7 @@ def patch_operations(patch: str, repository: Path) -> tuple[list[dict[str, str]]
         if match is None:
             continue
         operation, target = match.groups()
-        target_path = Path(target)
-        resolved = target_path if target_path.is_absolute() else repository / target_path
+        resolved = resolve_path(target, repository)
         if not within_repository(resolved, repository):
             rejected.append(target)
             continue
@@ -312,8 +309,8 @@ def session_documents(index: dict[str, Any]) -> list[dict[str, Any]]:
 def main() -> int:
     """Write edit candidates and unsupported mutation-shaped calls for review."""
     arguments = parse_args()
-    repository = arguments.repository.expanduser().resolve(strict=True)
     try:
+        repository = arguments.repository.expanduser().resolve(strict=True)
         index = load_json(arguments.tool_index.expanduser())
         if not isinstance(index, dict):
             raise AssessmentInputError("tool index: expected object")
@@ -398,7 +395,7 @@ def main() -> int:
         }
         atomic_write_text(arguments.output.expanduser(), canonical_json(result))
     except (AssessmentInputError, OSError) as error:
-        raise SystemExit(str(error)) from error
+        raise SystemExit(normalize_home_text(str(error))) from error
     return 0
 
 

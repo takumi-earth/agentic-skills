@@ -13,9 +13,9 @@ from damage_common import (
     atomic_write_text,
     canonical_json,
     display_path,
-    load_jsonl,
+    load_jsonl_snapshot,
+    normalize_home_text,
     normalize_home_value,
-    sha256_file,
 )
 
 
@@ -53,7 +53,7 @@ def call_id(payload: dict[str, Any]) -> str | None:
 
 def index_session(path: Path, session_index: int) -> dict[str, Any]:
     """Index one complete rollout without interpreting authority or effects."""
-    records = load_jsonl(path)
+    records, session_hash = load_jsonl_snapshot(path)
     session_meta: dict[str, Any] | None = None
     tool_events: list[dict[str, Any]] = []
     by_id: dict[str, list[dict[str, Any]]] = {}
@@ -102,7 +102,7 @@ def index_session(path: Path, session_index: int) -> dict[str, Any]:
     return {
         "session_index": session_index,
         "session": display_path(path),
-        "session_sha256": sha256_file(path),
+        "session_sha256": session_hash,
         "rollout_id": rollout_id,
         "records": len(records),
         "tool_events": tool_events,
@@ -119,7 +119,7 @@ def main() -> int:
         result = {"schema_version": 1, "sessions": sessions}
         atomic_write_text(arguments.output.expanduser(), canonical_json(result))
     except (AssessmentInputError, OSError) as error:
-        raise SystemExit(str(error)) from error
+        raise SystemExit(normalize_home_text(str(error))) from error
     return 0
 
 

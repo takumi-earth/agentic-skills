@@ -48,6 +48,7 @@ A file summary with a line, row, byte, or operation count is quantitative even w
 Resolve exhibit bodies from hash-verified evidence at render time. Do not paste incident text into renderer source or accept an uncited manually typed quotation as evidence.
 
 - Use a complete normalized patch when it is short enough to show the whole change.
+- A line range that omits part of the selected source requires `selected_excerpt` and an omission description. A range covering the entire selected source can remain `complete_change`.
 - For a failed call, show the exact attempted patch and label it `attempted_not_landed`.
 - For a deletion whose normalized hunk lacks body lines, show the exact delete operation and a prior-state excerpt from frozen trace evidence.
 - For a large added or changed artifact, show the load-bearing type, public function, behavior branch, or authority statement and list the omitted regions explicitly.

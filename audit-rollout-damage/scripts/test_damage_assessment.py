@@ -5,11 +5,21 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
 import unittest
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from unittest import mock
+
+import damage_common
+import discover_edit_candidates
+import extract_rollout_context
+import index_rollout_tools
+import render_damage_assessment
 
 
 SCRIPTS = Path(__file__).resolve().parent
@@ -23,6 +33,44 @@ def write_json(path: Path, value: object) -> None:
 def hash_file(path: Path) -> str:
     """Hash one fixture file."""
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def fixture_evidence(root: Path) -> Path:
+    """Write a complete report fixture for the snapshot and range regressions."""
+    path = root / "facts.json"
+    write_json(path, {"records": [
+        {"path": "small.rs", "added": 1, "removed": 0, "patch_lines": ["+small"]},
+        {"path": "middle.rs", "added": 3, "removed": 2, "patch_lines": ["-old middle", "+new middle"]},
+        {"path": "another-large.rs", "added": 9, "removed": 4, "patch_lines": ["-old another", "+new another"]},
+        {"path": "large.rs", "added": 9, "removed": 4, "patch_lines": ["-old large", "+new large"]},
+    ]})
+    return path
+
+
+@contextmanager
+def replace_after_read(replacements: dict[Path, bytes]) -> Iterator[None]:
+    """Replace owned inputs after their first read to expose mixed snapshots."""
+    pending = dict(replacements)
+    original_bytes = Path.read_bytes
+    original_text = Path.read_text
+
+    def replace(path: Path) -> None:
+        replacement = pending.pop(path, None)
+        if replacement is not None:
+            path.write_bytes(replacement)
+
+    def read_bytes(path: Path) -> bytes:
+        data = original_bytes(path)
+        replace(path)
+        return data
+
+    def read_text(path: Path, *args, **kwargs) -> str:
+        text = original_text(path, *args, **kwargs)
+        replace(path)
+        return text
+
+    with mock.patch.object(Path, "read_bytes", read_bytes), mock.patch.object(Path, "read_text", read_text):
+        yield
 
 
 def reference(input_id: str, locator: str) -> dict[str, str]:
@@ -731,6 +779,12 @@ class DamageAssessmentScriptsTest(unittest.TestCase):
                     "Done!",
                 ),
                 (
+                    "call-completed",
+                    "exec_command",
+                    {"cmd": "touch completed", "workdir": str(repository)},
+                    "Done!",
+                ),
+                (
                     "call-conflict",
                     "exec_command",
                     {"cmd": "touch conflict", "workdir": str(repository)},
@@ -746,7 +800,7 @@ class DamageAssessmentScriptsTest(unittest.TestCase):
                     "call_id": call_id,
                     "output": output,
                 }
-                if call_id == "call-failed":
+                if call_id in {"call-failed", "call-completed"}:
                     output_payload["status"] = "completed"
                 records.extend(
                     [
@@ -811,6 +865,7 @@ class DamageAssessmentScriptsTest(unittest.TestCase):
             self.assertEqual(by_call["call-nested"]["nested_tool"], "exec_command")
             self.assertEqual(by_call["call-failed"]["reported_success"], False)
             self.assertIsNone(by_call["call-unknown"]["reported_success"])
+            self.assertIsNone(by_call["call-completed"]["reported_success"])
             self.assertIsNone(by_call["call-conflict"]["reported_success"])
 
     def test_candidate_discovery_retains_unparsed_mutation_wrapper(self) -> None:
@@ -963,6 +1018,281 @@ class DamageAssessmentScriptsTest(unittest.TestCase):
             self.assertEqual(events[0]["origin_hint"], "direct_user_message")
             self.assertEqual(events[-1]["origin_hint"], "harness_internal_goal_context")
             self.assertEqual([event["kind"] for event in events], ["message", "message", "tool_call", "tool_output", "message"])
+
+
+    def test_normalized_patch_targets_keep_repository_ownership(self) -> None:
+        """Carry absolute and normalized targets through indexing and discovery."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repository = root / "repository"
+            repository.mkdir()
+            targets = {
+                "relative": "src/relative.rs",
+                "absolute": str(repository / "src/absolute.rs"),
+                "normalized": "~/repository/src/normalized.rs",
+                "outside-absolute": str(root / "outside.rs"),
+                "outside-normalized": "~/outside.rs",
+            }
+            records = []
+            for identifier, target in targets.items():
+                patch = f"*** Begin Patch\n*** Add File: {target}\n+fixture\n*** End Patch\n"
+                records.extend([
+                    {"type": "response_item", "payload": {
+                        "type": "custom_tool_call", "id": identifier, "name": "apply_patch", "input": patch,
+                    }},
+                    {"type": "response_item", "payload": {
+                        "type": "custom_tool_call_output", "call_id": identifier, "output": {"exit_code": 0},
+                    }},
+                ])
+            session = root / "session.jsonl"
+            session.write_text("".join(json.dumps(item) + "\n" for item in records), encoding="utf-8")
+            tool_index = root / "index.json"
+            output = root / "candidates.json"
+            args = ["discover_edit_candidates.py", "--tool-index", str(tool_index),
+                    "--repository", str(repository), "--output", str(output)]
+            with (
+                mock.patch.object(Path, "home", return_value=root),
+                mock.patch.object(damage_common, "HOME_PATH", str(root)),
+                mock.patch.object(damage_common, "HOME_PATH_PATTERN", re.compile(
+                    rf"{re.escape(str(root))}(?![A-Za-z0-9._-])"
+                )),
+                mock.patch.object(sys, "argv", args),
+            ):
+                write_json(tool_index, {"sessions": [index_rollout_tools.index_session(session, 0)]})
+                self.assertEqual(discover_edit_candidates.main(), 0)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            candidates = {item["call_id"]: item for item in result["candidates"]}
+            self.assertEqual(set(candidates), {"relative", "absolute", "normalized"})
+            for identifier in candidates:
+                self.assertEqual(candidates[identifier]["operations"], [
+                    {"operation": "add", "target": f"src/{identifier}.rs"}
+                ])
+            unsupported = result["unsupported_mutation_shaped_calls"]
+            self.assertEqual({item["call_id"] for item in unsupported}, {
+                "outside-absolute", "outside-normalized"
+            })
+            self.assertTrue(all(item["targets"] == ["~/outside.rs"] for item in unsupported))
+
+    def test_reproducibility_requires_both_reports_from_successful_runs(self) -> None:
+        """Missing reports and failed processes cannot pass the output gate."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            renderer = root / "fixture_renderer.py"
+            renderer.write_text(
+                'import argparse, json\n'
+                'from pathlib import Path\n'
+                'parser = argparse.ArgumentParser()\n'
+                'for flag in ("manifest", "output-markdown", "output-json"):\n'
+                '    parser.add_argument("--" + flag, required=True)\n'
+                'args = parser.parse_args()\n'
+                'config = json.loads(Path(args.manifest).read_text(encoding="utf-8"))\n'
+                'skip = config.get("skip_run_b") and Path(args.output_json).parent.name == "run-b"\n'
+                'if not skip:\n'
+                '    for kind in config["outputs"]:\n'
+                '        Path(getattr(args, "output_" + kind)).write_text(kind + "\\n", encoding="utf-8")\n'
+                'raise SystemExit(config["exit_code"])\n',
+                encoding="utf-8",
+            )
+            cases = [
+                {"outputs": [], "exit_code": 0},
+                {"outputs": ["markdown"], "exit_code": 0},
+                {"outputs": ["json"], "exit_code": 0},
+                {"outputs": ["markdown", "json"], "exit_code": 0, "skip_run_b": True},
+                {"outputs": ["markdown", "json"], "exit_code": 7},
+            ]
+            for index, config in enumerate(cases):
+                with self.subTest(config=config):
+                    manifest_path = root / f"manifest-{index}.json"
+                    write_json(manifest_path, config)
+                    output = root / f"verification-{index}.json"
+                    completed = subprocess.run([
+                        sys.executable, str(SCRIPTS / "verify_damage_assessment.py"),
+                        "--manifest", str(manifest_path), "--renderer", str(renderer),
+                        "--output-root", str(root / f"runs-{index}"), "--output", str(output),
+                    ], check=False, capture_output=True, text=True)
+                    self.assertEqual(completed.returncode, 1, completed.stderr)
+                    result = json.loads(output.read_text(encoding="utf-8"))
+                    self.assertFalse(result["outputs_byte_identical"])
+                    self.assertEqual([run["exit_code"] for run in result["runs"]], [config["exit_code"]] * 2)
+                    for kind in ("markdown", "json"):
+                        if config["exit_code"] or kind not in config["outputs"] or config.get("skip_run_b"):
+                            self.assertFalse(result[f"{kind}_byte_identical"])
+
+    def test_renderer_keeps_manifest_and_evidence_snapshots_attributable(self) -> None:
+        """Hash consumed bytes even when both files change after their first read."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            evidence = fixture_evidence(root)
+            evidence.write_bytes(evidence.read_bytes().replace(b"\n", b"\r\n"))
+            evidence_hash = hash_file(evidence)
+            value = manifest(evidence, evidence_hash)
+            display_target = Path.home() / "audit-fixture"
+            value["report"]["title"] = f"Evidence at {display_target}"
+            exhibit = value["qualification_levels"][0]["representative_assessments"][0]["verbatim_exhibits"][0]
+            exhibit["interpretation"]["text"] = f"Inspect {display_target}"
+            manifest_path = root / "manifest.json"
+            write_json(manifest_path, value)
+            manifest_hash = hash_file(manifest_path)
+            output = root / "report.json"
+            markdown = root / "report.md"
+            args = ["render_damage_assessment.py", "--manifest", str(manifest_path),
+                    "--output-json", str(output), "--output-markdown", str(markdown)]
+            replacement = b'{"replacement": true}\n'
+            with replace_after_read({manifest_path: replacement, evidence: replacement}), mock.patch.object(sys, "argv", args):
+                self.assertEqual(render_damage_assessment.main(), 0)
+            result_text = output.read_text(encoding="utf-8")
+            result = json.loads(result_text)
+            self.assertEqual(result["manifest"]["sha256"], manifest_hash)
+            self.assertEqual(result["evidence_inputs"][0]["sha256"], evidence_hash)
+            self.assertEqual(result["qualification_levels"][0]["statistics"]["total"], 32)
+            self.assertEqual(manifest_path.read_bytes(), replacement)
+            self.assertEqual(evidence.read_bytes(), replacement)
+            markdown_text = markdown.read_text(encoding="utf-8")
+            self.assertIn("Evidence at ~/audit-fixture", markdown_text)
+            self.assertIn("Inspect ~/audit-fixture", result_text)
+            self.assertNotIn(str(Path.home()), markdown_text)
+            self.assertNotIn(str(Path.home()), result_text)
+
+    def test_evidence_loaders_keep_original_json_and_jsonl_hashes(self) -> None:
+        """Preserve CRLF and blank-line bytes independently from parsed values."""
+        cases = [
+            ("json", b'{"fact": "before"}\r\n', {"fact": "before"}),
+            ("jsonl", b'{"fact": "before"}\r\n\r\n{"fact": "second"}',
+             [{"fact": "before"}, {"fact": "second"}]),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for format_name, data, expected in cases:
+                with self.subTest(format=format_name):
+                    path = root / f"facts.{format_name}"
+                    path.write_bytes(data)
+                    digest = hashlib.sha256(data).hexdigest()
+                    declaration = {"evidence_inputs": [{
+                        "id": "facts", "path": str(path), "sha256": digest,
+                        "format": format_name, "role": "Snapshot fixture.",
+                    }]}
+                    with replace_after_read({path: b'{"fact": "after"}\n'}):
+                        loaded, verified = render_damage_assessment.load_evidence(declaration, root / "manifest.json")
+                    self.assertEqual(loaded["facts"], expected)
+                    self.assertEqual(verified[0]["sha256"], digest)
+                    self.assertNotEqual(hash_file(path), digest)
+
+    def test_indexer_keeps_events_with_their_session_hash(self) -> None:
+        """A later session replacement cannot relabel already captured events."""
+        with tempfile.TemporaryDirectory() as directory:
+            session = Path(directory) / "session.jsonl"
+            record = {"type": "response_item", "payload": {
+                "type": "custom_tool_call", "id": "before-call", "name": "exec",
+                "input": "before input",
+            }}
+            data = (json.dumps(record) + "\r\n").encode("utf-8")
+            session.write_bytes(data)
+            with replace_after_read({session: b'{}\n'}):
+                result = index_rollout_tools.index_session(session, 0)
+            self.assertEqual(result["session_sha256"], hashlib.sha256(data).hexdigest())
+            self.assertEqual(result["tool_events"][0]["input"], "before input")
+            self.assertEqual(result["correlations"][0]["call_id"], "before-call")
+
+    def test_context_extractor_keeps_selection_and_session_snapshots(self) -> None:
+        """Context content and both recorded input hashes share their read snapshots."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            session = root / "session.jsonl"
+            session.write_text(json.dumps({"type": "response_item", "payload": {
+                "type": "custom_tool_call", "id": "before-call", "name": "exec", "input": "before input",
+            }}) + "\n", encoding="utf-8")
+            selection = root / "selection.json"
+            write_json(selection, {
+                "schema_version": 1,
+                "defaults": {"before": 0, "after": 0, "max_excerpt_chars": 2_000},
+                "anchors": [{"id": "before", "session_index": 0, "call_id": "before-call"}],
+            })
+            session_hash = hash_file(session)
+            selection_hash = hash_file(selection)
+            output = root / "context.json"
+            args = ["extract_rollout_context.py", "--session", str(session),
+                    "--selection", str(selection), "--output", str(output)]
+            with replace_after_read({session: b'{}\n', selection: b'{}\n'}), mock.patch.object(sys, "argv", args):
+                self.assertEqual(extract_rollout_context.main(), 0)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(result["selection"]["sha256"], selection_hash)
+            self.assertEqual(result["sessions"][0]["session_sha256"], session_hash)
+            self.assertEqual(result["anchors"][0]["call_id"], "before-call")
+            self.assertEqual(result["anchors"][0]["events"][0]["text_excerpt"], "before input")
+
+    def test_complete_exhibits_require_the_entire_selected_range(self) -> None:
+        """Reject either omitted edge while allowing a complete explicit range."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            evidence = fixture_evidence(root)
+            for index, (start, count, expected_exit) in enumerate([(1, 1, 1), (2, 1, 1), (1, 2, 0)]):
+                with self.subTest(start=start, count=count):
+                    value = manifest(evidence, hash_file(evidence))
+                    exhibit = value["qualification_levels"][0]["representative_assessments"][2]["verbatim_exhibits"][0]
+                    exhibit["source"]["start_line"] = start
+                    exhibit["source"]["line_count"] = count
+                    manifest_path = root / f"manifest-{index}.json"
+                    write_json(manifest_path, value)
+                    markdown = root / f"report-{index}.md"
+                    output = root / f"report-{index}.json"
+                    completed = subprocess.run([
+                        sys.executable, str(SCRIPTS / "render_damage_assessment.py"), "--manifest", str(manifest_path),
+                        "--output-markdown", str(markdown), "--output-json", str(output),
+                    ], check=False, capture_output=True, text=True)
+                    self.assertEqual(completed.returncode, expected_exit, completed.stderr)
+                    if expected_exit:
+                        self.assertIn("`complete_change` omits source lines", completed.stderr)
+                        self.assertFalse(output.exists())
+                        self.assertFalse(markdown.exists())
+                    else:
+                        result = json.loads(output.read_text(encoding="utf-8"))
+                        dossiers = result["qualification_levels"][0]["representative_assessments"]
+                        middle = next(item for item in dossiers if item["record_id"] == "middle")
+                        self.assertEqual(middle["verbatim_exhibits"][0]["text"], "-old middle\n+new middle")
+
+    def test_cli_input_errors_normalize_nested_home_paths(self) -> None:
+        """Expose stable failures without leaking expanded paths or tracebacks."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            missing = root / "missing-input"
+            output = root / "unused-output.json"
+            cases = [
+                ("index_rollout_tools.py", ["--session", str(missing), "--output", str(output)]),
+                ("discover_edit_candidates.py", ["--repository", str(root), "--tool-index", str(missing), "--output", str(output)]),
+                ("discover_edit_candidates.py", ["--repository", str(missing), "--tool-index", str(output), "--output", str(output)]),
+                ("extract_rollout_context.py", ["--session", str(missing), "--selection", str(missing), "--output", str(output)]),
+                ("render_damage_assessment.py", ["--manifest", str(missing), "--output-json", str(output), "--output-markdown", str(root / "unused.md")]),
+                ("verify_damage_assessment.py", ["--manifest", str(missing), "--output-root", str(root / "unused-runs"), "--output", str(output)]),
+            ]
+            for script, args in cases:
+                with self.subTest(script=script, args=args):
+                    completed = subprocess.run([sys.executable, str(SCRIPTS / script), *args],
+                                               check=False, capture_output=True, text=True)
+                    self.assertEqual(completed.returncode, 1, completed.stderr)
+                    self.assertEqual(completed.stdout, "")
+                    self.assertIn(damage_common.display_path(missing), completed.stderr)
+                    self.assertNotIn(str(Path.home()), completed.stderr)
+                    self.assertNotIn("Traceback", completed.stderr)
+                    self.assertFalse(output.exists())
+
+    def test_snapshot_readers_reject_malformed_inputs(self) -> None:
+        """Keep malformed JSON, JSONL records, and UTF-8 as located input failures."""
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid-input"
+            cases = [
+                (damage_common.load_json_snapshot, b'{'),
+                (damage_common.load_json_snapshot, b'\xff'),
+                (damage_common.load_jsonl_snapshot, b'{}\n{'),
+                (damage_common.load_jsonl_snapshot, b'[]\n'),
+                (damage_common.load_jsonl_snapshot, b'\xff'),
+            ]
+            for loader, data in cases:
+                with self.subTest(loader=loader.__name__, data=data):
+                    path.write_bytes(data)
+                    with self.assertRaises(damage_common.AssessmentInputError) as raised:
+                        loader(path)
+                    self.assertIn(damage_common.display_path(path), str(raised.exception))
+                    self.assertNotIn(str(Path.home()), str(raised.exception))
 
 
 if __name__ == "__main__":

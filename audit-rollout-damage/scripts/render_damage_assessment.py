@@ -14,8 +14,9 @@ from damage_common import (
     atomic_write_text,
     canonical_json,
     display_path,
-    load_json,
-    load_jsonl,
+    load_json_snapshot,
+    load_jsonl_snapshot,
+    normalize_home_text,
     require_exact_keys,
     require_list,
     require_object,
@@ -23,7 +24,6 @@ from damage_common import (
     require_string_list,
     require_unique,
     resolve_path,
-    sha256_file,
 )
 
 
@@ -102,13 +102,15 @@ def load_evidence(manifest: dict[str, Any], manifest_path: Path) -> tuple[dict[s
         if format_name not in {"json", "jsonl"}:
             raise AssessmentInputError(f"{location}.format: expected `json` or `jsonl`")
         path = resolve_path(path_text, manifest_path.parent).resolve(strict=True)
-        actual_hash = sha256_file(path)
+        document, actual_hash = (
+            load_json_snapshot(path) if format_name == "json" else load_jsonl_snapshot(path)
+        )
         if actual_hash != expected_hash:
             raise AssessmentInputError(
                 f"{location}: SHA-256 mismatch for {display_path(path)}; expected {expected_hash}, got {actual_hash}"
             )
         identifiers.append(identifier)
-        loaded[identifier] = load_json(path) if format_name == "json" else load_jsonl(path)
+        loaded[identifier] = document
         verified.append(
             {
                 "id": identifier,
@@ -354,7 +356,13 @@ def verbatim_text(value: Any, location: str) -> tuple[str, list[str]]:
     return exact_text, exact_lines
 
 
-def resolve_verbatim_source(value: Any, evidence: dict[str, Any], location: str) -> dict[str, Any]:
+def resolve_verbatim_source(
+    value: Any,
+    evidence: dict[str, Any],
+    location: str,
+    *,
+    require_complete: bool = False,
+) -> dict[str, Any]:
     """Resolve exact exhibit text from one hash-verified evidence selector."""
     source = require_object(value, location)
     require_exact_keys(source, {"select", "extract_path"}, {"start_line", "line_count"}, location)
@@ -383,6 +391,10 @@ def resolve_verbatim_source(value: Any, evidence: dict[str, Any], location: str)
     if start_index >= len(lines) or end_index > len(lines):
         raise AssessmentInputError(
             f"{location}: line slice {start_line}..{end_index} exceeds {len(lines)} available line(s)"
+        )
+    if require_complete and (start_index != 0 or end_index != len(lines)):
+        raise AssessmentInputError(
+            f"{location}: `complete_change` omits source lines; use `selected_excerpt` with an omission description"
         )
     return {"text": "\n".join(lines[start_index:end_index]), "source": source}
 
@@ -455,7 +467,9 @@ def validate_verbatim_exhibit(
         raise AssessmentInputError(f"{location}.omitted: required for a selected excerpt")
     if scope == "complete_change" and omitted is not None:
         raise AssessmentInputError(f"{location}.omitted: forbidden for a complete change")
-    resolved = resolve_verbatim_source(exhibit["source"], evidence, f"{location}.source")
+    resolved = resolve_verbatim_source(
+        exhibit["source"], evidence, f"{location}.source", require_complete=scope == "complete_change"
+    )
     return {
         "title": require_string(exhibit["title"], f"{location}.title"),
         "language": language,
@@ -1387,15 +1401,15 @@ def render_markdown(report: dict[str, Any], levels: list[dict[str, Any]], verifi
         lines.append(f"- `{item['id']}`: `{item['path']}` with SHA-256 `{item['sha256']}`; {item['role']}")
     lines.extend(["", "## Limits", ""])
     lines.extend(f"- {item}" for item in report["limits"])
-    return "\n".join(lines).rstrip() + "\n"
+    return normalize_home_text("\n".join(lines).rstrip() + "\n")
 
 
 def main() -> int:
     """Validate frozen evidence, compute statistics, and write both report forms."""
     arguments = parse_args()
-    manifest_path = arguments.manifest.expanduser().resolve(strict=True)
     try:
-        manifest_value = load_json(manifest_path)
+        manifest_path = arguments.manifest.expanduser().resolve(strict=True)
+        manifest_value, manifest_hash = load_json_snapshot(manifest_path)
         manifest = require_object(manifest_value, "manifest")
         require_exact_keys(manifest, TOP_LEVEL_REQUIRED, set(), "manifest")
         if manifest["schema_version"] != 4:
@@ -1404,7 +1418,6 @@ def main() -> int:
         evidence_ids = set(evidence)
         report = validate_report(manifest["report"], evidence, evidence_ids)
         levels = validate_levels(manifest["qualification_levels"], evidence, evidence_ids)
-        manifest_hash = sha256_file(manifest_path)
         derived = {
             "schema_version": 4,
             "manifest": {"path": display_path(manifest_path), "sha256": manifest_hash},
@@ -1419,7 +1432,7 @@ def main() -> int:
         atomic_write_text(arguments.output_json.expanduser(), canonical_json(derived))
         atomic_write_text(arguments.output_markdown.expanduser(), markdown)
     except (AssessmentInputError, OSError) as error:
-        raise SystemExit(str(error)) from error
+        raise SystemExit(normalize_home_text(str(error))) from error
     return 0
 
 

@@ -53,26 +53,37 @@ def run_renderer(renderer: Path, manifest: Path, output_root: Path, run_name: st
 def main() -> int:
     """Require successful byte-identical output from two absent-directory runs."""
     arguments = parse_args()
-    manifest = arguments.manifest.expanduser().resolve(strict=True)
-    renderer = arguments.renderer.expanduser().resolve(strict=True)
-    output_root = arguments.output_root.expanduser()
-    if output_root.exists():
-        raise SystemExit(f"output root already exists: {display_path(output_root)}")
-    output_root.mkdir(parents=True)
-    runs = [run_renderer(renderer, manifest, output_root, name) for name in ("run-a", "run-b")]
-    exits_ok = all(run["exit_code"] == 0 for run in runs)
-    markdown_identical = exits_ok and runs[0]["markdown_sha256"] == runs[1]["markdown_sha256"]
-    json_identical = exits_ok and runs[0]["json_sha256"] == runs[1]["json_sha256"]
-    result = {
-        "schema_version": 1,
-        "manifest": {"path": display_path(manifest), "sha256": sha256_file(manifest)},
-        "renderer": {"path": display_path(renderer), "sha256": sha256_file(renderer)},
-        "runs": runs,
-        "outputs_byte_identical": bool(markdown_identical and json_identical),
-        "markdown_byte_identical": bool(markdown_identical),
-        "json_byte_identical": bool(json_identical),
-    }
-    atomic_write_text(arguments.output.expanduser(), canonical_json(result))
+    try:
+        manifest = arguments.manifest.expanduser().resolve(strict=True)
+        renderer = arguments.renderer.expanduser().resolve(strict=True)
+        output_root = arguments.output_root.expanduser()
+        if output_root.exists():
+            raise SystemExit(f"output root already exists: {display_path(output_root)}")
+        output_root.mkdir(parents=True)
+        runs = [run_renderer(renderer, manifest, output_root, name) for name in ("run-a", "run-b")]
+        exits_ok = all(run["exit_code"] == 0 for run in runs)
+        markdown_identical = (
+            exits_ok
+            and all(run["markdown_sha256"] is not None for run in runs)
+            and runs[0]["markdown_sha256"] == runs[1]["markdown_sha256"]
+        )
+        json_identical = (
+            exits_ok
+            and all(run["json_sha256"] is not None for run in runs)
+            and runs[0]["json_sha256"] == runs[1]["json_sha256"]
+        )
+        result = {
+            "schema_version": 1,
+            "manifest": {"path": display_path(manifest), "sha256": sha256_file(manifest)},
+            "renderer": {"path": display_path(renderer), "sha256": sha256_file(renderer)},
+            "runs": runs,
+            "outputs_byte_identical": bool(markdown_identical and json_identical),
+            "markdown_byte_identical": bool(markdown_identical),
+            "json_byte_identical": bool(json_identical),
+        }
+        atomic_write_text(arguments.output.expanduser(), canonical_json(result))
+    except OSError as error:
+        raise SystemExit(normalize_home_text(str(error))) from error
     return 0 if result["outputs_byte_identical"] else 1
 
 
