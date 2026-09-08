@@ -15,6 +15,14 @@
     {"kind": "overlap", "target": "skill-researcher"},
     {"kind": "overlap", "target": "design-command-observability"}
   ],
+  "review_notes": [
+    "User disposition: retain pending correction as a distinct query-helper alternative. Typed filtering of normalized JSONL remains useful; the executable package remains uncorrected and pending.",
+    "Before adoption, define adapters for supported record layouts and keep event metadata separate from payload data. Do not promote `status`, `tool_name`, `call_id`, or `ordinal` from arbitrary nested user content. Honor the documented tool-record `id` fallback and make `--output-pattern` and `--path-contains` follow their declared fields, or accurately describe a broader text-search interface.",
+    "Preserve explicit uncertainty such as `ambiguous`. Keep transport completion separate from operation success: `status: completed` can coexist with a nonzero `exit_code` without creating a success/failure contradiction. Reconcile status semantics with the corrected `audit-rollout-damage` owner.",
+    "Bound the complete serialized response, including metadata and malformed-line diagnostics, and report omitted content. The reviewed `--max-rows 0 --max-bytes 128` invocation emitted 13,683 bytes because 100 diagnostics bypassed the row budget.",
+    "Use one documented line-addressing model for parsing, source locators, and subsequent inspection. Bare carriage returns currently produce anchors that disagree with an LF-delimited reader. Reject an inverted ordinal range as invalid input rather than a successful zero-match query.",
+    "Return structured failures for deeply nested and malformed input instead of uncaught `RecursionError` with empty stdout. Normalize home paths in successful output and operational diagnostics to `~/...` while preserving hashes of original evidence bytes."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-001-index-query-cli"
