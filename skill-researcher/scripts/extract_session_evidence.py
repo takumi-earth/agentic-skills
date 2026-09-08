@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
+from nested_goal_evidence import NestedGoalEvidence
+
 
 SKILL_REF_RE = re.compile(r"\$([a-z0-9][a-z0-9:-]{0,127})")
 DECLARED_USE_RE = re.compile(
@@ -396,6 +398,35 @@ def select_messages(
     return result, any_truncated or len(kept) != len(messages)
 
 
+def _goal_context(
+    events: list[dict[str, Any]], nested: NestedGoalEvidence, malformed_lines: list[int]
+) -> dict[str, Any]:
+    """Assemble direct and nested observations under the same evidence contract."""
+    events.extend(nested.events())
+    events.sort(key=lambda event: (event["line"], event.get("input_offset", -1)))
+    complete_outputs = [
+        event
+        for event in events
+        if (
+            event.get("kind") == "goal_tool_output"
+            or event.get("output_confirmation") == "confirmed"
+        )
+        and event.get("tool") == "update_goal"
+        and isinstance(event.get("output"), dict)
+        and decode_json_object(event["output"].get("goal")).get("status") == "complete"
+    ]
+    return {
+        "successful_completion_detected": bool(complete_outputs),
+        "completion_outputs": complete_outputs,
+        "events": events,
+        "nested_extraction": {
+            "scope": "literal tools.update_goal calls in completed exec inputs",
+            "complete_within_scope": not nested.issues and not malformed_lines,
+            "issues": nested.issues,
+        },
+    }
+
+
 def extract(args: argparse.Namespace) -> dict[str, Any]:
     transcript = resolve_transcript(args)
     skills = discover_skills(args.skills_root.expanduser().resolve())
@@ -405,6 +436,7 @@ def extract(args: argparse.Namespace) -> dict[str, Any]:
     recent_calls: collections.deque[dict[str, Any]] = collections.deque(maxlen=3)
     calls_by_id: dict[str, dict[str, Any]] = {}
     goal_events: list[dict[str, Any]] = []
+    nested_goals = NestedGoalEvidence(compact_goal)
     failure_candidates: list[dict[str, Any]] = []
     session_meta: dict[str, Any] = {}
     turn_ids: set[str] = set()
@@ -415,15 +447,16 @@ def extract(args: argparse.Namespace) -> dict[str, Any]:
     first_timestamp: str | None = None
     last_timestamp: str | None = None
 
-    with transcript.open(encoding="utf-8", errors="replace") as handle:
+    with transcript.open(encoding="utf-8", errors="replace", newline="\n") as handle:
         for line_no, raw_line in enumerate(handle, start=1):
             total_lines = line_no
             try:
                 record = json.loads(raw_line)
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, RecursionError):
                 malformed_lines.append(line_no)
                 continue
             if not isinstance(record, dict):
+                malformed_lines.append(line_no)
                 continue
 
             timestamp = record.get("timestamp")
@@ -495,6 +528,7 @@ def extract(args: argparse.Namespace) -> dict[str, Any]:
             if record_type != "response_item":
                 continue
 
+            nested_goals.observe(payload, line_no, timestamp)
             payload_type = payload.get("type")
             if payload_type == "message":
                 role = payload.get("role")
@@ -690,18 +724,6 @@ def extract(args: argparse.Namespace) -> dict[str, Any]:
         for skill in used_skills
         if skill["owner"] == "user" and not skill["excluded_by_request"]
     ]
-    complete_outputs = [
-        event
-        for event in goal_events
-        if event.get("kind") == "goal_tool_output"
-        and event.get("tool") == "update_goal"
-        and (
-            isinstance(event.get("output"), dict)
-            and decode_json_object(event["output"].get("goal")).get("status")
-            == "complete"
-        )
-    ]
-
     return {
         "schema_version": 1,
         "evidence_contract": {
@@ -721,11 +743,7 @@ def extract(args: argparse.Namespace) -> dict[str, Any]:
             "session_meta": session_meta,
             "turn_ids": sorted(turn_ids),
         },
-        "goal_context": {
-            "successful_completion_detected": bool(complete_outputs),
-            "completion_outputs": complete_outputs,
-            "events": goal_events,
-        },
+        "goal_context": _goal_context(goal_events, nested_goals, malformed_lines),
         "skills": {
             "root": str(args.skills_root.expanduser().resolve()),
             "used": used_skills,
@@ -759,7 +777,8 @@ def main() -> int:
     try:
         result = extract(args)
     except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
-        print(f"error: {error}", file=sys.stderr)
+        diagnostic = str(error).replace(str(Path.home()), "~")
+        print(f"error: {diagnostic}", file=sys.stderr)
         return 2
     json.dump(result, sys.stdout, ensure_ascii=False, indent=2)
     sys.stdout.write("\n")

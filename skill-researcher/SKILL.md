@@ -99,6 +99,12 @@ python3 ~/agentic-skills/skill-researcher/scripts/extract_session_evidence.py \
   --transcript /absolute/path/to/rollout.jsonl
 ```
 
+The bounded extractor includes literal `tools.update_goal(...)` call sites inside completed `exec` inputs through `scripts/nested_goal_evidence.py`. It accepts quoted or identifier property names, literal JSON-like arguments, comments, and trailing commas. Regular-expression/division syntax, template interpolation, dynamic arguments, and duplicate properties are outside its inspected grammar and appear in `goal_context.nested_extraction.issues`; incomplete coverage must not be read as absence of a lifecycle operation. Source JSONL anchors and input line locators use LF-delimited lines.
+
+Call sites do not prove execution. Nested confirmation requires one outer call and one later output, one literal goal call, and a direct result-emitting form: `text(await tools.update_goal({...}))` or `const result = await tools.update_goal({...}); text(result)`. The result must be a typed `goal` object, JSON encoding of that object, or a single text content block carrying it, without explicit failure semantics. Other control flow, duplicate outputs, unsupported result shapes, and status mismatches remain separately classified observations. `successful_completion_detected` describes transcript evidence; it does not establish current harness status, user acceptance, or authority to call a lifecycle tool or access a goal store.
+
+After changing the bounded extractor or its nested-call helper, run `python3 scripts/test_extract_session_evidence.py` from this package and validate the complete package.
+
 Read [research-protocol.md](references/research-protocol.md) before classifying corpus evidence, delegating partitions, or recommending a skill portfolio. Apply its false-positive controls and evidence schema exactly.
 
 ## Sample to saturation
