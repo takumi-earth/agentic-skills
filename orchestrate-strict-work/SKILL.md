@@ -29,7 +29,7 @@ When the user requests agents, delegation, waves, orchestration, or parallel wor
 - Do not override model, reasoning effort, service tier, or agent type unless the user explicitly requests a different value.
 - Treat the worker as a worker, not a recursive orchestrator.
 - Do not rely on inherited history to establish role or scope.
-- If a spawn attempt rejects explicit overrides that conflict with full-history inheritance, retry with the full-history setting and the self-contained assignment only; do not silently fall back to isolation.
+- If a spawn attempt rejects unnecessary overrides introduced by the agent, remove those overrides while preserving the user's requested context and assignment. If explicitly requested model and context constraints cannot both be satisfied, surface the incompatibility and resolve it with the user before retrying that spawn. Do not silently discard either requirement or fall back to isolation.
 
 ## Write a self-contained assignment packet
 
@@ -62,6 +62,8 @@ The parent cannot grant a worker authority it does not hold.
 - Keep one orchestration plane. Workers must not launch shell-level or nested agents unless explicitly authorized.
 
 At compaction or resume, restate the current wave, completed boundary, active workers, exact next event, and hard prohibitions from source artifacts.
+
+When authorized workers are running and the task calls for long interruptible waits or restrained polling, read [interruptible worker waits](references/interruptible-worker-waits.md). Keep this optional guidance within the existing delegation scope and wave boundaries.
 
 ## Verify only closed snapshots
 
