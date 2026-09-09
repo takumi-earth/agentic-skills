@@ -29,6 +29,15 @@
       "target": "define-codex-goal-artifacts"
     }
   ],
+  "review_notes": [
+    "Retain pending contract completion as a distinct typed managed_objective_artifacts consumer. Align its schema with the selected durable-goal or event-local producer under define-codex-goal-artifacts before implementation or adoption.",
+    "Define artifact roles, active-objective selection, cardinality, duplicates, unsupported records, absent fields, and invalid records. A typed role declaration must not substitute for verified attribution to the current goal.",
+    "Bind response artifacts to the exact goal and event. Define stale and replayed response handling separately from current authority, and specify lifecycle, legacy-goal, and resume behavior for the selected producer model.",
+    "Specify compatibility fallback explicitly. Invalid authoritative typed records must not silently become arbitrary objective-prose inference; preserve the selected runtime-root, containment, and file-identity checks.",
+    "Replace summary-only references with the concrete typed contract and migration/resume rules. Distinguish planned from executed evidence and use proportional recording without inventing a new persisted gate.",
+    "Reconcile the consumer with the shared resolver in maintain-living-goal and its auto-skill-enhancer caller. Preserve the user's ability to designate any exact goal-file pathname, including a path outside attachments with an established base when relative; managed attachment layout is not a universal goal-file requirement.",
+    "The pruned environment-root predecessor remains reconstructable in candidate-root Git history. Retention does not authorize a Codex protocol implementation, goal mutation, hook registration, installation, or activation."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-003-typed-goal-artifact"

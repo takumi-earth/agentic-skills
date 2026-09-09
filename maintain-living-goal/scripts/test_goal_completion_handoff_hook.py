@@ -61,11 +61,11 @@ class ResolverTests(unittest.TestCase):
             artifact.write_text("goal\n", encoding="utf-8")
 
             result = goal_artifact_resolution.resolve_artifact(
-                f"Read {artifact}.", environ={}, fallback_home=fallback_home
+                f"Read `{artifact}`.", environ={}, fallback_home=fallback_home
             )
 
             self.assertEqual(result.status, "success")
-            self.assertEqual(result.artifact, str(artifact))
+            self.assertEqual(result.artifact, goal_artifact_resolution.display_path(artifact))
 
     def test_empty_configured_runtime_does_not_fall_back(self) -> None:
         result = goal_artifact_resolution.resolve_artifact(
@@ -84,6 +84,190 @@ class ResolverTests(unittest.TestCase):
         )
 
         self.assertEqual(rendered, f"~/.codex/attachments/{UUID}/goal")
+
+
+class ExactPathTests(unittest.TestCase):
+    """Protect path identity, explicit relative bases, and structured failures."""
+
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.base = Path(temporary.name)
+        self.runtime, self.attachments = goal_artifact_resolution.make_root(self.base)
+        self.environment = {"CODEX_HOME": str(self.runtime)}
+
+    def managed(self, objective: str) -> goal_artifact_resolution.GoalArtifactResolution:
+        return goal_artifact_resolution.resolve_artifact(objective, environ=self.environment)
+
+    def wrapper(self, artifact: Path | str) -> str:
+        return f"pasted text file: {artifact}. Read this file before continuing."
+
+    def test_complete_wrapper_and_quotes_preserve_names_including_prefix_decoys(self) -> None:
+        for name in ("custom name.plan", "punctuated)", "trailing.", "trailing ", "apostrophe's goal", "no-extension"):
+            with self.subTest(name=name):
+                artifact = goal_artifact_resolution.make_artifact(self.attachments, name)
+                prefix = name.split()[0].rstrip(".)")
+                if prefix != name:
+                    goal_artifact_resolution.make_artifact(self.attachments, prefix)
+                for objective in (self.wrapper(artifact), f"Read `{artifact}`.", str(artifact)):
+                    result = self.managed(objective)
+                    self.assertEqual(result.status, "success")
+                    self.assertEqual(result.artifact, goal_artifact_resolution.display_path(artifact))
+                    self.assertEqual(artifact.read_text(encoding="utf-8"), "objective")
+
+    def test_unbounded_prose_never_selects_a_shorter_existing_filename(self) -> None:
+        artifact = goal_artifact_resolution.make_artifact(self.attachments, "long name)")
+        goal_artifact_resolution.make_artifact(self.attachments, "long")
+        result = self.managed(f"Read {artifact} before continuing.")
+        self.assertEqual(result.code, "managed-path-shape")
+        self.assertEqual(result.received, "unbounded-prose-reference")
+        self.assertIsNone(result.artifact)
+
+    def test_a_closing_phrase_inside_a_filename_cannot_select_a_wrapper_prefix(self) -> None:
+        artifact = goal_artifact_resolution.make_artifact(
+            self.attachments, "prefix. Read this file before continuing. suffix"
+        )
+        goal_artifact_resolution.make_artifact(self.attachments, "prefix")
+        result = self.managed(self.wrapper(artifact))
+        self.assertEqual(result.code, "managed-path-shape")
+        self.assertIsNone(result.artifact)
+        quoted = self.managed(f"Read `{artifact}`.")
+        self.assertEqual(quoted.status, "success")
+        self.assertEqual(Path(quoted.artifact).expanduser(), artifact)
+
+    def test_wrappers_participate_in_unique_reference_selection(self) -> None:
+        artifact = goal_artifact_resolution.make_artifact(self.attachments, "first goal")
+        second = goal_artifact_resolution.make_artifact(self.attachments, "second")
+        repeated = self.managed(f"{self.wrapper(artifact)} Again: `{artifact}`.")
+        self.assertEqual(repeated.status, "success")
+        self.assertEqual(repeated.candidate_count, 1)
+        for extra in (f"`{second}`", self.wrapper(second), str(second)):
+            result = self.managed(f"{self.wrapper(artifact)} Also {extra}")
+            self.assertEqual(result.code, "ambiguous-managed-artifacts")
+            self.assertEqual(result.candidate_count, 2)
+
+    def test_wrapper_support_preserves_managed_shape_and_identity_guards(self) -> None:
+        artifact = goal_artifact_resolution.make_artifact(self.attachments)
+        internal = artifact.with_name("internal")
+        internal.symlink_to(artifact)
+        outside = self.base / "outside"
+        outside.write_text("outside", encoding="utf-8")
+        escape = artifact.with_name("escape")
+        escape.symlink_to(outside)
+        cases = (
+            (internal, "artifact-not-file"),
+            (escape, "attachments-root-mismatch"),
+            (f"{artifact.parent}/nested/../goal", "managed-path-shape"),
+            (artifact.with_name("missing"), "artifact-not-file"),
+            (self.attachments / "not-a-uuid" / "goal", "managed-path-shape"),
+        )
+        for path, code in cases:
+            with self.subTest(code=code):
+                self.assertEqual(self.managed(self.wrapper(path)).code, code)
+        other, _ = goal_artifact_resolution.make_root(self.base, "other")
+        mismatch = goal_artifact_resolution.resolve_artifact(
+            self.wrapper(artifact), environ={"CODEX_HOME": str(other)}
+        )
+        self.assertEqual(mismatch.code, "attachments-root-mismatch")
+        linked = self.base / "linked-runtime"
+        linked.mkdir()
+        (linked / "attachments").symlink_to(self.attachments, target_is_directory=True)
+        result = goal_artifact_resolution.resolve_artifact(
+            self.wrapper(artifact), environ={"CODEX_HOME": str(linked)}
+        )
+        self.assertEqual(result.code, "invalid-runtime-root")
+
+    def test_designated_files_accept_any_name_outside_managed_attachments(self) -> None:
+        for name in ("custom plan.md", "cleanup", "review).", "pasted-text-42.other", " leading and trailing "):
+            with self.subTest(name=name):
+                artifact = self.base / name
+                artifact.write_bytes(b"selected goal\n")
+                for reference in (str(artifact), goal_artifact_resolution.display_path(artifact), name):
+                    result = goal_artifact_resolution.resolve_designated_artifact(reference, base_dir=self.base)
+                    self.assertEqual(result.status, "success")
+                    self.assertEqual(Path(result.artifact).expanduser(), artifact)
+                    self.assertEqual(result.approach, "designated-path")
+                self.assertEqual(artifact.read_bytes(), b"selected goal\n")
+
+    def test_whole_objective_paths_use_the_declared_base_independently_of_runtime(self) -> None:
+        artifact = self.base / "plans" / "cleanup plan"
+        artifact.parent.mkdir()
+        artifact.write_text("goal", encoding="utf-8")
+        for objective in (str(artifact), "./plans/cleanup plan", "`plans/cleanup plan`"):
+            result = goal_artifact_resolution.resolve_artifact(
+                objective, base_dir=self.base, environ={"CODEX_HOME": ""}
+            )
+            self.assertEqual(result.status, "success")
+            self.assertEqual(Path(result.artifact).expanduser(), artifact)
+        short = self.base / "plans" / "cleanup"
+        short.write_text("decoy", encoding="utf-8")
+        result = goal_artifact_resolution.resolve_artifact(
+            "plans/cleanup", base_dir=self.base, environ={}
+        )
+        self.assertEqual(Path(result.artifact).expanduser(), short)
+
+    def test_relative_paths_require_a_valid_explicit_base(self) -> None:
+        for base in (None, "", "relative-base", self.base / "missing", [], "~nonexistent_goal_user_7d1ca951"):
+            with self.subTest(base_type=type(base).__name__):
+                result = goal_artifact_resolution.resolve_designated_artifact("goal", base_dir=base)
+                self.assertEqual(result.code, "invalid-goal-base")
+                self.assertIsNone(result.artifact)
+
+    def test_arbitrary_prose_mentions_are_not_goal_path_designations(self) -> None:
+        artifact = self.base / "historical-goal.md"
+        artifact.write_text("history", encoding="utf-8")
+        result = self.managed(f"Compare history at `{artifact}` while doing the current work.")
+        self.assertEqual(result.code, "no-managed-artifact-reference")
+
+    def test_invalid_designated_paths_remain_typed(self) -> None:
+        for reference in (None, 5, "", "   "):
+            self.assertEqual(goal_artifact_resolution.resolve_designated_artifact(reference).code, "invalid-goal-path")
+        for path in (self.base / "missing", self.base):
+            self.assertEqual(goal_artifact_resolution.resolve_designated_artifact(str(path)).code, "artifact-not-file")
+        target = self.base / "actual"
+        target.write_text("goal", encoding="utf-8")
+        alias = self.base / "alias"
+        alias.symlink_to(target)
+        result = goal_artifact_resolution.resolve_designated_artifact(str(alias))
+        self.assertEqual(result.received, "symlink")
+
+    def test_cli_keeps_expansion_errors_structured_and_paths_normalized(self) -> None:
+        missing_home = "~nonexistent_goal_user_7d1ca951"
+        artifact = goal_artifact_resolution.make_artifact(self.attachments)
+        cases = (
+            (["--objective", self.wrapper(artifact)], {"CODEX_HOME": missing_home}, "invalid-runtime-root"),
+            (["--objective", self.wrapper(f"{missing_home}/attachments/{UUID}/goal")], self.environment, "artifact-path-unresolvable"),
+            (["--goal-path", f"{missing_home}/goal"], self.environment, "artifact-path-unresolvable"),
+            (["--goal-path", "relative-goal"], self.environment, "invalid-goal-base"),
+            (["--goal-path", str(artifact)], self.environment, "resolved-exact-artifact"),
+            (["--goal-path", artifact.name, "--base-dir", str(artifact.parent)], self.environment, "resolved-exact-artifact"),
+            (["--objective", str(artifact)], self.environment, "resolved-exact-artifact"),
+        )
+        for arguments, environment, code in cases:
+            with self.subTest(code=code, mode=arguments[0]):
+                result = subprocess.run(
+                    [sys.executable, str(SCRIPT_DIRECTORY / "goal_artifact_resolution.py"), *arguments],
+                    env={**os.environ, **environment}, capture_output=True, text=True, check=False,
+                )
+                output = json.loads(result.stdout)
+                self.assertEqual(output["code"], code)
+                self.assertEqual(result.returncode, 0 if output["status"] == "success" else 1)
+                self.assertEqual(result.stderr, "")
+                self.assertNotIn(str(Path.home()) + "/", result.stdout)
+
+    def test_cli_rejects_conflicting_selection_modes_before_resolution(self) -> None:
+        for arguments in (
+            [],
+            ["--objective", "./first", "--goal-path", "./second"],
+            ["--self-test", "--base-dir", str(self.base)],
+        ):
+            result = subprocess.run(
+                [sys.executable, str(SCRIPT_DIRECTORY / "goal_artifact_resolution.py"), *arguments],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(result.returncode, 2)
+            self.assertEqual(result.stdout, "")
+            self.assertIn("error:", result.stderr)
 
 
 class HandoffHookTests(unittest.TestCase):
@@ -200,6 +384,20 @@ class HandoffHookTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0)
             self.assertEqual(result.stdout, "")
             self.assertEqual(result.stderr, "")
+
+    def test_path_expansion_failure_still_emits_the_typed_handoff_diagnostic(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "attachments").mkdir()
+            payload = self.completion_payload(
+                f"~nonexistent_goal_user_7d1ca951/attachments/{UUID}/goal"
+            )
+            result = self.run_hook(payload, codex_home=root)
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(result.stderr, "")
+            context = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+            self.assertIn("Code: artifact-path-unresolvable", context)
+            self.assertIn("Candidate count: 1", context)
 
     def test_json_encoded_tool_objects_preserve_the_completion_gate(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

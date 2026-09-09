@@ -101,7 +101,7 @@ class PostGoalReviewHookTests(unittest.TestCase):
         self.assertIn("skip the automatic review", context)
         self.assertIn("--exclude-skill auto-skill-enhancer", context)
         self.assertIn("session-123", context)
-        self.assertIn(str(self.transcript), context)
+        self.assertIn(post_goal_review_hook.display_path(self.transcript), context)
         self.assertNotIn("Checked condition:", context)
         self.assertNotIn("Expected:", context)
         self.assertNotIn("Structured completion accounting", context)
@@ -169,6 +169,39 @@ class PostGoalReviewHookTests(unittest.TestCase):
         self.assertNotIn("automatic post-completion skill review", handoff_context)
         self.assertIn("automatic post-completion skill review", review_context)
         self.assertNotIn("Append that text exactly once", review_context)
+
+    def test_both_handlers_resolve_custom_paths_from_the_same_explicit_base(self) -> None:
+        artifact = self.root / "plans" / "cleanup plan).md"
+        artifact.parent.mkdir()
+        artifact.write_text("selected goal\n", encoding="utf-8")
+        before = artifact.read_bytes()
+        for objective in (str(artifact), "`plans/cleanup plan).md`"):
+            payload = self.payload()
+            payload["cwd"] = str(self.root)
+            payload["tool_response"]["goal"]["objective"] = objective
+            for script in (HANDOFF_HOOK, HOOK):
+                with self.subTest(mode=objective, script=script.name):
+                    result = self.run_hook(script, payload)
+                    self.assertEqual(result.returncode, 0)
+                    self.assertEqual(result.stderr, "")
+                    context = json.loads(result.stdout)["hookSpecificOutput"]["additionalContext"]
+                    self.assertIn(f"`{post_goal_review_hook.display_path(artifact)}`", context)
+                    self.assertIn("codex-goal-completion-handoff:goal-123:begin", context)
+                    self.assertNotIn("could not be resolved", context)
+        self.assertEqual(artifact.read_bytes(), before)
+
+    def test_relative_objective_without_a_base_preserves_distinct_failure_behavior(self) -> None:
+        payload = self.payload()
+        payload["tool_response"]["goal"]["objective"] = "plans/cleanup"
+        handoff = self.run_hook(HANDOFF_HOOK, payload)
+        review = self.run_hook(HOOK, payload)
+        self.assertEqual(handoff.returncode, 0)
+        self.assertEqual(handoff.stderr, "")
+        context = json.loads(handoff.stdout)["hookSpecificOutput"]["additionalContext"]
+        self.assertIn("Code: invalid-goal-base", context)
+        self.assertEqual(review.returncode, 0)
+        self.assertEqual(review.stdout, "")
+        self.assertEqual(review.stderr, "")
 
 
 class SiblingTopologyTests(unittest.TestCase):

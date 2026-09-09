@@ -29,6 +29,15 @@
       "target": "define-codex-goal-artifacts"
     }
   ],
+  "review_notes": [
+    "Retain pending contract completion as a distinct trusted event-root consumer. Align the consumer with the selected versioned producer under define-codex-goal-artifacts before implementation or adoption.",
+    "Define the actual field schema, runtime-root provenance, event-versus-environment precedence, and behavior for absent, null, invalid, and conflicting contexts. An absent supported legacy field may permit declared fallback; an invalid authoritative field must not silently fall back.",
+    "Specify custom roots, home-relative presentation, platform semantics, and the exact managed attachment containment contract. Keep package-resource discovery separate from runtime authority.",
+    "Replace summary-only references with the concrete producer schema and compatibility rules. Attribute revision and execution evidence; planned scenarios do not establish executed behavior, and contract review does not automatically require persisted audit output.",
+    "Reconcile ownership with the current pure resolver in maintain-living-goal. auto-skill-enhancer consumes that resolver and must not reconstruct a competing resolution owner.",
+    "Preserve the user's clarification that an explicitly designated goal file may have any filename or extension and may be outside attachments. Distinguish exact path designation with an established relative base from a managed attachment reference; do not promote arbitrary historical or prose path mentions into authority.",
+    "The pruned environment-root predecessor remains reconstructable in candidate-root Git history; its shared implementation is maintained by maintain-living-goal. Retention does not authorize installing a producer, changing hook configuration, or implementing this alternative."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-002-hook-context-root"

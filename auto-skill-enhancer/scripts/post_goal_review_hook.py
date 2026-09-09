@@ -105,14 +105,14 @@ def completion_event(payload: Any) -> dict[str, Any] | None:
     return goal
 
 
-def resolve_goal(goal: Mapping[str, Any]) -> Any | None:
+def resolve_goal(goal: Mapping[str, Any], *, base_dir: str | Path | None = None) -> Any | None:
     """Independently resolve this handler's immutable goal objective."""
 
     resolver = load_shared_resolver()
     if resolver is None:
         return None
     try:
-        return resolver(goal.get("objective"))
+        return resolver(goal.get("objective"), base_dir=base_dir)
     except (Exception, KeyboardInterrupt):
         return None
 
@@ -155,7 +155,7 @@ def build_output(payload: Any) -> dict[str, Any] | None:
     if not isinstance(transcript_path, str) or not transcript_path.strip():
         return None
 
-    resolution = resolve_goal(goal)
+    resolution = resolve_goal(goal, base_dir=payload.get("cwd"))
     if (
         resolution is None
         or getattr(resolution, "status", None) != "success"

@@ -22,11 +22,11 @@ Treat a completed goal or explicitly selected conversation as a source of candid
 
 For an automatic review, treat the completion handoff as an external lifecycle prerequisite owned by `$maintain-living-goal`. The two hook handlers may execute concurrently, so this workflow depends on the exact delimited block being durably confirmed by the model, not on another handler's process completion or mutable inter-handler state.
 
-- Use only the exact managed goal-file path and delimiters independently resolved and supplied by the hook contexts.
+- Use only the exact goal-file path and delimiters independently resolved and supplied by the hook contexts. The shared resolver under `$maintain-living-goal` owns both explicitly designated paths and managed attachments. A relative whole-objective pathname uses the same event `cwd` in both handlers and requires that directory to be the established goal base; this consumer must not infer another base or choose a filename.
 - Confirm that the ordinary final-ready goal result already exists exactly once between those delimiters and has been re-read before reading this skill, running the extractor, or performing review analysis.
 - Do not create, repair, reconstruct, or modify the completion handoff as part of this read-only analysis. If the ordered handoff context is absent, the exact block cannot be confirmed, or the handoff otherwise failed, skip the automatic review and immediately deliver the ordinary goal-completion response from retained evidence.
 - After analysis and the automatic-creator handoff, begin the final response with only the confirmed saved content between the delimiters, copied verbatim with its Markdown, whitespace, ordering, and nuance intact. Then add the automatic skill-maintenance result as a separate section; do not summarize, rewrite, or merge the preserved result into it.
-- After any context compaction, re-read the confirmed block from the exact managed goal file instead of reconstructing it from memory or review evidence.
+- After any context compaction, re-read the confirmed block from the exact goal file instead of reconstructing it from memory or review evidence.
 
 Manual `$auto-skill-enhancer` invocation neither requires nor creates a completion handoff.
 

@@ -140,7 +140,7 @@ def success_context(
     return (
         "A successful `update_goal(status=\"complete\")` call just marked the active "
         "goal achieved. Before any downstream post-completion work, preserve the ordinary "
-        f"goal-completion handoff in the exact managed harness file: `{resolution.artifact}`. "
+        f"goal-completion handoff in the exact resolved goal file: `{resolution.artifact}`. "
         "Draft the complete final-ready result exactly as the user should receive it if no "
         "post-completion work ran. Include every material outcome, changed or installed "
         "surface, current state, verification command and result, failure or nonzero "
@@ -164,7 +164,7 @@ def build_output(payload: Any) -> dict[str, Any] | None:
     if event is None or not isinstance(payload, dict):
         return None
     goal, tool_response = event
-    resolution = resolve_artifact(goal.get("objective"))
+    resolution = resolve_artifact(goal.get("objective"), base_dir=payload.get("cwd"))
     if resolution.status == "failure":
         return envelope(failure_context(resolution, goal, tool_response))
     return envelope(success_context(resolution, goal, tool_response, payload))
