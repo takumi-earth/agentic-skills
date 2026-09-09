@@ -24,6 +24,15 @@
       "target": "resolve-managed-goal-artifacts"
     }
   ],
+  "review_notes": [
+    "User disposition: retain pending contract completion as a distinct event-local alternative. Keep its metadata lifetime separate from durable `ThreadGoal` state. The instruction package remains incomplete and pending; no Codex protocol implementation is selected or authorized.",
+    "Name the authoritative input from which response artifact metadata is derived. Parsing objective prose at response construction moves that parsing into the producer rather than eliminating it; narrow any stronger claim unless the producer has an independent authoritative input.",
+    "Bind the metadata to the response, its goal, and its artifact references. Preserve the distinction between an event-local observation and current goal authority so replayed or stale responses cannot select another current goal's artifact.",
+    "Define consumer behavior after resume without an earlier response and when metadata is unavailable. Event-local metadata alone does not supply a durable artifact association.",
+    "Specify the response field types, optionality, versioning, and `PostToolUse` pass-through contract. Keeping `ThreadGoal` unchanged does not by itself establish compatibility for `GoalToolResponse` or event consumers.",
+    "Replace the repeated approach summaries in the schema and source-map references with concrete definitions and revision-attributed producer and consumer locations before implementation. Treat the recorded checkout and running-binary claims as historical provenance until their source evidence is verified for the intended task.",
+    "Keep planned validation distinct from executed evidence. Render diagnostics in the existing authorized response or record; metadata and review do not require another persisted artifact or authorize source mutation, promotion, or activation."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-003-goal-response-artifacts"
