@@ -6,7 +6,7 @@ Protect field-level authority epochs created by schema, planning, normalization,
 
 ## Approach
 
-Build a raw-to-prepared-to-consumer matrix, remove stale rediscovery, preserve mutation and cleanup barriers, and require paired migrated-positive and genuinely-unresolved-negative workflow evidence.
+Map the affected raw-to-prepared-to-consumer edge in existing task context, remove stale rediscovery, preserve mutation and cleanup barriers, and preserve full-workflow migrated-positive evidence and unresolved-negative evidence only when the failure is reachable.
 
 ## Preserved nuance
 
@@ -14,11 +14,11 @@ Prepared authority is field-specific. Raw input remains valid for unrelated fact
 
 ## Relationships and uncertainty
 
-Retain this broader standalone test-workflow trigger pending correction. The user approved folding the corrected `variant-002-causal-reference` into `protect-causal-architecture/references/prepared-authority-handoffs.md` and pruning that draft. The optional causal reference does not replace this broader trigger or approve its adoption.
+Retain this broader standalone test-workflow trigger for comparison; its approved corrections are applied. The user approved folding the corrected `variant-002-causal-reference` into `protect-causal-architecture/references/prepared-authority-handoffs.md` and pruning that draft. The optional causal reference does not replace this broader trigger or approve its adoption.
 
-## Required corrections before adoption
+## Applied correction contract
 
 - Require unresolved-authority negatives only when constructible production inputs can reach the failure. Preserve supported derivation or defaulting when authority is always available; do not invent branches, impossible prepared states, or public test access.
 - Name the protected target writes or mutation phase. Preserve legitimate earlier preparation effects and their cleanup or recovery obligations instead of asserting that every mutation or restoration attempt was absent.
 - Keep field-level ownership and the full-workflow positive while retaining raw input for independently owned facts. Use role-correct fixtures according to the actual scenario contract.
-- Make recording proportional in the existing task contract; an exact already-approved change requires no renewed approval, mandatory full matrix, or new audit artifact. The package body and reference remain pending these corrections before adoption.
+- Make recording proportional in the existing task contract; an exact already-approved change requires no renewed approval, mandatory full matrix, or new audit artifact. The corrected standalone package remains an adoption alternative.

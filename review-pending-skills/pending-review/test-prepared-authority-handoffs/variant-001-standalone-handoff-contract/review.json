@@ -12,19 +12,37 @@
     "The template-update failure reread CurrentTarget after schema-engine preparation"
   ],
   "relationships": [
-    {"kind": "overlap", "target": "protect-causal-architecture"},
-    {"kind": "overlap", "target": "plan-strict-work"},
-    {"kind": "complements", "target": "audit-architectural-regressions"},
-    {"kind": "complements", "target": "preserve-real-workflow-fixtures"},
-    {"kind": "historical-alternative", "target": "test-prepared-authority-handoffs/variant-002-causal-reference"},
-    {"kind": "shared-guidance-owner", "target": "protect-causal-architecture/references/prepared-authority-handoffs.md"}
+    {
+      "kind": "overlap",
+      "target": "protect-causal-architecture"
+    },
+    {
+      "kind": "overlap",
+      "target": "plan-strict-work"
+    },
+    {
+      "kind": "complements",
+      "target": "audit-architectural-regressions"
+    },
+    {
+      "kind": "complements",
+      "target": "preserve-real-workflow-fixtures"
+    },
+    {
+      "kind": "historical-alternative",
+      "target": "test-prepared-authority-handoffs/variant-002-causal-reference"
+    },
+    {
+      "kind": "shared-guidance-owner",
+      "target": "protect-causal-architecture/references/prepared-authority-handoffs.md"
+    }
   ],
   "review_notes": [
-    "User disposition: retain pending correction as a distinct broader test-workflow trigger; this disposition does not promote the standalone package.",
-    "The user approved integrating the corrected variant-002 guidance into an optional reference under protect-causal-architecture, then pruning that draft. Its creation remains in candidate-root Git history.",
-    "Before adoption, condition unresolved-authority negatives on constructible production inputs that can actually reach the failure. Preserve supported derivation and defaulting; prohibit fabricated prepared states or public API widening solely for test access.",
-    "Name the relevant protected target-write or mutation boundary and preserve legitimate earlier preparation effects, cleanup, and recovery. Remove blanket claims that no mutation or restoration attempt occurred.",
-    "Preserve field-specific prepared authority, independently owned raw facts, full-workflow positive evidence, and role-correct scenario inputs. Keep records proportional in the existing task contract without a mandatory matrix, new audit artifact, or renewed approval for an exact approved change. The current package remains uncorrected pending that work."
+    "Approved corrections applied to the standalone contract; pending status concerns adoption only.",
+    "Require unresolved-authority negatives only for constructible production inputs. Preserve supported derivation and prohibit fabricated prepared states or public API widening for test access.",
+    "Name the protected target-write or mutation boundary while preserving earlier preparation effects, cleanup, and recovery.",
+    "Preserve field-specific authority and full-workflow positives. Use existing task context without a mandatory matrix, audit artifact, or renewed approval. Six local scenarios covered migrated success, independent raw facts, unreachable failure, reachable prewrite failure, earlier preparation cleanup, and existing approval.",
+    "The user approved integrating the corrected variant-002 guidance into an optional reference under protect-causal-architecture, then pruning that draft. Its creation remains in candidate-root Git history."
   ],
   "schema_version": 1,
   "status": "pending",
