@@ -2,7 +2,7 @@
 
 ## Concrete intent
 
-Produce a stable review ledger of transformation callers whose targeting or evidence may depend on fixed paths, marker gates, complete bodies, fingerprints, hashes, regexes, or textual fallbacks.
+Produce a bounded, source-snapshot-specific review inventory of transformation callers whose targeting or evidence may depend on fixed paths, marker gates, complete bodies, fingerprints, hashes, regexes, or textual fallbacks.
 
 ## Approach
 

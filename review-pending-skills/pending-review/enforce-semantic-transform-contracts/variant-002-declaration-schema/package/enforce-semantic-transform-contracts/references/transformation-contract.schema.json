@@ -20,109 +20,395 @@
     "evidence"
   ],
   "properties": {
-    "schema_version": {"const": 1},
-    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]+$"
+    },
     "owner": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "name"],
+      "required": [
+        "kind",
+        "name"
+      ],
       "properties": {
-        "kind": {"type": "string", "minLength": 1},
-        "name": {"type": "string", "minLength": 1}
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "scope": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "roots"],
+      "required": [
+        "kind",
+        "roots"
+      ],
       "properties": {
-        "kind": {"enum": ["workspace", "crate", "module", "owned-content"]},
-        "roots": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        "kind": {
+          "enum": [
+            "workspace",
+            "crate",
+            "module",
+            "owned-content"
+          ]
+        },
+        "roots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "query": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["language", "semantic_identity"],
+      "required": [
+        "language",
+        "semantic_identity"
+      ],
       "properties": {
-        "language": {"type": "string", "minLength": 1},
-        "semantic_identity": {"type": "string", "minLength": 1},
-        "resolver": {"type": "string"}
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "semantic_identity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolver": {
+          "type": "string"
+        }
       }
     },
     "precondition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["load_bearing_predicates"],
+      "required": [
+        "load_bearing_predicates"
+      ],
       "properties": {
-        "load_bearing_predicates": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        "load_bearing_predicates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "rewrite": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["operation", "minimal_ast_change"],
+      "required": [
+        "operation",
+        "minimal_ast_change"
+      ],
       "properties": {
-        "operation": {"type": "string", "minLength": 1},
-        "minimal_ast_change": {"const": true}
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minimal_ast_change": {
+          "const": true,
+          "type": "boolean"
+        }
       }
     },
     "postcondition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["semantic_predicates"],
+      "required": [
+        "semantic_predicates"
+      ],
       "properties": {
-        "semantic_predicates": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        "semantic_predicates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     },
     "cardinality": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["minimum", "maximum", "absence"],
+      "required": [
+        "minimum",
+        "maximum",
+        "absence"
+      ],
       "properties": {
-        "minimum": {"type": "integer", "minimum": 0},
-        "maximum": {"type": "integer", "minimum": 1},
-        "absence": {"enum": ["optional", "required"]}
-      }
+        "minimum": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "absence": {
+          "enum": [
+            "optional",
+            "required"
+          ]
+        }
+      },
+      "description": "The CLI additionally checks minimum <= maximum; standard JSON Schema does not compare sibling numeric values."
     },
     "hints": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["kind", "value", "authoritative", "miss_behavior"],
+        "required": [
+          "kind",
+          "value",
+          "authoritative",
+          "miss_behavior"
+        ],
         "properties": {
-          "kind": {"enum": ["path", "marker", "version", "fingerprint", "hash", "rendered-fragment"]},
-          "value": {"type": "string"},
-          "authoritative": {"const": false},
-          "miss_behavior": {"const": "continue-authoritative-query"}
+          "kind": {
+            "enum": [
+              "path",
+              "marker",
+              "version",
+              "fingerprint",
+              "hash",
+              "rendered-fragment"
+            ]
+          },
+          "value": {
+            "type": "string"
+          },
+          "authoritative": {
+            "const": false,
+            "type": "boolean"
+          },
+          "miss_behavior": {
+            "const": "continue-authoritative-query"
+          }
         }
       }
     },
     "outcomes": {
       "type": "array",
       "uniqueItems": true,
-      "items": {"enum": ["applied", "already-applied", "optional-absent", "required-absent", "ambiguous", "mixed-state", "incompatible-shape", "postcondition-failed", "replay-failed"]}
+      "items": {
+        "enum": [
+          "applied",
+          "already-applied",
+          "optional-absent",
+          "required-absent",
+          "ambiguous",
+          "mixed-state",
+          "incompatible-shape",
+          "postcondition-failed",
+          "replay-failed"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "applied"
+          }
+        },
+        {
+          "contains": {
+            "const": "already-applied"
+          }
+        },
+        {
+          "contains": {
+            "const": "ambiguous"
+          }
+        },
+        {
+          "contains": {
+            "const": "mixed-state"
+          }
+        },
+        {
+          "contains": {
+            "const": "incompatible-shape"
+          }
+        },
+        {
+          "contains": {
+            "const": "postcondition-failed"
+          }
+        },
+        {
+          "contains": {
+            "const": "replay-failed"
+          }
+        }
+      ]
     },
     "transaction": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["classify_complete_scope_before_edit", "verify_postcondition", "verify_replay", "atomic_publish"],
+      "required": [
+        "classify_complete_scope_before_edit",
+        "verify_postcondition",
+        "verify_replay",
+        "atomic_publish"
+      ],
       "properties": {
-        "classify_complete_scope_before_edit": {"const": true},
-        "verify_postcondition": {"const": true},
-        "verify_replay": {"const": true},
-        "atomic_publish": {"const": true}
+        "classify_complete_scope_before_edit": {
+          "const": true,
+          "type": "boolean"
+        },
+        "verify_postcondition": {
+          "const": true,
+          "type": "boolean"
+        },
+        "verify_replay": {
+          "const": true,
+          "type": "boolean"
+        },
+        "atomic_publish": {
+          "const": true,
+          "type": "boolean"
+        }
       }
     },
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["metamorphic_cases", "product_owner_tests"],
+      "required": [
+        "metamorphic_cases",
+        "product_behavior_required"
+      ],
       "properties": {
-        "metamorphic_cases": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-        "product_owner_tests": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        "metamorphic_cases": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            "minItems": 1
+          },
+          "description": "Each key names a category required by the controlling test contract; values are actual test identifiers. Semantic review establishes whether the selected categories are sufficient.",
+          "propertyNames": {
+            "enum": [
+              "file-move",
+              "module-move",
+              "trivia",
+              "line-shift",
+              "reorder",
+              "unrelated-extension",
+              "equal-text-decoy",
+              "old-path-decoy",
+              "ambiguity",
+              "semantic-drift",
+              "already-applied",
+              "replay",
+              "irrelevant-version"
+            ]
+          }
+        },
+        "product_behavior_required": {
+          "type": "boolean"
+        },
+        "product_owner_tests": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "product_behavior_required": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "product_owner_tests"
+            ],
+            "properties": {
+              "product_owner_tests": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "cardinality": {
+            "properties": {
+              "absence": {
+                "const": "optional"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "outcomes": {
+            "contains": {
+              "const": "optional-absent"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "cardinality": {
+            "properties": {
+              "absence": {
+                "const": "required"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "outcomes": {
+            "contains": {
+              "const": "required-absent"
+            }
+          }
+        }
       }
     }
-  }
+  ],
+  "description": "Schema-driven structural contract. The CLI additionally rejects inverted cardinality; semantic review checks the declared evidence requirements against the actual task."
 }

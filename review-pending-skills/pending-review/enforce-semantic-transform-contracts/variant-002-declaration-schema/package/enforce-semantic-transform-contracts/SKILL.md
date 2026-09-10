@@ -17,7 +17,8 @@ Conform declarations to [the bundled schema](references/transformation-contract.
 - semantic `postcondition` and `cardinality`;
 - typed outcome names;
 - every discovery hint and its full-query miss behavior;
-- movement, decoy, ambiguity, drift, post-state, and replay evidence identifiers.
+- task-required evidence categories, each mapped to actual test identifiers;
+- whether substantive product behavior requires separate product-owner tests.
 
 Never serialize a complete upstream body, token signature, hash, regex, or expected path as semantic identity.
 
@@ -29,7 +30,13 @@ Run:
 python3 scripts/validate_contract.py <declaration.json>
 ```
 
-The validator reports `condition`, `expected`, and `received` for structural defects and exits nonzero. It rejects hint misses that suppress the authoritative query and outcome sets missing ambiguity, mixed-state, postcondition-failure, or replay-failure states.
+The dependency-free CLI evaluates the keywords used by the packaged schema and reports `condition`, `expected`, and `received` for structural defects. It exits `1` for invalid declarations and `2` for unreadable or malformed input. The packaged tests additionally use `jsonschema` to compare structural results. It rejects hint misses that suppress the authoritative query and outcome sets missing ambiguity, mixed-state, postcondition-failure, or replay-failure states.
+
+## Evidence and cross-field checks
+
+`evidence.metamorphic_cases` maps each category required by the actual testing contract to a nonempty array of actual test identifiers; identifiers need not equal category names. Semantic review checks category selection against the task, rather than imposing literal case names on every transformation. `product_behavior_required` declares whether substantive product behavior needs separate evidence. Only when true must `product_owner_tests` be nonempty. The declaration must reflect the controlling contract; choosing false does not waive a real behavioral obligation.
+
+The schema owns field types, unknown-field rejection, hint rules, required typed outcomes, and conditional evidence requirements. The CLI also checks `cardinality.minimum <= maximum` as an explicit cross-field check beyond the schema. Neither layer checks whether the named tests exist or ran.
 
 ## Preserve the semantic boundary
 

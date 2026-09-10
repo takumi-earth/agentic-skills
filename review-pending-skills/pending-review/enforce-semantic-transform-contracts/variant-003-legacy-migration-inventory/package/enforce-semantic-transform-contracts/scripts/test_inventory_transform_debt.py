@@ -63,5 +63,44 @@ class InventoryTransformDebtTest(unittest.TestCase):
         self.assertIn("escapes repository", result.stdout)
 
 
+    def test_missing_and_non_utf8_inputs_fail(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory)
+            status, output = self.run_scan(repo)
+            self.assertEqual(status, 2, output)
+            (repo / 'src').mkdir()
+            (repo / 'src/bad.rs').write_bytes(b'\xff')
+            status, output = self.run_scan(repo)
+            self.assertEqual(status, 2, output)
+            self.assertNotIn('sites', output)
+
+    def test_overlapping_roots_and_symlink_scope(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory); (repo / 'src').mkdir(); (repo / 'other').mkdir()
+            source = repo / 'src/a.rs'; source.write_text('source.replace(a,b)\n')
+            outside = repo / 'other/b.rs'; outside.write_text('source_hash(x)\n')
+            (repo / 'src/alias.rs').symlink_to(outside)
+            (repo / 'src/aliasdir').symlink_to(repo / 'other', target_is_directory=True)
+            result = subprocess.run([sys.executable, str(SCRIPT), '--repo', str(repo), '--root', 'src', '--root', 'src/a.rs'], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout)
+            report = json.loads(result.stdout)
+            self.assertEqual(len(report['sites']), 1)
+            self.assertEqual(report['files_scanned'], 1)
+            self.assertEqual(report['excluded_symlinks'], ['src/alias.rs', 'src/aliasdir'])
+            selected = subprocess.run([sys.executable, str(SCRIPT), '--repo', str(repo), '--root', 'src/alias.rs'], capture_output=True, text=True)
+            self.assertEqual(selected.returncode, 2)
+
+    def test_anchors_use_lf_lines_and_hash_original_source(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as directory:
+            repo = Path(directory); (repo / 'src').mkdir()
+            raw = b'alpha\rbravo\nsource_hash(x)\n'
+            (repo / 'src/a.rs').write_bytes(raw)
+            status, output = self.run_scan(repo)
+            self.assertEqual(status, 0, output)
+            self.assertEqual(output['sites'][0]['line'], 2)
+            self.assertEqual(output['sites'][0]['source_hash'], 'sha256:' + hashlib.sha256(raw).hexdigest())
+
+
 if __name__ == "__main__":
     unittest.main()
