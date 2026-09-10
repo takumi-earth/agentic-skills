@@ -6,11 +6,11 @@ Make explicit whole-file source-reading requests reproducible through determinis
 
 ## Approach
 
-Package a content-free UTF-8 range planner, read one file and one range per result, invalidate only changed hashes, and permit `rg` only as navigation after the selected semantic owners are complete.
+Package a content-free UTF-8 range planner, read one file and one range per result, reuse sufficient source evidence, and use `ripwire` navigation to select files before full reads establish conceptual ownership.
 
 ## Preserved nuance
 
-Whole-file reading applies to a selected owner set, not an entire repository. The planner emits hashes and ranges but never source bodies, and a complete unchanged file is not reread merely because context compacted.
+Whole-file reading applies to a selected owner set, not an entire repository. The planner emits hashes and ranges but never source bodies, and source evidence reuse does not override mandatory goal or instruction reloads after compaction.
 
 ## Relationships and uncertainty
 
@@ -19,6 +19,8 @@ This variant overlaps the instruction-read planner in `$resume-strict-context` a
 ## Review questions
 
 - Should the planner accept non-UTF-8 files as byte ranges or keep the source contract text-only?
-- Should symlink aliases be rejected, as this variant does, or represented as distinct lexical inputs?
-- Should a promoted form persist the ledger or leave ledger storage to the calling workflow?
+- The corrected planner rejects duplicate resolved paths, accepts one symlink, and leaves distinct hard-link paths separate.
+- Read-completion bookkeeping stays in existing task context; the planner does not authorize a persisted audit.
 
+
+Both this planner and the existing instruction planner now use LF-delimited ranges and normalized operational diagnostics. The standalone resolved-path check remains distinct; no shared package or promotion is introduced.
