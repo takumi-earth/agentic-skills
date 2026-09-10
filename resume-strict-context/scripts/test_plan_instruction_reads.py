@@ -89,6 +89,48 @@ class InstructionReadPlanTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "must be unique"):
                 plan_instruction_reads.build_plan([path, path], 100)
 
+    def test_ranges_match_lf_reader_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "input.txt"
+            for data in (b"alpha\rbravo\nTARGET\n", b"a\r\nb\r\ntail", b"\n", b""):
+                with self.subTest(data=data):
+                    path.write_bytes(data)
+                    plan = plan_instruction_reads.plan_file(path, 6)
+                    bodies = []
+                    for chunk in plan["chunks"]:
+                        result = subprocess.run(
+                            ["sed", "-n", f'{chunk["start_line"]},{chunk["end_line"]}p', str(path)],
+                            capture_output=True, check=True,
+                        )
+                        self.assertEqual(len(result.stdout), chunk["byte_count"])
+                        bodies.append(result.stdout)
+                    self.assertEqual(b"".join(bodies), data)
+                    self.assertEqual(plan["line_delimiter"], "LF")
+
+    def test_missing_input_and_symlink_loop_have_stable_diagnostics(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            loop = root / "loop"
+            loop.symlink_to("loop")
+            missing = Path.home() / root.name / "absent-read-plan-input"
+            for path in (missing, loop):
+                with self.subTest(path=path):
+                    result = subprocess.run(
+                        [sys.executable, str(PLANNER), str(path)], capture_output=True, text=True,
+                    )
+                    self.assertEqual(result.returncode, 2)
+                    self.assertEqual(result.stdout, "")
+                    self.assertIn("READ_PLAN_ERROR:", result.stderr)
+                    self.assertNotIn("Traceback", result.stderr)
+                    self.assertNotIn(str(Path.home()) + "/", result.stderr)
+
+    def test_diagnostic_path_boundaries_preserve_siblings(self) -> None:
+        home = str(Path.home())
+        error = RuntimeError(f"paths: '{home}/input', '{home}-neighbor/input'")
+        displayed = plan_instruction_reads.display_error(error)
+        self.assertIn("'~/input'", displayed)
+        self.assertIn(f"'{home}-neighbor/input'", displayed)
+
     def test_home_paths_are_normalized(self) -> None:
         path = Path.home() / ".codex" / "skills" / "example" / "SKILL.md"
 

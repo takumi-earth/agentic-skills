@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -33,7 +34,8 @@ def logical_lines(data: bytes, path: Path) -> list[bytes]:
         data.decode("utf-8")
     except UnicodeDecodeError as error:
         raise ValueError(f"instruction file is not UTF-8: {display_path(path)}") from error
-    return data.splitlines(keepends=True)
+    parts = data.split(b"\n")
+    return [part + b"\n" for part in parts[:-1]] + ([parts[-1]] if parts[-1] else [])
 
 
 def chunk_lines(lines: Sequence[bytes], max_chunk_bytes: int) -> list[dict[str, Any]]:
@@ -75,6 +77,7 @@ def chunk_lines(lines: Sequence[bytes], max_chunk_bytes: int) -> list[dict[str, 
 def plan_file(path: Path, max_chunk_bytes: int) -> dict[str, Any]:
     """Build one immutable read plan for a regular instruction file."""
 
+    path = path.expanduser()
     if not path.is_file():
         raise ValueError(f"instruction path is not a regular file: {display_path(path)}")
     data = path.read_bytes()
@@ -86,6 +89,7 @@ def plan_file(path: Path, max_chunk_bytes: int) -> dict[str, Any]:
         "sha256": hashlib.sha256(data).hexdigest(),
         "byte_count": len(data),
         "logical_line_count": len(lines),
+        "line_delimiter": "LF",
         "ends_with_newline": data.endswith(b"\n"),
         "chunks": chunks,
         "has_oversized_line": any(chunk["oversized_line"] for chunk in chunks),
@@ -97,6 +101,7 @@ def build_plan(paths: Sequence[Path], max_chunk_bytes: int) -> dict[str, Any]:
 
     if max_chunk_bytes < 1:
         raise ValueError("max chunk bytes must be positive")
+    paths = [path.expanduser() for path in paths]
     lexical = [path.absolute() for path in paths]
     if len(set(lexical)) != len(lexical):
         raise ValueError("instruction paths must be unique")
@@ -107,6 +112,13 @@ def build_plan(paths: Sequence[Path], max_chunk_bytes: int) -> dict[str, Any]:
         "files": [plan_file(path, max_chunk_bytes) for path in paths],
         "content_emitted": False,
     }
+
+
+def display_error(error: Exception) -> str:
+    """Normalize diagnostic paths at home boundaries without changing sibling paths."""
+    home = re.escape(str(Path.home().resolve(strict=False)))
+    message = re.sub(rf"""(["'`]){home}\1""", r"\1~\1", str(error))
+    return re.sub(r"""(?<![^\s"'`=:(\[{])""" + home + r"(?=/|$)", "~", message)
 
 
 def main() -> int:
@@ -130,8 +142,8 @@ def main() -> int:
     arguments = parser.parse_args()
     try:
         plan = build_plan(arguments.paths, arguments.max_chunk_bytes)
-    except (OSError, ValueError) as error:
-        parser.exit(2, f"READ_PLAN_ERROR: {error}\n")
+    except (OSError, ValueError, RuntimeError) as error:
+        parser.exit(2, f"READ_PLAN_ERROR: {display_error(error)}\n")
     print(json.dumps(plan, indent=2, sort_keys=True))
     return 0
 

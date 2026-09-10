@@ -34,7 +34,7 @@ When more than one instruction file is required:
 4. If a result is truncated, preserve every earlier confirmed range and resume that file at the first unread line. Do not restart the file or reread complete siblings from the attempted batch.
 5. Re-run the planner after all reads when the files may have changed concurrently. If a hash changed, discard only that file's stale ledger entry and read its new plan; do not invalidate unchanged files.
 
-The planner counts an unterminated final line correctly and flags a single line whose bytes exceed the chosen chunk limit. For an oversized line, read that line alone with a sufficiently bounded one-file result; never hide it inside a larger aggregate. Apply the same protocol to directly referenced skill instructions.
+The planner uses LF-delimited line addressing, matching `sed -n 'START,ENDp'`: CRLF bytes remain intact, bare CR does not advance the line, and an unterminated final line counts. An empty file has no body ranges. It flags a single line whose bytes exceed the chosen chunk limit. For an oversized line, read that line alone with a sufficiently bounded one-file result; never hide it inside a larger aggregate. Apply the same protocol to directly referenced skill instructions.
 
 ## Reconstruct the active state
 
