@@ -11,16 +11,23 @@
     "Forensic finding that parse-then-text and wrapper APIs preserved brittle test oracles"
   ],
   "relationships": [
-    {"kind": "overlap", "target": "test-adaptive-source-transforms"},
-    {"kind": "historical-alternative", "target": "enforce-adaptive-transform-tests/variant-001-opaque-typed-harness"},
-    {"kind": "shared-guidance-owner", "target": "test-adaptive-source-transforms/SKILL.md"}
+    {
+      "kind": "overlap",
+      "target": "test-adaptive-source-transforms"
+    },
+    {
+      "kind": "historical-alternative",
+      "target": "enforce-adaptive-transform-tests/variant-001-opaque-typed-harness"
+    },
+    {
+      "kind": "shared-guidance-owner",
+      "target": "test-adaptive-source-transforms/SKILL.md"
+    }
   ],
   "review_notes": [
-    "User disposition: retain pending correction as a distinct advisory Python analysis alternative; do not adopt the analyzer as a repository gate.",
     "The user approved folding the narrow source-exposure rule from `variant-001-opaque-typed-harness` into `test-adaptive-source-transforms` and pruning that draft. The owner preserves opacity through child values, typed diagnostics, legitimate complete-workspace zero-edit comparisons, and the existing fixture effect contract.",
-    "Before adoption, correct the documented `--root` invocation to match the positional-path CLI and make the implementation's Python scope visible at the entry point.",
-    "Reconcile supported propagation and sink behavior for keyword arguments, local assertion helpers, and helper-returned source; clear stale taint after unrelated reassignment and avoid classifying typed AST cardinality assertions as raw equality.",
-    "Expose unknown flow coverage separately from `clean` results and enforce exact-output exemptions at their declared function boundary. The executable package remains uncorrected and pending."
+    "Approved corrections applied: positional Python-file invocation; source, structural, and unknown provenance; keyword and local-helper propagation; reassignment; typed cardinality; function-local exemptions; explicit unknown coverage.",
+    "The package remains pending adoption as an advisory analysis alternative. No CI gate or product test source was installed or changed."
   ],
   "schema_version": 1,
   "status": "pending",

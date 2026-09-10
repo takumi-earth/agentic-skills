@@ -6,42 +6,99 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 
 REQUIRED_ROOTS = {"schema_version", "fixture_id", "scope", "owner", "target", "unrelated", "permitted_move", "drift_state"}
-REQUIRED_TARGET = {"file", "module", "node_id", "pre_state", "post_state"}
+
+
+def nonempty(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def source_path(value: Any) -> bool:
+    return nonempty(value) and not value.startswith(("/", "~")) and "\\" not in value and ":" not in value and ".." not in value.split("/") and str(PurePosixPath(value)) == value
+
+
+def validate_fields(value: Any, fields: set[str], label: str) -> list[str]:
+    if not isinstance(value, dict):
+        return [f"{label} must be an object"]
+    return [f"{label}.{key} must be a nonempty string" for key in sorted(fields) if not nonempty(value.get(key))]
+
+
+def validate_relationships(model: dict[str, Any]) -> list[str]:
+    errors = []
+    target, move = model["target"], model["permitted_move"]
+    for value in (target["file"], move["file"]):
+        if not any(PurePosixPath(value).is_relative_to(root) and value != root for root in model["scope"]):
+            errors.append(f"target path is outside declared file scope: {value}")
+    if target["file"] == move["file"] or target["module"] == move["module"]:
+        errors.append("file and module moves must each change their original identity")
+    states = [target["pre_state"], target["post_state"], model["drift_state"]]
+    keys = [json.dumps(state, sort_keys=True, allow_nan=False) for state in states]
+    if len(set(keys)) != 3:
+        errors.append("pre-state, post-state, and drift must be distinct")
+    nodes = [target["node_id"], *(item["node_id"] for item in model["unrelated"])]
+    if len(set(nodes)) != len(nodes):
+        errors.append("target and unrelated node identities must be distinct")
+    if any(item["owner"] == model["owner"] for item in model["unrelated"]):
+        errors.append("unrelated owners must differ from the target owner")
+    return errors
+
+
+def validate_nested(model: dict[str, Any]) -> list[str]:
+    errors = []
+    for label, fields in (("target", {"file", "module", "node_id"}), ("permitted_move", {"file", "module"})):
+        obj = model.get(label)
+        errors += validate_fields(obj, fields, label)
+        if isinstance(obj, dict) and not source_path(obj.get("file")):
+            errors.append(f"{label}.file must be a normalized repository-relative path")
+    target = model.get("target", {})
+    for label, value in (("pre_state", target.get("pre_state") if isinstance(target, dict) else None),
+                         ("post_state", target.get("post_state") if isinstance(target, dict) else None),
+                         ("drift_state", model.get("drift_state"))):
+        if not isinstance(value, dict) or not value:
+            errors.append(f"{label} must be a nonempty object")
+    unrelated = model.get("unrelated")
+    if not isinstance(unrelated, list):
+        errors.append("unrelated must be an array")
+    else:
+        for item in unrelated:
+            errors += validate_fields(item, {"node_id", "owner"}, "unrelated entry")
+            if isinstance(item, dict) and "file" in item and not source_path(item["file"]):
+                errors.append("unrelated file must be a normalized repository-relative path")
+    return errors
 
 
 def validate_model(model: Any) -> list[str]:
-    errors: list[str] = []
     if not isinstance(model, dict):
         return ["fixture must be an object"]
-    missing = sorted(REQUIRED_ROOTS - model.keys())
-    if missing:
-        errors.append("missing fields: " + ", ".join(missing))
-    if model.get("schema_version") != 1:
-        errors.append("schema_version must equal 1")
-    for key in ("fixture_id", "owner"):
-        if not isinstance(model.get(key), str) or not model.get(key):
-            errors.append(f"{key} must be a nonempty string")
-    if not isinstance(model.get("scope"), list) or not model.get("scope"):
-        errors.append("scope must be a nonempty array")
-    target = model.get("target")
-    if not isinstance(target, dict):
-        errors.append("target must be an object")
-    else:
-        missing_target = sorted(REQUIRED_TARGET - target.keys())
-        if missing_target:
-            errors.append("target missing fields: " + ", ".join(missing_target))
-    move = model.get("permitted_move")
-    if not isinstance(move, dict) or not isinstance(move.get("file"), str) or not isinstance(move.get("module"), str):
-        errors.append("permitted_move must contain file and module strings")
-    if not isinstance(model.get("unrelated"), list):
-        errors.append("unrelated must be an array")
-    return errors
+    errors = validate_fields(model, {"fixture_id", "owner"}, "fixture")
+    if set(model) != REQUIRED_ROOTS:
+        errors.append("fixture fields must match the declared model")
+    if type(model.get("schema_version")) is not int or model["schema_version"] != 1:
+        errors.append("schema_version must be integer 1")
+    scope = model.get("scope")
+    if not isinstance(scope, list) or not scope or not all(source_path(p) for p in scope):
+        errors.append("scope must contain normalized repository-relative paths")
+    errors += validate_nested(model)
+    return errors or validate_relationships(model)
+
+
+def fresh_identity(prefix: str, occupied: set[str]) -> str:
+    value, suffix = prefix, 0
+    while value in occupied:
+        suffix += 1
+        value = f"{prefix}-{suffix}"
+    occupied.add(value)
+    return value
+
+
+def display(value: str) -> str:
+    return re.sub(re.escape(str(Path.home())) + r"(?=$|[/\s\x27\x22:,)])", "~", value)
 
 
 def case(
@@ -71,12 +128,17 @@ def case(
 
 
 def generate(model: dict[str, Any]) -> list[dict[str, Any]]:
+    errors = validate_model(model)
+    if errors:
+        raise ValueError("; ".join(errors))
     fixture_id = model["fixture_id"]
     owner = model["owner"]
     original_path = model["target"]["file"]
     moved_path = model["permitted_move"]["file"]
     preserve = [item.get("node_id", "unrelated") for item in model["unrelated"]]
     cases: list[dict[str, Any]] = []
+    occupied = {owner, model["target"]["node_id"]} | {item[k] for item in model["unrelated"] for k in ("node_id", "owner")}
+    generated = {name: fresh_identity(name, occupied) for name in ("generated-unrelated-extension", "generated-equal-decoy", "generated-old-path-decoy", "generated-second-genuine-candidate", "unrelated-owner")}
 
     def variant(name: str) -> dict[str, Any]:
         value = copy.deepcopy(model)
@@ -85,7 +147,7 @@ def generate(model: dict[str, Any]) -> list[dict[str, Any]]:
 
     for name in ("baseline", "trivia", "line-shift", "reorder"):
         value = variant(name)
-        value["variation_metadata"] = {"kind": name, "semantic_change": False}
+        value["variation_metadata"] = {"kind": name, "semantic_change": False, "adapter_materialization_required": name != "baseline"}
         cases.append(case(fixture_id, name, value, "applied", owner, [original_path], preserve))
 
     value = variant("file-move")
@@ -98,34 +160,34 @@ def generate(model: dict[str, Any]) -> list[dict[str, Any]]:
     cases.append(case(fixture_id, "module-move", value, "applied", owner, [moved_path], preserve))
 
     value = variant("unrelated-extension")
-    value["unrelated"].append({"node_id": "generated-unrelated-extension", "owner": "unrelated-owner", "extension": True})
-    cases.append(case(fixture_id, "unrelated-extension", value, "applied", owner, [original_path], preserve + ["generated-unrelated-extension"]))
+    value["unrelated"].append({"node_id": generated["generated-unrelated-extension"], "owner": generated["unrelated-owner"], "extension": True})
+    cases.append(case(fixture_id, "unrelated-extension", value, "applied", owner, [original_path], preserve + [generated["generated-unrelated-extension"]]))
 
     value = variant("equal-text-decoy")
     value["unrelated"].append(
         {
-            "node_id": "generated-equal-decoy",
-            "owner": "unrelated-owner",
+            "node_id": generated["generated-equal-decoy"],
+            "owner": generated["unrelated-owner"],
             "state": copy.deepcopy(model["target"]["pre_state"]),
         }
     )
-    cases.append(case(fixture_id, "equal-text-decoy", value, "applied", owner, [original_path], preserve + ["generated-equal-decoy"]))
+    cases.append(case(fixture_id, "equal-text-decoy", value, "applied", owner, [original_path], preserve + [generated["generated-equal-decoy"]]))
 
     value = variant("old-path-decoy")
     value["target"]["file"] = moved_path
     value["unrelated"].append(
         {
-            "node_id": "generated-old-path-decoy",
-            "owner": "unrelated-owner",
+            "node_id": generated["generated-old-path-decoy"],
+            "owner": generated["unrelated-owner"],
             "file": original_path,
             "state": copy.deepcopy(model["target"]["pre_state"]),
         }
     )
-    cases.append(case(fixture_id, "old-path-decoy", value, "applied", owner, [moved_path], preserve + ["generated-old-path-decoy"]))
+    cases.append(case(fixture_id, "old-path-decoy", value, "applied", owner, [moved_path], preserve + [generated["generated-old-path-decoy"]]))
 
     value = variant("ambiguity")
     value["additional_candidates"] = [
-        {"owner": owner, "node_id": "generated-second-genuine-candidate", "state": copy.deepcopy(model["target"]["pre_state"])}
+        {"owner": owner, "node_id": generated["generated-second-genuine-candidate"], "state": copy.deepcopy(model["target"]["pre_state"])}
     ]
     cases.append(case(fixture_id, "ambiguity", value, "ambiguous", None, [], preserve))
 
@@ -163,18 +225,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
     try:
-        model = json.loads(args.fixture.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        print(json.dumps({"status": "invalid-input", "errors": [str(error)]}, sort_keys=True))
+        model = json.loads(args.fixture.expanduser().read_text(encoding="utf-8"))
+        errors = validate_model(model)
+    except (OSError, UnicodeError, ValueError, RecursionError) as error:
+        print(json.dumps({"status": "invalid-input", "errors": [display(str(error))]}, sort_keys=True))
         return 2
-    errors = validate_model(model)
     if errors:
         print(json.dumps({"status": "invalid", "errors": errors}, sort_keys=True))
         return 1
     output = {"schema_version": 1, "fixture_id": model["fixture_id"], "cases": generate(model)}
     rendered = json.dumps(output, indent=2, sort_keys=True) + "\n"
     if args.output:
-        args.output.write_text(rendered, encoding="utf-8")
+        try:
+            args.output.expanduser().write_text(rendered, encoding="utf-8")
+        except OSError as error:
+            print(json.dumps({"status": "output-failure", "errors": [display(str(error))]}))
+            return 2
     else:
         sys.stdout.write(rendered)
     return 0

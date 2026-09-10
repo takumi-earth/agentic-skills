@@ -29,3 +29,7 @@ The output is a sorted JSON case list. Each case contains a stable ID, variation
 Required cases are `baseline`, `trivia`, `line-shift`, `reorder`, `file-move`, `module-move`, `unrelated-extension`, `equal-text-decoy`, `old-path-decoy`, `ambiguity`, `semantic-drift`, `already-applied`, `replay`, and `irrelevant-version`.
 
 Generated models are inputs to a real transformation harness. They do not contain full source snapshots and do not establish behavior until typed assertions execute against the product implementation.
+
+Validate nested objects, nonempty identity fields, and normalized repository-relative paths before generation. Both original and moved paths must lie beneath the declared scope. File and module moves must each change identity. Pre-state, post-state, and drift are nonempty JSON objects and must be distinct; these checks establish model consistency, not semantic truth of the supplied states. Unrelated node IDs must be unique and distinct from the target; unrelated owners differ from the target owner. Generated owner and node IDs are allocated without colliding with supplied identities.
+
+`trivia`, `line-shift`, and `reorder` are planning annotations with `adapter_materialization_required: true`. A consuming adapter must materialize and check each actual variation. Equal text does not merge fixture roles. Fourteen records do not establish fourteen executed behaviors.

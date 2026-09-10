@@ -1,4 +1,4 @@
 interface:
   display_name: "Enforce Adaptive Transform Tests"
-  short_description: "Reject brittle transform test oracles"
-  default_prompt: "Use $enforce-adaptive-transform-tests to detect rendered-source oracle laundering through provenance-aware analysis."
+  short_description: "Analyze Python source-oracle provenance"
+  default_prompt: "Use $enforce-adaptive-transform-tests to detect rendered-source oracle laundering in selected Python files, including unknown flow coverage."

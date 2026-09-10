@@ -1,6 +1,6 @@
 ---
 name: enforce-adaptive-transform-tests
-description: "Detect text-oracle laundering in adaptive parsed-source tests by following values derived from source parsing, syntax text, transformation output, or rendered workspaces into substring, regex, equality, snapshot, and wrapper assertions. Use for focused review or CI design; do not ban ordinary string tests globally."
+description: "Analyze selected Python files for text-oracle laundering in adaptive parsed-source tests by following values derived from source parsing, syntax text, transformation output, or rendered workspaces into substring, regex, equality, snapshot, and wrapper assertions. Use for focused review or CI design; do not ban ordinary string tests globally."
 ---
 
 # Enforce Adaptive Transform Tests
@@ -14,10 +14,10 @@ Read [the flow model](references/flow-model.md). Mark parsed-source rendering, s
 ## Run the bounded scanner
 
 ```bash
-python3 scripts/lint_oracle_flow.py --root <test-root>
+python3 scripts/lint_oracle_flow.py <test-file.py> [<another-test.py>]
 ```
 
-The lightweight scanner emits review findings with file, line, source variable, sink, and reason. It is intentionally conservative and must not be reported as a complete compiler-grade dataflow proof.
+The scanner emits findings with file, line, sink, and reason, plus explicit unknown-flow diagnostics. Exit `0` means no finding within the supported model, `1` means findings, `2` means input errors, and `3` means unknown coverage without findings. It is intentionally conservative and must not be reported as a complete compiler-grade dataflow proof.
 
 ## Adjudicate findings
 

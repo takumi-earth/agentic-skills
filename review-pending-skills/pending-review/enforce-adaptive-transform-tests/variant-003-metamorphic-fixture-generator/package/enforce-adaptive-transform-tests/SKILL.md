@@ -17,7 +17,7 @@ Read [the fixture model](references/fixture-model.md). Declare semantic owner, t
 python3 scripts/generate_metamorphic_cases.py <model.json> --output <cases.json>
 ```
 
-The generator emits named variation instructions and expected typed outcomes. It does not emit full expected transformed source and does not execute the transformation.
+The generator first rejects malformed or contradictory models, then emits named variation instructions and expected typed outcomes. Annotation-only trivia, line-shift, and reorder cases require materialization by the consuming adapter. It does not emit full expected transformed source and does not execute the transformation.
 
 ## Use one oracle
 

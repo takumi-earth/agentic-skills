@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
-"""Find textual test oracles whose values derive from rendered source."""
-
+"""Advisory rendered-source oracle analysis for selected Python files."""
 from __future__ import annotations
 
 import argparse
 import ast
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Iterable
 
+PRODUCERS = {'render_source', 'rendered_source', 'to_source', 'syntax_text', 'node_text', 'transformation_output'}
+STRUCTURAL_PRODUCERS = {'parse_source', 'ast.parse'}
+STRUCTURAL_QUERIES = {'functions', 'owners', 'nodes', 'query', 'find', 'function_count'}
+SNAPSHOT_SINKS = {'assert_snapshot', 'match_snapshot', 'snapshot'}
+FUNCTION_SINKS = {'contains', 'regex_match', 'regex_search', 'assert_equal', 'assert_equals', 'assertEqual'}
+METHOD_SINKS = {'startswith', 'endswith', 'count', 'contains'}
+TEXT, STRUCTURE, UNKNOWN = frozenset({'text'}), frozenset({'structure'}), frozenset({'unknown'})
 
-PRODUCERS = {
-    "render_source",
-    "rendered_source",
-    "to_source",
-    "syntax_text",
-    "node_text",
-    "transformation_output",
-}
-SNAPSHOT_SINKS = {"assert_snapshot", "match_snapshot", "snapshot"}
-FUNCTION_SINKS = {"contains", "regex_match", "regex_search"}
-METHOD_SINKS = {"startswith", "endswith", "count", "contains"}
+
+def display(value: str) -> str:
+    return re.sub(re.escape(str(Path.home())) + r'(?=$|[/\s\x27\x22:,)])', '~', value)
 
 
 def call_name(node: ast.AST) -> str | None:
@@ -30,170 +29,205 @@ def call_name(node: ast.AST) -> str | None:
         return node.id
     if isinstance(node, ast.Attribute):
         prefix = call_name(node.value)
-        return f"{prefix}.{node.attr}" if prefix else node.attr
+        return f'{prefix}.{node.attr}' if prefix else node.attr
     return None
 
 
-def infer_identity_wrappers(tree: ast.AST) -> set[str]:
-    wrappers: set[str] = set()
-    for node in ast.walk(tree):
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) or len(node.body) != 1:
-            continue
-        returned = node.body[0]
-        if not isinstance(returned, ast.Return) or not isinstance(returned.value, ast.Name):
-            continue
-        parameters = {argument.arg for argument in node.args.args}
-        if returned.value.id in parameters:
-            wrappers.add(node.name)
-    return wrappers
-
-
-class OracleFlowAnalyzer(ast.NodeVisitor):
-    def __init__(self, path: Path, wrappers: set[str]) -> None:
+class OracleFlowAnalyzer:
+    def __init__(self, path: Path, wrappers: Iterable[str]) -> None:
         self.path = path
-        self.wrappers = wrappers
-        self.tainted_scopes: list[set[str]] = [set()]
-        self.findings: list[dict[str, object]] = []
-        self.exempt_depth = 0
-        self.seen: set[tuple[int, int, str]] = set()
+        self.wrappers = set(wrappers)
+        self.env = {}
+        self.functions = {}
+        self.findings = []
+        self.unknown = []
+        self.active = set()
+        self.visited = set()
+        self.exempt = False
+        self.in_assert = False
+        self.returns = []
 
-    @property
-    def tainted(self) -> set[str]:
-        return self.tainted_scopes[-1]
-
-    def add_finding(self, node: ast.AST, rule: str, detail: str) -> None:
-        key = (getattr(node, "lineno", 0), getattr(node, "col_offset", 0), rule)
-        if key in self.seen or self.exempt_depth:
+    def observation(self, node: ast.AST, rule: str, value: frozenset[str]) -> None:
+        if self.exempt:
             return
-        self.seen.add(key)
-        self.findings.append(
-            {
-                "path": self.path.as_posix(),
-                "line": key[0],
-                "column": key[1] + 1,
-                "rule": rule,
-                "detail": detail,
-            }
-        )
+        row = dict(path=display(str(self.path)), line=node.lineno, column=node.col_offset + 1, rule=rule)
+        if 'text' in value and not any(all(f[k] == v for k, v in row.items()) for f in self.findings):
+            self.findings.append({**row, 'detail': 'rendered-source provenance reaches a textual oracle'})
+        if 'unknown' in value:
+            self.unknown_at(node, 'oracle receives an unmodeled value')
 
-    def expression_is_tainted(self, node: ast.AST | None) -> bool:
-        if node is None:
-            return False
+    def unknown_at(self, node: ast.AST, detail: str) -> None:
+        row = dict(line=node.lineno, detail=detail)
+        if not self.exempt and row not in self.unknown:
+            self.unknown.append(row)
+
+    def expression(self, node: ast.AST | None) -> frozenset[str]:
+        if node is None or isinstance(node, ast.Constant):
+            return frozenset()
         if isinstance(node, ast.Name):
-            return node.id in self.tainted
+            return self.env.get(node.id, UNKNOWN)
         if isinstance(node, ast.Call):
-            name = call_name(node.func) or ""
-            short = name.rsplit(".", 1)[-1]
-            if short in PRODUCERS:
-                return True
-            if short in self.wrappers:
-                return any(self.expression_is_tainted(argument) for argument in node.args)
-            return self.expression_is_tainted(node.func) or any(
-                self.expression_is_tainted(argument) for argument in node.args
-            )
+            return self.call(node)
         if isinstance(node, ast.Attribute):
-            return self.expression_is_tainted(node.value)
-        if isinstance(node, ast.Subscript):
-            return self.expression_is_tainted(node.value)
-        return any(self.expression_is_tainted(child) for child in ast.iter_child_nodes(node))
+            value = self.expression(node.value)
+            return value if 'text' in value else UNKNOWN
+        if isinstance(node, ast.Compare):
+            value = frozenset().union(*(self.expression(n) for n in [node.left, *node.comparators]))
+            if self.in_assert:
+                for op in node.ops:
+                    if isinstance(op, (ast.Eq, ast.NotEq, ast.In, ast.NotIn)):
+                        self.observation(node, 'membership' if isinstance(op, (ast.In, ast.NotIn)) else 'raw-equality', value)
+            return frozenset() if self.in_assert else value
+        if isinstance(node, (ast.BinOp, ast.UnaryOp, ast.BoolOp, ast.JoinedStr, ast.FormattedValue)):
+            return frozenset().union(*(self.expression(n) for n in ast.iter_child_nodes(node) if isinstance(n, ast.expr)))
+        self.unknown_at(node, f'unsupported expression: {type(node).__name__}')
+        return UNKNOWN
 
-    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        decorators = {call_name(item) for item in node.decorator_list}
-        self.tainted_scopes.append(set())
-        if "exact_output_contract" in decorators:
-            self.exempt_depth += 1
-        for statement in node.body:
-            self.visit(statement)
-        if "exact_output_contract" in decorators:
-            self.exempt_depth -= 1
-        self.tainted_scopes.pop()
+    def call(self, node: ast.Call) -> frozenset[str]:
+        name = call_name(node.func) or ''
+        short = name.rsplit('.', 1)[-1]
+        args = [self.expression(arg) for arg in node.args]
+        keywords = {kw.arg: self.expression(kw.value) for kw in node.keywords}
+        values = frozenset().union(*args, *keywords.values())
+        if name in self.functions:
+            return self.invoke(self.functions[name], args, keywords, node)
+        if short in PRODUCERS:
+            return TEXT
+        if name in STRUCTURAL_PRODUCERS:
+            return STRUCTURE
+        if name in self.wrappers:
+            return values
+        receiver = self.expression(node.func.value) if isinstance(node.func, ast.Attribute) else frozenset()
+        if receiver == STRUCTURE and short in STRUCTURAL_QUERIES:
+            return STRUCTURE
+        if name == 'len' and values == STRUCTURE:
+            return frozenset()
+        if name in {'str', 'len'}:
+            return values
+        sink = self.call_sink(name, short)
+        if sink:
+            self.observation(node, sink, values | receiver)
+            return frozenset()
+        # Formatting/source-string methods preserve text. Other calls are not proof of a safe value.
+        if receiver == TEXT and short in METHOD_SINKS | {'strip', 'replace', 'format', 'join', 'lower', 'upper'}:
+            return TEXT
+        self.unknown_at(node, f'unmodeled call: {name or "dynamic callable"}')
+        return UNKNOWN
 
-    visit_AsyncFunctionDef = visit_FunctionDef
+    def call_sink(self, name, short):
+        if short in SNAPSHOT_SINKS:
+            return 'snapshot'
+        if short in FUNCTION_SINKS and (self.in_assert or short.startswith('assert')):
+            return f'function-{short}'
+        if self.in_assert and short in METHOD_SINKS:
+            return f'method-{short}'
+        if self.in_assert and name in {'re.search', 're.match', 're.fullmatch'}:
+            return 'regex'
+        return None
 
-    def visit_Assign(self, node: ast.Assign) -> None:
-        if self.expression_is_tainted(node.value):
-            for target in node.targets:
+    def invoke(self, binding, args, keywords, site):
+        node, closure, functions = binding
+        if id(node) in self.active or node.args.vararg or node.args.kwarg or None in keywords:
+            self.unknown_at(site, 'recursive or variadic local call is not modeled')
+            return UNKNOWN
+        parameters = [*node.args.posonlyargs, *node.args.args]
+        names = [p.arg for p in parameters]
+        if len(args) > len(names) or set(names[:len(args)]) & keywords.keys():
+            self.unknown_at(site, 'local argument binding cannot be established')
+            return UNKNOWN
+        allowed = set(names) | {p.arg for p in node.args.kwonlyargs}
+        if set(keywords) - allowed or set(keywords) & {p.arg for p in node.args.posonlyargs}:
+            self.unknown_at(site, 'unsupported local keyword binding')
+            return UNKNOWN
+        env = dict(closure)
+        env.update({name: UNKNOWN for name in names + [p.arg for p in node.args.kwonlyargs]})
+        env.update(zip(names, args))
+        env.update(keywords)
+        saved = self.env, self.functions, self.exempt, self.in_assert, self.returns
+        self.env, self.functions = env, dict(functions)
+        self.exempt = any(call_name(d) == 'exact_output_contract' for d in node.decorator_list)
+        self.in_assert, self.returns = False, []
+        self.active.add(id(node)); self.visited.add(id(node))
+        self.block(node.body)
+        result = frozenset().union(*self.returns)
+        self.active.remove(id(node))
+        self.env, self.functions, self.exempt, self.in_assert, self.returns = saved
+        return result
+
+    def block(self, statements):
+        for node in statements:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                self.functions[node.name] = (node, self.env, self.functions)
+        for node in statements:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Import, ast.ImportFrom, ast.Pass)):
+                continue
+            if isinstance(node, ast.Return):
+                self.returns.append(self.expression(node.value))
+                break
+            self.statement(node)
+
+    def statement(self, node):
+        if isinstance(node, (ast.Assign, ast.AnnAssign)):
+            value = self.expression(node.value)
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for target in targets:
                 if isinstance(target, ast.Name):
-                    self.tainted.add(target.id)
-        self.generic_visit(node)
+                    self.env[target.id] = value
+                else:
+                    self.unknown_at(node, 'container or destructuring assignment is not modeled')
+        elif isinstance(node, ast.Assert):
+            self.in_assert = True
+            value = self.expression(node.test)
+            self.observation(node, 'assertion', value)
+            self.in_assert = False
+        elif isinstance(node, ast.Expr):
+            self.expression(node.value)
+        else:
+            self.unknown_at(node, f'unsupported statement: {type(node).__name__}')
+            # Preserve uncertainty after unmodeled control flow, including potentially reassigned names.
+            for child in ast.walk(node):
+                if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Store):
+                    self.env[child.id] = UNKNOWN
 
-    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
-        if isinstance(node.target, ast.Name) and self.expression_is_tainted(node.value):
-            self.tainted.add(node.target.id)
-        self.generic_visit(node)
-
-    def visit_Compare(self, node: ast.Compare) -> None:
-        operands = [node.left, *node.comparators]
-        if any(self.expression_is_tainted(operand) for operand in operands):
-            for operator in node.ops:
-                if isinstance(operator, (ast.Eq, ast.NotEq)):
-                    self.add_finding(node, "raw-equality", "rendered-source-derived value reaches equality")
-                elif isinstance(operator, (ast.In, ast.NotIn)):
-                    self.add_finding(node, "membership", "rendered-source-derived value reaches membership oracle")
-        self.generic_visit(node)
-
-    def visit_Call(self, node: ast.Call) -> None:
-        name = call_name(node.func) or ""
-        short = name.rsplit(".", 1)[-1]
-        if isinstance(node.func, ast.Attribute) and short in METHOD_SINKS:
-            if self.expression_is_tainted(node.func.value):
-                self.add_finding(node, f"method-{short}", f"tainted source reaches .{short}()")
-        if short in SNAPSHOT_SINKS and any(self.expression_is_tainted(item) for item in node.args):
-            self.add_finding(node, "snapshot", "rendered-source-derived value reaches snapshot oracle")
-        if short in FUNCTION_SINKS and any(self.expression_is_tainted(item) for item in node.args):
-            self.add_finding(node, f"function-{short}", f"tainted source reaches {short}()")
-        if name in {"re.search", "re.match", "re.fullmatch"} and any(
-            self.expression_is_tainted(item) for item in node.args[1:]
-        ):
-            self.add_finding(node, "regex", "rendered-source-derived value reaches regex oracle")
-        self.generic_visit(node)
+    def analyze(self, tree):
+        self.block(tree.body)
+        entries = [b for n, b in self.functions.items() if n.startswith('test_')]
+        for binding in entries:
+            self.invoke(binding, [], {}, binding[0])
+        # Uncalled local helpers are disclosed, not optimistically certified clean.
+        for binding in list(self.functions.values()):
+            if id(binding[0]) not in self.visited:
+                self.unknown_at(binding[0], 'function not reached by a selected test or module call')
 
 
 def analyze(path: Path, configured_wrappers: Iterable[str]) -> dict[str, object]:
-    source = path.read_text(encoding="utf-8")
-    tree = ast.parse(source, filename=str(path))
-    wrappers = infer_identity_wrappers(tree) | set(configured_wrappers)
-    analyzer = OracleFlowAnalyzer(path, wrappers)
-    analyzer.visit(tree)
-    analyzer.findings.sort(key=lambda item: (int(item["line"]), int(item["column"]), str(item["rule"])))
-    return {
-        "path": path.as_posix(),
-        "sha256": hashlib.sha256(source.encode("utf-8")).hexdigest(),
-        "wrappers": sorted(wrappers),
-        "findings": analyzer.findings,
-    }
+    raw = path.expanduser().read_bytes()
+    tree = ast.parse(raw.decode('utf-8'), filename=display(str(path)))
+    analyzer = OracleFlowAnalyzer(path, configured_wrappers)
+    analyzer.analyze(tree)
+    return dict(path=display(str(path)), sha256=hashlib.sha256(raw).hexdigest(),
+                wrappers=sorted(configured_wrappers), findings=analyzer.findings,
+                coverage='unknown' if analyzer.unknown else 'complete-within-model', unknown=analyzer.unknown)
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("paths", type=Path, nargs="+")
-    parser.add_argument("--wrapper", action="append", default=[])
+    parser.add_argument('paths', type=Path, nargs='+', help='explicit Python files, not directory roots')
+    parser.add_argument('--wrapper', action='append', default=[])
     args = parser.parse_args(argv)
-    reports: list[dict[str, object]] = []
-    errors: list[dict[str, str]] = []
+    reports, errors = [], []
     for path in args.paths:
         try:
             reports.append(analyze(path, args.wrapper))
-        except (OSError, SyntaxError) as error:
-            errors.append({"path": path.as_posix(), "error": str(error)})
-    finding_count = sum(len(report["findings"]) for report in reports)  # type: ignore[arg-type]
-    print(
-        json.dumps(
-            {
-                "schema_version": 1,
-                "status": "error" if errors else ("findings" if finding_count else "clean"),
-                "finding_count": finding_count,
-                "reports": reports,
-                "errors": errors,
-            },
-            indent=2,
-            sort_keys=True,
-        )
-    )
-    if errors:
-        return 2
-    return 1 if finding_count else 0
+        except (OSError, UnicodeError, SyntaxError, ValueError, RecursionError) as error:
+            errors.append(dict(path=display(str(path)), error=display(str(error))))
+    findings = sum(len(r['findings']) for r in reports)
+    unknown = sum(len(r['unknown']) for r in reports)
+    status = 'error' if errors else 'findings' if findings else 'unknown' if unknown else 'clean'
+    print(json.dumps(dict(schema_version=1, status=status, finding_count=findings, unknown_count=unknown,
+                          reports=reports, errors=errors), indent=2, sort_keys=True))
+    return 2 if errors else 1 if findings else 3 if unknown else 0
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
