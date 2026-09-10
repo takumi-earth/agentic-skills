@@ -8,11 +8,11 @@
 
 ## Required behavior
 
-Require every substantive operation to be declared in a durable argv manifest consumed by one generic runner.
+Specify a task-required declaration as an adapter over the existing command recorder. Ordinary reads and focused checks do not acquire a manifest requirement.
 
-Persist cwd, inputs, exact argv, expected conditions, outputs, and timeout before execution; keep passive reads outside the manifest; refuse shell interpolation and unlisted side effects.
+Declare `cwd`, inputs, exact `argv`, expected conditions, operation outputs, report path, purpose, and timeout. `runner-contract.md` distinguishes supported observations from proposed enforcement; neither schema validity nor a list of outputs restricts the command's actual effects.
 
-## Planned resources
+## Packaged specification resources
 
 - `complete SKILL.md`
 - `agents/openai.yaml`
@@ -30,12 +30,12 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 
 - exact argv preservation
 - home-path normalization
-- undeclared output rejection
+- declared versus enforced output scope
 - passive read exemption
 - nonzero diagnostic reporting
 
 ## Git and activation boundary
 
-Include the complete candidate root in the single creation-batch commit.
+Use the complete candidate root for interactive correctness commits; the automatic creator retains its separate invocation-wide creation boundary.
 
 Do not promote, enable, synchronize, register, or publish this pending package without separate explicit user authority.

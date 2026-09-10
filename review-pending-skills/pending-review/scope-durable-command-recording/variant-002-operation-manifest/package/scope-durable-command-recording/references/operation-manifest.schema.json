@@ -8,18 +8,27 @@
         "type": "string"
       },
       "minItems": 1,
-      "type": "array"
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
     },
     "cwd": {
+      "type": "string",
       "minLength": 1,
-      "type": "string"
+      "pattern": "\\S"
     },
     "expected_conditions": {
       "items": {
         "additionalProperties": false,
         "properties": {
           "condition": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
           },
           "expected": {}
         },
@@ -33,22 +42,42 @@
     },
     "inputs": {
       "items": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
       },
-      "type": "array"
+      "type": "array",
+      "uniqueItems": true
     },
     "outputs": {
       "items": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "pattern": "\\S"
       },
-      "type": "array"
+      "type": "array",
+      "uniqueItems": true
     },
     "schema_version": {
-      "const": 1
+      "const": 1,
+      "type": "integer"
     },
     "timeout_seconds": {
       "exclusiveMinimum": 0,
       "type": "number"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "report_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "parse_json": {
+      "type": "boolean"
     }
   },
   "required": [
@@ -58,8 +87,10 @@
     "inputs",
     "outputs",
     "expected_conditions",
-    "timeout_seconds"
+    "timeout_seconds",
+    "purpose",
+    "report_path"
   ],
-  "title": "Durable substantive operation manifest",
+  "title": "Task-required command operation manifest",
   "type": "object"
 }

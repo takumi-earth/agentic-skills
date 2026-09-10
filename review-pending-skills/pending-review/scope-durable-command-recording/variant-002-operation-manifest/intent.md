@@ -2,13 +2,13 @@
 
 ## Concrete use
 
-Require durable scripts and persisted reports for substantive computation, mutation, and evidence production without wrapping passive instruction or source reads in unnecessary task scripts.
+Specify a durable command manifest when the authorized task requires recoverable evidence, preserving direct reads and focused checks.
 
 ## Preserved approach
 
-Require every substantive operation to be declared in a durable argv manifest consumed by one generic runner.
+Declare task-required operations through an adapter over the existing recorder rather than a competing runner.
 
-Persist cwd, inputs, exact argv, expected conditions, outputs, and timeout before execution; keep passive reads outside the manifest; refuse shell interpolation and unlisted side effects.
+Declare `cwd`, inputs, exact `argv`, expected conditions, operation outputs, report path, purpose, and timeout. Preserve exact arguments without shell interpolation; distinguish declared scope from implemented enforcement.
 
 ## Difference from sibling variants
 
@@ -16,7 +16,7 @@ The user approved pruning `variant-001-effect-classification` after clarifying t
 
 ## Current review disposition
 
-Retain pending. `filesystem-git-observability/scripts/persist_command_report.py` already preserves exact argv, input hashes, stdout, stderr, and exit status. This candidate provides a manifest schema and proposed runner contract; it has no runner implementation. Reconcile its proposed `cwd`, timeout, expected-condition, and output enforcement with that helper and the existing owner's task-required evidence boundary before implementing a runner or proposing promotion.
+The approved reconciliation is applied in `references/runner-contract.md`: each manifest field maps to the current recorder or explicitly identifies a missing capability. The schema and specification remain pending adoption; this package has no executable adapter. Implementing that proposed capability is separate from completing the approved specification correction.
 
 ## Causal evidence
 
@@ -30,13 +30,13 @@ The durable-script mandate was correctly intended to make investigation and muta
 
 - exact argv preservation
 - home-path normalization
-- undeclared output rejection
+- declared versus enforced output scope
 - passive read exemption
 - nonzero diagnostic reporting
 
 ## Uncertainty and risk
 
-- Calling a substantive source selection a passive read to evade durability.
+- Treating a manifest declaration as enforcement of a command's effects.
 - Wrapping trivial reads and obscuring intent.
 - Treating a persisted report as proof that a flawed procedure is correct.
 - Treating a label such as substantive computation as authority to create evidence artifacts.

@@ -31,5 +31,8 @@
   ],
   "schema_version": 1,
   "status": "pending",
-  "variant_id": "variant-002-operation-manifest"
+  "variant_id": "variant-002-operation-manifest",
+  "review_notes": [
+    "Approved recorder reconciliation applied: exact CLI mappings, unsupported capabilities, publication and partial-effect semantics, task-required persistence, and schema field agreement. This remains an inert specification pending adoption; no runner implementation is claimed."
+  ]
 }

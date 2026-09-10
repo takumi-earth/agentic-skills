@@ -1,4 +1,4 @@
 interface:
   display_name: "Scope Durable Command Recording"
-  short_description: "Scope durable recording to substantive work"
-  default_prompt: "Use $scope-durable-command-recording to apply the variant-002-operation-manifest pending design with explicit evidence and authority boundaries."
+  short_description: "Reconcile manifests with the command recorder"
+  default_prompt: "Use $scope-durable-command-recording to reconcile this task-required manifest with the existing recorder's capabilities and evidence boundaries."
