@@ -27,6 +27,16 @@
       "target": "resolve-managed-goal-artifacts"
     }
   ],
+  "review_notes": [
+    "User-approved disposition: retain pending correction as a distinct standalone typed-input renderer, validator, and schema alternative; do not adopt or repair the executable in this consolidation.",
+    "The sibling comparisons in intent.md naming variant-002-structured-failure-exceptions and variant-004-stderr-audit-and-context are historical: their approved guidance was consolidated into design-command-observability and both drafts were pruned. Git history preserves those comparison designs.",
+    "Before adoption, reconcile schema and runtime requirements for expected, received, artifact, unknown fields, and approach types. Missing observations must remain distinct from explicit null, and artifact optionality must agree with the intended contract.",
+    "Preserve legitimate empty, null, false, zero, and collection observations while requiring nonempty identifying text. The current runtime rejects a schema-valid empty received string.",
+    "Normalize path-bearing object keys as well as values without rewriting similarly prefixed sibling paths or unrelated text. Presentation normalization must preserve path identity.",
+    "Define a budget for the complete serialized response with explicit omission accounting. A valid nested value within the current individual limits emitted 68,483 bytes.",
+    "Preserve the valid PostToolUse hookSpecificOutput envelope, empty stderr, process exit 0, and safe invalid-input rendering; keep a reported decision failure distinct from process success.",
+    "Preserve the maintain-living-goal owner's completion accounting, goal-specific delimiters, and write-and-re-read barrier. A generic renderer does not replace that lifecycle adapter or authorize new records or channels."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-001-typed-resolution-result"

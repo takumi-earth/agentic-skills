@@ -130,6 +130,28 @@ class PostGoalReviewHookTests(unittest.TestCase):
                 self.assertEqual(result.stdout, "")
                 self.assertEqual(result.stderr, "")
 
+    def test_transcript_presentation_preserves_path_identity(self) -> None:
+        home = str(Path.home().resolve(strict=False))
+        cases = (
+            (home, "~"),
+            (f"{home}/session.jsonl", "~/session.jsonl"),
+            (f"{home}-neighbor/session.jsonl", f"{home}-neighbor/session.jsonl"),
+            (f"{home} archive/session.jsonl", f"{home} archive/session.jsonl"),
+            (f"/mirror{home}/session.jsonl", f"/mirror{home}/session.jsonl"),
+        )
+        for index, (transcript, expected) in enumerate(cases):
+            with self.subTest(case=index):
+                payload = self.payload()
+                payload["transcript_path"] = transcript
+                result = self.run_hook(HOOK, payload)
+                self.assertEqual(result.returncode, 0)
+                self.assertEqual(result.stderr, "")
+                output = json.loads(result.stdout)
+                self.assertEqual(set(output), {"hookSpecificOutput"})
+                hook = output["hookSpecificOutput"]
+                self.assertEqual(hook["hookEventName"], "PostToolUse")
+                self.assertIn(f"and transcript `{expected}`.", hook["additionalContext"])
+
     def test_both_handlers_resolve_identical_immutable_inputs_independently(self) -> None:
         scripts = REPOSITORY_ROOT / "maintain-living-goal" / "scripts"
         sys.path.insert(0, str(scripts))

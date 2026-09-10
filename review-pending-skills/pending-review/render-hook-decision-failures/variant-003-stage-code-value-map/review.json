@@ -29,6 +29,16 @@
       "target": "resolve-managed-goal-artifacts"
     }
   ],
+  "review_notes": [
+    "User-approved disposition: retain pending correction as a distinct compact CLI and diagnostic-map presentation alternative; do not adopt or repair the executable in this consolidation.",
+    "The sibling comparisons in intent.md naming variant-002-structured-failure-exceptions and variant-004-stderr-audit-and-context are historical: their approved guidance was consolidated into design-command-observability and both drafts were pruned. Git history preserves those comparison designs.",
+    "Before adoption, reconcile the advertised Codex hook interface with the PostToolUse hookSpecificOutput envelope and hookEventName. The current --hook-only output has only a top-level additionalContext.",
+    "Require nonempty stage, code, and condition fields while preserving legitimate literal, null, false, zero, and collection values and deterministic diagnostic ordering.",
+    "Handle deeply nested values through the declared structured failure and channel contract. The current recursive normalizer raises RecursionError, exits 1, and leaves stdout empty.",
+    "Normalize path-bearing object keys as well as values while preserving actual path identity and unrelated text. Retain the existing positive behavior that preserves similarly prefixed sibling paths.",
+    "Define and enforce a budget for the complete serialized response, including repeated diagnostic values and metadata, with explicit omission accounting. A 65,536-character received value emitted 131,418 bytes.",
+    "Follow the selected adapter's schema, channels, silence rules, and exit semantics. Rendering does not authorize stderr emission, a new persisted audit, or replacement of goal-specific handoff ownership."
+  ],
   "schema_version": 1,
   "status": "pending",
   "variant_id": "variant-003-stage-code-value-map"

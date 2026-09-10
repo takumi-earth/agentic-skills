@@ -44,9 +44,12 @@ def display_path(path: Path) -> str:
 
 
 def normalize_home_text(value: str) -> str:
-    """Normalize expanded current-home occurrences without treating text as a path."""
+    """Normalize quoted home roots and delimited home-path prefixes only."""
 
-    return value.replace(str(Path.home().resolve(strict=False)), "~")
+    home = re.escape(str(Path.home().resolve(strict=False)))
+    value = re.sub(rf"""(["'`]){home}\1""", r"\1~\1", value)
+    path_prefix = r"""(?<![^\s"'`=:(\[{])""" + home + r"(?=/|$)"
+    return re.sub(path_prefix, "~", value)
 
 
 def lexical_package_root() -> Path:

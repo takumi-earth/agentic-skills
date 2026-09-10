@@ -270,6 +270,34 @@ class ExactPathTests(unittest.TestCase):
             self.assertIn("error:", result.stderr)
 
 
+class DiagnosticPresentationTests(unittest.TestCase):
+    """Keep home-path presentation separate from the identity of other text."""
+
+    def test_diagnostic_values_preserve_sibling_paths_and_nested_values(self) -> None:
+        home = str(Path.home().resolve(strict=False))
+        siblings = [home + suffix for suffix in ("-neighbor/goal", ".backup", " archive/goal", "'archive/goal")]
+        unrelated = [f"/mirror{home}/goal", f"label{home}/goal", "~/already-normalized"]
+        value = {home: [home, f"{home}/goal", siblings, unrelated, None, False, 0, ""]}
+
+        rendered = json.loads(goal_completion_handoff_hook.render_value(value))
+
+        self.assertEqual(rendered, {"~": ["~", "~/goal", siblings, unrelated, None, False, 0, ""]})
+
+    def test_accounting_normalizes_delimited_paths_without_rewriting_other_text(self) -> None:
+        home = str(Path.home().resolve(strict=False))
+        report = f'Retain `{home}/goal`, root "{home}", sibling `{home}-neighbor/goal`, and label{home}/goal.'
+        expected = f'Retain `~/goal`, root "~", sibling `{home}-neighbor/goal`, and label{home}/goal.'
+
+        context = goal_completion_handoff_hook.accounting_context(
+            {"tokensUsed": 41, "timeUsedSeconds": 9},
+            {"completionBudgetReport": report},
+        )
+
+        self.assertIn(f"completion requirement: {expected}", context)
+        self.assertIn("`goal.tokensUsed=41`", context)
+        self.assertIn("`goal.timeUsedSeconds=9`", context)
+
+
 class HandoffHookTests(unittest.TestCase):
     """Exercise trigger gating, output shape, diagnostics, and non-mutation."""
 

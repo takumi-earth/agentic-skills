@@ -26,6 +26,8 @@ Map the operation graph, including policy decisions, blocking calls, nested work
 
 Do not wrap runner dispatch blindly or centralize domain vocabulary in a generic logger.
 
+For a failed policy or resolution decision, keep the checked condition, expected and received values, stage, and code with the deciding owner. Carry those facts through the existing typed result or a structured exception; preserve result-based handoffs. At the adapter boundary, distinguish expected policy rejection from unexpected implementation errors without imposing a universal exception hierarchy.
+
 ## Emit actionable progress
 
 Before blocking work, report the smallest useful typed facts:
@@ -59,6 +61,10 @@ Report verification separately as `not-run`, `passed`, or `failed`, with the che
 - Preserve existing child stream behavior; do not capture or replay merely to add progress.
 - Render one canonical typed impact or decision body across interactive and noninteractive paths when their details must match.
 - Avoid a new dependency when injected standard-library timing and output capabilities satisfy the contract.
+
+For hooks, follow the selected schema, envelope, permitted channels, silence rules, and process-exit semantics. Preserve an empty-stderr contract where required. When an authorized workflow uses both stderr and agent-visible context, derive both from the same diagnostic facts; stderr emission alone proves neither visibility nor durable capture. Hook process exit `0` does not establish decision success.
+
+Use the existing response or authorized record. Rendering or classifying a diagnostic does not authorize another audit artifact, diagnostic channel, or persistence workflow.
 
 ## Test both visibility and silence
 

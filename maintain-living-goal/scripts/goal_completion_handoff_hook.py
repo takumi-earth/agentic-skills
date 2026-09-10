@@ -32,10 +32,12 @@ def object_value(value: Any) -> dict[str, Any]:
 
 
 def normalize_home_text(value: str) -> str:
-    """Render every expanded current-home occurrence as `~`."""
+    """Normalize quoted home roots and delimited home-path prefixes only."""
 
-    home = str(Path.home().resolve(strict=False))
-    return value.replace(home, "~")
+    home = re.escape(str(Path.home().resolve(strict=False)))
+    value = re.sub(rf"""(["'`]){home}\1""", r"\1~\1", value)
+    path_prefix = r"""(?<![^\s"'`=:(\[{])""" + home + r"(?=/|$)"
+    return re.sub(path_prefix, "~", value)
 
 
 def render_value(value: Any) -> str:
