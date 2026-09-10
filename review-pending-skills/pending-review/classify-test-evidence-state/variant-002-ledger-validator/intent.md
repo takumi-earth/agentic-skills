@@ -14,17 +14,17 @@ Structural consistency does not prove test adequacy, parity, semantic ownership,
 
 ## Relationships and uncertainty
 
-Retain this executable alternative pending correction. It overlaps `$verify-test-parity`; its general evidence distinctions now belong to `$verify-strict-work` and `$maintain-living-goal`. The approved `variant-001-evidence-state-protocol` was folded into those owners with corrected attribution and authority rules, then pruned. Its complement relationship is historical.
+Retain this corrected executable alternative pending adoption. It overlaps `$verify-test-parity`; its general evidence distinctions now belong to `$verify-strict-work` and `$maintain-living-goal`. The approved `variant-001-evidence-state-protocol` was folded into those owners with corrected attribution and authority rules, then pruned. Its complement relationship is historical.
 
 The owners classify available evidence in the existing response or authorized record. They do not require this validator or authorize creating a ledger. Structural validation of caller-supplied rows does not establish source/configuration/run identity, test adequacy, or canonical acceptance. Whether TSV support warrants a sibling remains an unresolved design choice.
 
-## Corrections required before adoption
+## Applied correction contract
 
-- Preserve the declared structured error contract for wrong-shaped enum values and invalid UTF-8 input; the reviewed implementation can raise uncaught `TypeError` or `UnicodeDecodeError` instead of emitting its JSON result.
+- Preserve the declared structured error contract for wrong-shaped enum values and invalid UTF-8 input; malformed values and invalid UTF-8 now produce the declared JSON failure result.
 - Validate calendar timestamps, not only their textual shape, and reject Boolean `schema_version` values that Python otherwise equates with `1`.
 - Enforce the declared evidence-locator requirement for written rows; a null locator is reserved for merely declared evidence.
 - Preserve exact command arguments, including legitimate empty arguments after the executable; rejecting them loses valid command identity.
-- Reconcile gate states with assertion results and declared acceptance criteria. The reviewed validator accepts `canonical-gate-passed` with failed assertions when behavioral closure is false; process success alone cannot establish gate acceptance.
+- Reconcile gate states with assertion results and declared acceptance criteria. Passing gates require explicit passed acceptance criteria and reject failed assertions even when behavioral closure is false; process success alone cannot establish gate acceptance.
 - Normalize paths beneath the home directory as `~/...` in input errors and diagnostics, and prevent uncaught tracebacks from bypassing the structured response.
 
-These are pending requirements, not implemented repairs. The packaged validator and its tests remain unchanged.
+These approved repairs are applied in the package and covered by direct tests. Compilation observes a build command, not test-body execution. Adoption and enablement remain separate decisions.

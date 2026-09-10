@@ -7,11 +7,11 @@ description: "Validate JSON test-evidence ledgers that claim behavioral closure.
 
 Make unsupported evidence-state transitions fail structurally.
 
-## Write the ledger
+## Inspect the supplied ledger
 
-Read [the ledger schema](references/ledger-schema.md). Give every row an ID, semantic owner, claimed contract, evidence state, scope, command identity when executed, assertion result, process exit status, and evidence locator.
+Read [the ledger schema](references/ledger-schema.md) and validate an existing supplied record. Classification does not authorize execution or persistence, including creation of another ledger. Each row identifies its owner, claimed contract, evidence state, scope, exact command when observed, assertions, process exit, and evidence locator. Gate acceptance additionally names the actual criteria and their observed result.
 
-Use `unexecuted` explicitly when tests exist but no command ran. Do not invent command metadata or call unexecuted rows failures.
+Use `unexecuted` when tests exist but no command ran. A `compiled` row observes a successful build command and establishes no test-body execution or assertions. Do not invent command metadata or call unexecuted rows failures.
 
 ## Validate
 
@@ -23,4 +23,4 @@ The validator rejects impossible or unsupported combinations, including `process
 
 ## Interpret narrowly
 
-Exit `0` proves schema and transition consistency only. It does not prove the tests observe the right owner, provide parity, or satisfy the repository's canonical command. Run those gates only with separate authority and report their results independently.
+Exit `0` proves schema and transition consistency only. It does not authenticate observations or prove test adequacy, parity, or canonical acceptance. Attribute evidence to its source, configuration, and command inputs; changes can invalidate a current claim without deleting its historical result. A later verification ban does not erase previously obtained, still-applicable evidence. Run gates only under the existing task authority and report results separately.

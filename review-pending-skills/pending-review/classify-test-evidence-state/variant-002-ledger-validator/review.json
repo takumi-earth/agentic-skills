@@ -11,12 +11,31 @@
     "Need to preserve assertion outcome and process exit as separate evidence"
   ],
   "relationships": [
-    {"kind": "overlap", "target": "verify-test-parity"},
-    {"kind": "historical-complement", "target": "classify-test-evidence-state/variant-001-evidence-state-protocol"},
-    {"kind": "shared-guidance-owner", "target": "verify-strict-work"},
-    {"kind": "shared-guidance-owner", "target": "maintain-living-goal"}
+    {
+      "kind": "overlap",
+      "target": "verify-test-parity"
+    },
+    {
+      "kind": "historical-complement",
+      "target": "classify-test-evidence-state/variant-001-evidence-state-protocol"
+    },
+    {
+      "kind": "shared-guidance-owner",
+      "target": "verify-strict-work"
+    },
+    {
+      "kind": "shared-guidance-owner",
+      "target": "maintain-living-goal"
+    }
   ],
   "schema_version": 1,
   "status": "pending",
-  "variant_id": "variant-002-ledger-validator"
+  "variant_id": "variant-002-ledger-validator",
+  "review_notes": [
+    "All approved ledger corrections applied; pending status concerns adoption only.",
+    "Validate enum shapes before transition checks, calendar timestamps, integer schema versions, and observed-evidence locators. Preserve exact empty command arguments after the executable.",
+    "Keep successful compilation, test assertions, process exit, and explicit acceptance criteria separate. Reject passing gates with failed assertions even without a closure claim.",
+    "Preserve structured JSON failures for invalid UTF-8, deep input, and missing files, normalizing diagnostic home paths.",
+    "Use supplied evidence records without authorizing another ledger or execution. Input applicability and source evidence remain caller-owned obligations."
+  ]
 }
