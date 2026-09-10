@@ -9,13 +9,13 @@ Use the bundled report to identify contradictions. Keep editing and harness comp
 
 ## Prepare current state
 
-Provide JSON with user-provenanced terminal units:
+Use an existing JSON state record with attributable evidence for each selected unit; classification does not authorize creating a ledger:
 
 ```json
-{"units":[{"id":"U1","current":"applied","evidence":"application-state.json state verified"}]}
+{"units":[{"id":"U1","current":"applied","dimension":"application","evidence":"application-state.json: application observed for the current inputs"}]}
 ```
 
-Supported terminal values are `complete`, `applied`, `verified`, `superseded-gate`, and `no-action`. Mark retained chronology only between:
+Supported terminal values are `complete`, `applied`, `verified`, `superseded-gate`, and `no-action`. `dimension` may be `decision`, `application`, or `verification`. Legacy `applied`/`no-action` records concern application, `verified` concerns verification, and `superseded-gate` concerns decision state. An unqualified `complete` record cannot establish a dimension or harness completion. Mark retained chronology between:
 
 ```markdown
 <!-- goal-status-history:begin -->
@@ -29,10 +29,12 @@ Run:
 python3 scripts/report_status_reconciliation.py --state <state.json> --plan <goal.md>
 ```
 
-The report tracks unit headings, finds high-signal operative stale status, and proposes one evidence-backed `STATUS` line per finding. It exits nonzero for contradictions and never writes the plan.
+The report tracks unit headings through subsections and excludes history and fenced examples. For a same-dimension status such as `application: PENDING; verification: NOT RUN (prohibited)`, it may propose replacing only `PENDING` with `APPLIED`; it preserves every other part of the line. Application evidence never changes verification status. Explicit unrun or prohibited verification remains protected even when earlier evidence says `verified`.
+
+Ambiguous legacy prose produces `needs-context` with `proposed_line: null`, not a whole-line replacement. Definite supported field conflicts use `dimension-status-conflict`. Exit `1` means findings require review, exit `0` means no finding within the supported format, and malformed inputs exit `2`. No code path writes the plan or changes harness status.
 
 ## Apply judgment outside the script
 
-Confirm the exact active goal, read it through EOF, verify each ledger entry traces to user authority and current evidence, and preserve unrun verification boundaries. A clean report proves only consistency with the supplied state file; it does not establish correctness or authorize completion.
+Confirm the exact active goal, read it through EOF, and verify each supplied observation's authority, input identity, and current applicability. Separate the selected decision, its application, its verification, and the user's completion decision. A clean report covers only the supported textual checks against supplied observations; it does not establish correctness or authorize completion.
 
 Validate a stale operative line, the same wording inside history markers, an unresolved unit, a missing evidence field, unmatched markers, and a clean terminal plan.

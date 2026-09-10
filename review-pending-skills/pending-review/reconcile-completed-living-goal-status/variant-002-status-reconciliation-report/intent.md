@@ -6,7 +6,7 @@ Produce a deterministic, read-only report of operative goal-status contradiction
 
 ## Approach
 
-Read a structured current-state ledger and one Markdown plan, track unit headings, exempt only explicitly delimited history, and emit each stale line with its evidence-backed proposed current status.
+Read an existing structured state record and one Markdown plan, track unit headings, exclude explicit history and fenced examples, and propose a status-span change only within the observation's own dimension. Ambiguous prose carries no generated replacement.
 
 ## Preserved nuance
 
@@ -18,5 +18,5 @@ This is a mechanical alternative to `variant-001-terminal-status-checklist`. Rev
 
 ## Review questions
 
-- Should proposal text be generated or should the report expose only contradiction facts?
+- Generate a proposal only for an unambiguous same-dimension status span; preserve all other text and expose uncertain cases as facts requiring interpretation.
 - Which plan formats beyond Markdown headings deserve support?

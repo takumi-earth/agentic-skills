@@ -24,5 +24,11 @@
   ],
   "schema_version": 1,
   "status": "pending",
-  "variant_id": "variant-002-status-reconciliation-report"
+  "variant_id": "variant-002-status-reconciliation-report",
+  "review_notes": [
+    "Approved reconciliation corrections applied; retain the alternative pending adoption only.",
+    "Keep decision, application, and verification dimensions separate. Generate only status-span replacements within the supplied observation dimension, preserving the rest of each line.",
+    "Preserve unrun and prohibited verification boundaries. Ambiguous legacy prose receives needs-context with no proposed replacement; no harness completion transition is inferred.",
+    "Five direct tests cover mixed-status preservation, independent dimensions, explicit verification limits, ambiguous prose, heading/history scope, malformed records, and read-only CLI behavior."
+  ]
 }
