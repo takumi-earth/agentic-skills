@@ -31,10 +31,12 @@ Run:
 python3 scripts/lint_settled_units.py --ledger <ledger.json> --document <plan.md>
 ```
 
-The script tracks Markdown headings such as `### U1`, detects high-signal reassessment and countersignature phrases outside historical regions, emits JSON findings, and exits nonzero when it finds an operative reopening.
+The script tracks unit headings such as `### U1` through their subsections and excludes explicit historical regions and fenced examples. It separates supported English prohibitions and checks of guards, hashes, inputs, source, configuration, or application readiness from requests to reassess the decision itself. It examines clauses separately, so a prohibition for one unit does not hide a reopening for another.
+
+Findings are advisory: `decision-reopening` identifies explicit decision or countersignature wording; `needs-context` identifies an unqualified reassessment whose target remains uncertain. Exit `1` means review these signals, not that semantic reopening is proved; exit `0` means no signal in this bounded vocabulary, and malformed inputs exit `2`. Do not turn an unknown phrase or clean scan into a verdict.
 
 ## Preserve authority boundaries
 
-Require real user provenance before placing a unit in a terminal state. Treat a clean lint as text consistency only; it does not prove the verdict, authorize application, or mark a goal complete.
+Require real user provenance before placing a unit in a terminal state. A nonempty provenance or supersession string is a caller assertion that still needs attribution to actual user input; the linter cannot authenticate it. Changed application conditions can block effects without reopening the user's selection. Use existing task records; classification does not authorize creating a ledger. A clean lint does not prove the verdict, authorize application, or mark a goal complete.
 
 Validate clean history, operative reopening, explicit user supersession, malformed ledger, nested history markers, and a unit mentioned outside its own section.

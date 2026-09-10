@@ -6,11 +6,11 @@ Detect operative reassessment, re-verification, and renewed countersignature lan
 
 ## Approach
 
-Read a caller-supplied unit ledger and Markdown document, track unit headings, exempt only explicitly delimited historical regions, and emit deterministic findings without changing either input.
+Read an existing caller-supplied unit ledger and Markdown document, track heading scope, exclude explicit history and fenced examples, distinguish prohibitions and guard checks from decision reassessment, and emit deterministic advisory findings without changing either input.
 
 ## Preserved nuance
 
-The linter checks text consistency, not decision truth. A ledger entry must carry user provenance; the script does not create settled authority from a label.
+The linter checks a bounded English vocabulary, not decision truth. Unqualified reassessment remains `needs-context`; a clean scan is limited to supported signals. A ledger entry must carry attributable user provenance; the script does not create settled authority from a label or authorize another ledger.
 
 ## Relationships and uncertainty
 

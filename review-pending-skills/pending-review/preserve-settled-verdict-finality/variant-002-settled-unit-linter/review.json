@@ -24,5 +24,11 @@
   ],
   "schema_version": 1,
   "status": "pending",
-  "variant_id": "variant-002-settled-unit-linter"
+  "variant_id": "variant-002-settled-unit-linter",
+  "review_notes": [
+    "Approved linter corrections applied; retain the alternative pending adoption only.",
+    "Separate supported prohibitions and legitimate guard/input checks from decision reassessment. Classify unqualified wording as needs-context rather than claiming semantic reopening.",
+    "Preserve unit scope across subsections and exclude explicit history and fenced examples. Validate state, provenance, and supersession types before use.",
+    "Five direct tests cover prohibitions, guard checks, decision requests, uncertain wording, mixed clauses, headings, history, supersession, and malformed CLI input."
+  ]
 }
