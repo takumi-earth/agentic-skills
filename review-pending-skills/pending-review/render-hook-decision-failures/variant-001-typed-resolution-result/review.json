@@ -28,14 +28,14 @@
     }
   ],
   "review_notes": [
-    "User-approved disposition: retain pending correction as a distinct standalone typed-input renderer, validator, and schema alternative; do not adopt or repair the executable in this consolidation.",
-    "The sibling comparisons in intent.md naming variant-002-structured-failure-exceptions and variant-004-stderr-audit-and-context are historical: their approved guidance was consolidated into design-command-observability and both drafts were pruned. Git history preserves those comparison designs.",
-    "Before adoption, reconcile schema and runtime requirements for expected, received, artifact, unknown fields, and approach types. Missing observations must remain distinct from explicit null, and artifact optionality must agree with the intended contract.",
-    "Preserve legitimate empty, null, false, zero, and collection observations while requiring nonempty identifying text. The current runtime rejects a schema-valid empty received string.",
-    "Normalize path-bearing object keys as well as values without rewriting similarly prefixed sibling paths or unrelated text. Presentation normalization must preserve path identity.",
-    "Define a budget for the complete serialized response with explicit omission accounting. A valid nested value within the current individual limits emitted 68,483 bytes.",
-    "Preserve the valid PostToolUse hookSpecificOutput envelope, empty stderr, process exit 0, and safe invalid-input rendering; keep a reported decision failure distinct from process success.",
-    "Preserve the maintain-living-goal owner's completion accounting, goal-specific delimiters, and write-and-re-read barrier. A generic renderer does not replace that lifecycle adapter or authorize new records or channels."
+    "All approved corrections are implemented. The user clarified that correction work was already authorized; the earlier deferral was mistaken. Pending status now refers to adoption of this distinct typed-input renderer, not unfinished repairs.",
+    "Former sibling comparisons to variant-002-structured-failure-exceptions and variant-004-stderr-audit-and-context are historical; their approved guidance is consolidated into design-command-observability and their designs remain in Git history.",
+    "Schema and runtime now require all seven decision fields, reject unknown fields and invalid optional approach values, and make artifact optional with nonempty text or null. Integral numeric counts agree with JSON Schema while Boolean and negative counts are rejected.",
+    "Required observations preserve explicit empty strings, null, false, zero, and empty collections. Identifying text remains nonempty; the schema declares the same bounded strings, keys, collection sizes, and nesting as the executable.",
+    "Path-bearing keys and values normalize at home-path boundaries without rewriting sibling identities or unrelated text. A normalization collision fails explicitly rather than discarding an object entry.",
+    "The complete serialized response and final newline are limited to 8192 UTF-8 bytes. Oversized valid decisions preserve their reported outcome and explicitly omit the original context with omitted-context and original-response byte counts.",
+    "Valid PostToolUse envelopes, empty stderr, process exit 0, and safe invalid-decision-result output are preserved, including deep-input failures. Rendering leaves goal-specific accounting, delimiters, and handoff ownership with maintain-living-goal.",
+    "Validation: the packaged self-test reports 48 passing assertions; 38 focused schema/runtime comparison cases agreed. Package validation and complete-candidate-root Git history retain the repair evidence."
   ],
   "schema_version": 1,
   "status": "pending",

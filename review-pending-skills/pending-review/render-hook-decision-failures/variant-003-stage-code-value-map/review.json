@@ -30,14 +30,14 @@
     }
   ],
   "review_notes": [
-    "User-approved disposition: retain pending correction as a distinct compact CLI and diagnostic-map presentation alternative; do not adopt or repair the executable in this consolidation.",
-    "The sibling comparisons in intent.md naming variant-002-structured-failure-exceptions and variant-004-stderr-audit-and-context are historical: their approved guidance was consolidated into design-command-observability and both drafts were pruned. Git history preserves those comparison designs.",
-    "Before adoption, reconcile the advertised Codex hook interface with the PostToolUse hookSpecificOutput envelope and hookEventName. The current --hook-only output has only a top-level additionalContext.",
-    "Require nonempty stage, code, and condition fields while preserving legitimate literal, null, false, zero, and collection values and deterministic diagnostic ordering.",
-    "Handle deeply nested values through the declared structured failure and channel contract. The current recursive normalizer raises RecursionError, exits 1, and leaves stdout empty.",
-    "Normalize path-bearing object keys as well as values while preserving actual path identity and unrelated text. Retain the existing positive behavior that preserves similarly prefixed sibling paths.",
-    "Define and enforce a budget for the complete serialized response, including repeated diagnostic values and metadata, with explicit omission accounting. A 65,536-character received value emitted 131,418 bytes.",
-    "Follow the selected adapter's schema, channels, silence rules, and exit semantics. Rendering does not authorize stderr emission, a new persisted audit, or replacement of goal-specific handoff ownership."
+    "All approved corrections are implemented. The user clarified that correction work was already authorized; the earlier deferral was mistaken. Pending status now refers to adoption of this distinct compact-map alternative, not unfinished repairs.",
+    "Former sibling comparisons to variant-002-structured-failure-exceptions and variant-004-stderr-audit-and-context are historical; their approved guidance is consolidated into design-command-observability and their designs remain in Git history.",
+    "The default CLI preserves its context, diagnostic map, and mode. --hook-only now emits only the PostToolUse hookSpecificOutput envelope with hookEventName and additionalContext.",
+    "Identifying stage, code, and condition fields must contain non-whitespace text. Literal and JSON observations preserve empty, null, false, zero, and collection values with stable diagnostic ordering.",
+    "Excessive nesting and malformed identifying values return structured invalid-decision-input diagnostics without tracebacks or rejected contents. Decision diagnostics exit 0 with empty stderr; invalid command grammar retains argparse exit 2.",
+    "Path-bearing keys and values normalize at actual home-path boundaries while preserving sibling paths and unrelated text. Key collisions introduced by presentation are rejected instead of overwriting facts.",
+    "The complete selected output and final newline are limited to 8192 UTF-8 bytes, including metadata and repeated values. Oversized diagnostics are omitted in full with explicit omitted-context and original-response byte counts. Rendering does not authorize recording or change goal-handoff ownership.",
+    "Validation: the packaged self-test reports 25 passing assertions, including real CLI checks for the hook envelope, malformed fields, deep input, large values, and oversized metadata. Package validation and complete-candidate-root Git history retain the repair evidence."
   ],
   "schema_version": 1,
   "status": "pending",

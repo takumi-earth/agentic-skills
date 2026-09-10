@@ -18,6 +18,8 @@ Apply the `variant-001-typed-resolution-result` design without silently merging 
 
 Model success and failure with explicit `status`, `stage`, `code`, `condition`, `expected`, `received`, `candidate_count`, and optional `artifact` fields. Require nonempty `stage`, `code`, and `condition`; accept only bounded domain-selected diagnostic values; normalize paths beneath the home directory.
 
+Require `expected` and `received` even when the observation is `null`, `false`, `0`, an empty string, or an empty collection. Reject unknown fields. Optional `artifact` is nonempty text or `null`; optional `approach` is nonempty text. The packaged schema and runtime share the value limits described in the approach reference. The caller selects publishable facts; validation does not establish redaction.
+
 Render only this Codex envelope:
 
 ```json
@@ -30,6 +32,8 @@ Render only this Codex envelope:
 ```
 
 Do not emit custom top-level `decision`, `mode`, or diagnostic objects. Keep stderr empty and return process status `0` for both a typed decision failure and a safe invalid-input diagnostic.
+
+The complete serialized response, including its envelope and final newline, is limited to `8192` UTF-8 bytes. If it exceeds that budget, preserve the reported success or failure and explicitly omit the original context, stating its byte count and the original response size with renderer code `output-budget-exceeded`. Omitted fields are unavailable in that presentation, not empty observations.
 
 Use this sequence:
 
@@ -44,7 +48,7 @@ Use this sequence:
 - Prove one exact fixture for every failure code.
 - Prove success path contains no failure language.
 - Prove stdout remains one valid `PostToolUse` JSON object and stderr remains empty.
-- Prove condition, expected, received, stage, and code are never omitted or empty.
+- Prove required observations are present and identifying fields are nonempty; preserve legitimate empty observations and explicit budget omissions.
 - Prove malformed or unsafe values render a safe envelope without exposing the rejected input.
 
 Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.

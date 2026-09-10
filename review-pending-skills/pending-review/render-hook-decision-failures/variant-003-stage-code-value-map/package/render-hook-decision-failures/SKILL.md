@@ -18,6 +18,10 @@ Apply the `variant-003-stage-code-value-map` design without silently merging it 
 
 Emit a concise diagnostic such as stage=resolve_goal_file, code=attachments_root_mismatch, condition=..., expected=..., received=... and keep value rendering home-relative.
 
+Require nonempty `--stage`, `--code`, and `--condition`. Preserve JSON values and literal strings for `--expected` and `--received`, including empty observations. The default CLI emits the compact context, diagnostic map, and mode; `--hook-only` emits only the Codex `PostToolUse` `hookSpecificOutput` envelope. Keep stderr empty and exit `0` for rendered decision failures and structured invalid-value diagnostics; invalid command grammar retains argparse's exit `2` contract.
+
+Apply the `8192`-byte UTF-8 budget to the entire selected output, including metadata, repeated values, envelope, and final newline. Report `output-budget-exceeded` with explicit full omission, the omitted context byte count, and original serialized size. Malformed identifying fields, excessive nesting, and non-finite numbers produce `invalid-decision-input` without exposing rejected values or tracebacks. Load the approach reference for the limits and path-identity contract.
+
 Use this sequence:
 
 1. Identify the authority source and exact input facts before making a policy decision.

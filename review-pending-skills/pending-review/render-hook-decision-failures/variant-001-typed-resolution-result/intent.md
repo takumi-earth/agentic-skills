@@ -27,7 +27,7 @@ The hook collapsed distinct resolver failures into the false-sounding statement 
 - one exact fixture for every failure code
 - success path contains no failure language
 - stdout remains one valid `PostToolUse` hook JSON object and stderr remains empty
-- condition, expected, received, stage, and code are never omitted or empty
+- identifying text is nonempty; expected and received are required observations that may legitimately be empty, with explicit whole-response budget omissions
 - unsafe, unbounded, or malformed decision values become a safe typed renderer diagnostic
 
 ## Uncertainty and risk

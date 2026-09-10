@@ -16,6 +16,8 @@ Emit a concise diagnostic such as stage=resolve_goal_file, code=attachments_root
 
 ## Validation
 
+The adapter owns two additional codes: `invalid-decision-input` for unsupported fields or values, and `output-budget-exceeded` for full omission of an oversized diagnostic. Domain stage/code pairs remain caller-owned. Both adapter outcomes preserve the selected normal or `--hook-only` output shape and empty stderr; the serialized response, including its newline, cannot exceed `8192` UTF-8 bytes.
+
 - stable field ordering
 - home-path normalization
 - null and collection rendering

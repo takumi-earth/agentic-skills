@@ -1,48 +1,9 @@
 {
   "$id": "skill://render-hook-decision-failures/typed-decision-result.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Typed hook decision result",
+  "type": "object",
   "additionalProperties": false,
-  "properties": {
-    "code": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "candidate_count": {
-      "minimum": 0,
-      "type": "integer"
-    },
-    "condition": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "artifact": {
-      "oneOf": [
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "approach": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "expected": {},
-    "received": {},
-    "stage": {
-      "minLength": 1,
-      "type": "string"
-    },
-    "status": {
-      "enum": [
-        "success",
-        "failure"
-      ]
-    }
-  },
   "required": [
     "status",
     "stage",
@@ -50,9 +11,252 @@
     "condition",
     "expected",
     "received",
-    "candidate_count",
-    "artifact"
+    "candidate_count"
   ],
-  "title": "Typed hook decision result",
-  "type": "object"
+  "properties": {
+    "status": {
+      "enum": [
+        "success",
+        "failure"
+      ]
+    },
+    "stage": {
+      "$ref": "#/$defs/identifier"
+    },
+    "code": {
+      "$ref": "#/$defs/identifier"
+    },
+    "condition": {
+      "$ref": "#/$defs/identifier"
+    },
+    "approach": {
+      "$ref": "#/$defs/identifier"
+    },
+    "expected": {
+      "$ref": "#/$defs/value0"
+    },
+    "received": {
+      "$ref": "#/$defs/value0"
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "artifact": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/identifier"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "maxLength": 512,
+      "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+    },
+    "identifier": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "pattern": "\\S"
+        }
+      ]
+    },
+    "value0": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/value1"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/text"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 64
+              }
+            ]
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/value1"
+          }
+        }
+      ]
+    },
+    "value1": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/value2"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/text"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 64
+              }
+            ]
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/value2"
+          }
+        }
+      ]
+    },
+    "value2": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/value3"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/text"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 64
+              }
+            ]
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/value3"
+          }
+        }
+      ]
+    },
+    "value3": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/value4"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/text"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 64
+              }
+            ]
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/value4"
+          }
+        }
+      ]
+    },
+    "value4": {
+      "anyOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "number"
+          ]
+        },
+        {
+          "$ref": "#/$defs/text"
+        },
+        {
+          "type": "array",
+          "maxItems": 0
+        },
+        {
+          "type": "object",
+          "maxProperties": 0,
+          "propertyNames": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/text"
+              },
+              {
+                "minLength": 1,
+                "maxLength": 64
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
 }

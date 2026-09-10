@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
+import re
 import subprocess
 import sys
 from typing import Any, Mapping
@@ -17,13 +19,16 @@ MAX_DEPTH = 4
 MAX_COLLECTION = 16
 MAX_KEY_LENGTH = 64
 MAX_STRING_LENGTH = 512
+MAX_OUTPUT_BYTES = 8192
+REQUIRED_FIELDS = {"status", "stage", "code", "condition", "expected", "received", "candidate_count"}
 
 
 def normalize_home_text(value: str) -> str:
-    """Normalize every expanded current-home occurrence for rendering."""
+    """Normalize delimited home paths without rewriting sibling identities."""
 
-    home = str(Path.home().resolve(strict=False))
-    return value.replace(home, "~")
+    home = re.escape(str(Path.home().resolve(strict=False)))
+    value = re.sub(rf"""(["'`]){home}\1""", r"\1~\1", value)
+    return re.sub(r"""(?<![^\s"'`=:(\[{])""" + home + r"(?=/|$)", "~", value)
 
 
 def safe_value(value: Any, *, depth: int = 0) -> Any:
@@ -32,10 +37,12 @@ def safe_value(value: Any, *, depth: int = 0) -> Any:
     if depth > MAX_DEPTH:
         raise ValueError("diagnostic value exceeds the maximum nesting depth")
     if value is None or isinstance(value, (bool, int, float)):
+        if isinstance(value, float) and not math.isfinite(value):
+            raise ValueError("diagnostic numbers must be finite")
         return value
     if isinstance(value, str):
-        if not value or len(value) > MAX_STRING_LENGTH:
-            raise ValueError("diagnostic strings must be nonempty and bounded")
+        if len(value) > MAX_STRING_LENGTH:
+            raise ValueError("diagnostic strings must be bounded")
         if any(ord(character) < 32 and character not in "\t\n\r" for character in value):
             raise ValueError("diagnostic strings must not contain control bytes")
         return normalize_home_text(value)
@@ -44,15 +51,24 @@ def safe_value(value: Any, *, depth: int = 0) -> Any:
             raise ValueError("diagnostic arrays must be bounded")
         return [safe_value(item, depth=depth + 1) for item in value]
     if isinstance(value, Mapping):
-        if len(value) > MAX_COLLECTION:
-            raise ValueError("diagnostic objects must be bounded")
-        normalized: dict[str, Any] = {}
-        for key, item in value.items():
-            if not isinstance(key, str) or not key or len(key) > MAX_KEY_LENGTH:
-                raise ValueError("diagnostic object keys must be short nonempty strings")
-            normalized[key] = safe_value(item, depth=depth + 1)
-        return normalized
+        return _safe_mapping(value, depth)
     raise ValueError(f"unsupported diagnostic value type: {type(value).__name__}")
+
+
+def _safe_mapping(value: Mapping[str, Any], depth: int) -> dict[str, Any]:
+    """Validate object keys and refuse lossy presentation collisions."""
+
+    if len(value) > MAX_COLLECTION:
+        raise ValueError("diagnostic objects must be bounded")
+    normalized: dict[str, Any] = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not key or len(key) > MAX_KEY_LENGTH:
+            raise ValueError("diagnostic object keys must be short nonempty strings")
+        key = safe_value(key)
+        if key in normalized:
+            raise ValueError("path normalization would collapse diagnostic keys")
+        normalized[key] = safe_value(item, depth=depth + 1)
+    return normalized
 
 
 def nonempty_text(result: Mapping[str, Any], name: str) -> str:
@@ -69,34 +85,35 @@ def validate_result(value: Any) -> dict[str, Any]:
 
     if not isinstance(value, Mapping):
         raise ValueError("decision result must be an object")
+    if REQUIRED_FIELDS - value.keys() or value.keys() - (REQUIRED_FIELDS | {"artifact", "approach"}):
+        raise ValueError("decision fields must match the declared schema")
     status = value.get("status")
-    if status not in {"success", "failure"}:
+    if not isinstance(status, str) or status not in {"success", "failure"}:
         raise ValueError("status must equal success or failure")
     candidate_count = value.get("candidate_count")
     if (
-        not isinstance(candidate_count, int)
+        not isinstance(candidate_count, (int, float))
         or isinstance(candidate_count, bool)
+        or (isinstance(candidate_count, float) and not math.isfinite(candidate_count))
         or candidate_count < 0
+        or int(candidate_count) != candidate_count
     ):
         raise ValueError("candidate_count must be a nonnegative integer")
     artifact = value.get("artifact")
     if artifact is not None:
-        artifact = safe_value(artifact)
-        if not isinstance(artifact, str):
-            raise ValueError("artifact must be text or null")
+        artifact = nonempty_text(value, "artifact")
     normalized = {
         "status": status,
         "stage": nonempty_text(value, "stage"),
         "code": nonempty_text(value, "code"),
         "condition": nonempty_text(value, "condition"),
-        "expected": safe_value(value.get("expected")),
-        "received": safe_value(value.get("received")),
-        "candidate_count": candidate_count,
+        "expected": safe_value(value["expected"]),
+        "received": safe_value(value["received"]),
+        "candidate_count": int(candidate_count),
         "artifact": artifact,
     }
-    approach = value.get("approach")
-    if approach is not None:
-        normalized["approach"] = safe_value(approach)
+    if "approach" in value:
+        normalized["approach"] = nonempty_text(value, "approach")
     return normalized
 
 
@@ -117,6 +134,29 @@ def envelope(context: str) -> dict[str, Any]:
             "additionalContext": context,
         }
     }
+
+
+def serialize(output: Mapping[str, Any]) -> str:
+    """Measure and emit the same JSON bytes, including the final newline."""
+
+    return json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
+
+
+def bounded_envelope(context: str, status: str) -> dict[str, Any]:
+    """Explicitly omit the original context when the whole response is too large."""
+
+    output = envelope(context)
+    size = len(serialize(output).encode("utf-8"))
+    if size <= MAX_OUTPUT_BYTES:
+        return output
+    outcome = "succeeded" if status == "success" else "failed"
+    return envelope(
+        f"Hook decision {outcome}. Original diagnostic context omitted in full. "
+        "Checked condition, expected, received, stage, code, and candidate count are unavailable "
+        "in this bounded presentation. Renderer code: output-budget-exceeded. "
+        f"Omitted context bytes: {len(context.encode('utf-8'))}. "
+        f"Original serialized response bytes: {size}. Output budget bytes: {MAX_OUTPUT_BYTES}."
+    )
 
 
 def render(result: Any) -> dict[str, Any]:
@@ -143,7 +183,7 @@ def render(result: Any) -> dict[str, Any]:
             f"Code: {decision['code']}. "
             f"Candidate count: {decision['candidate_count']}."
         )
-    return envelope(context)
+    return bounded_envelope(context, decision["status"])
 
 
 def invalid_input_envelope() -> dict[str, Any]:
@@ -151,8 +191,9 @@ def invalid_input_envelope() -> dict[str, Any]:
 
     return envelope(
         "Hook decision failed. Checked condition: the typed decision result is complete and safe. "
-        "Expected: a success-or-failure result with nonempty stage, code, condition, expected, "
-        "received, and candidate_count fields. Received: invalid typed decision result. "
+        "Expected: a success-or-failure result with nonempty stage, code, and condition, "
+        "explicit expected and received observations, and a nonnegative candidate_count. "
+        "Received: invalid typed decision result; its contents were omitted. "
         "Stage: render-hook-decision. Code: invalid-decision-result. Candidate count: 0."
     )
 
@@ -263,6 +304,47 @@ def self_test() -> dict[str, Any]:
     assert "invalid-decision-result" in invalid_output["hookSpecificOutput"]["additionalContext"]
     assertions += 4
 
+    for field in REQUIRED_FIELDS:
+        missing = dict(failure_result)
+        del missing[field]
+        try:
+            validate_result(missing)
+        except ValueError:
+            assertions += 1
+        else:
+            raise AssertionError(f"missing {field} was accepted")
+    for changes in ({"unknown": 0}, {"approach": 9}, {"approach": None}, {"status": []}, {"candidate_count": True}):
+        try:
+            validate_result({**failure_result, **changes})
+        except ValueError:
+            assertions += 1
+        else:
+            raise AssertionError("malformed decision was accepted")
+    for observation in ("", None, False, 0, [], {}):
+        result = {**failure_result, "received": observation, "candidate_count": 1.0}
+        del result["artifact"]
+        assert validate_result(result)["received"] == observation
+        assertions += 1
+    home = str(Path.home().resolve(strict=False))
+    values = {home: [home + "/goal", home + "-neighbor/goal", "prefix" + home + "/goal"]}
+    assert safe_value(values) == {"~": ["~/goal", home + "-neighbor/goal", "prefix" + home + "/goal"]}
+    assertions += 1
+    wide: Any = "x" * 128
+    for _ in range(3):
+        wide = [wide] * 8
+    bounded = render({**failure_result, "received": wide})
+    assert len(serialize(bounded).encode("utf-8")) <= MAX_OUTPUT_BYTES
+    assert "output-budget-exceeded" in bounded["hookSpecificOutput"]["additionalContext"]
+    assert "Omitted context bytes:" in bounded["hookSpecificOutput"]["additionalContext"]
+    assertions += 3
+    deep = subprocess.run(
+        [sys.executable, str(Path(__file__).resolve()), "--result-json", "[" * 1200 + "0" + "]" * 1200],
+        capture_output=True, text=True, check=False,
+    )
+    assert deep.returncode == 0 and deep.stderr == ""
+    assert "invalid-decision-result" in json.loads(deep.stdout)["hookSpecificOutput"]["additionalContext"]
+    assertions += 2
+
     return {"status": "passed", "assertions": assertions, "mode": MODE}
 
 
@@ -288,9 +370,9 @@ def main() -> int:
     try:
         value = json.loads(arguments.result_json)
         output = render(value)
-    except (json.JSONDecodeError, TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError, OverflowError):
         output = invalid_input_envelope()
-    print(json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False))
+    sys.stdout.write(serialize(output))
     return 0
 
 
