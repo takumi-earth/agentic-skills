@@ -47,4 +47,4 @@ Report assertions and process exit status separately. A nonzero command is diagn
 
 - Read `references/approach.md` before applying this variant's design.
 - Read `references/schema-generation-contract.md` when its named contract is load-bearing.
-- Run `scripts/generate_evidence_schema.py` for the deterministic operation it owns; use its `--self-test` before relying on it.
+- Use `scripts/generate_evidence_schema.py --output <schema.json>` for model-derived generation, `--check` for drift, or `--validate <evidence.json>` for a read-only instance check. Read the schema-generation contract for path fields and evidence limits; run `--self-test` before relying on the helper.

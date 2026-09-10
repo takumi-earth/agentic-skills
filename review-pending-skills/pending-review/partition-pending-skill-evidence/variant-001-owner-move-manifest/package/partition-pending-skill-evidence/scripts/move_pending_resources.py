@@ -7,18 +7,21 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
-import subprocess
+import os
+import re
+import shutil
+import stat
 import tempfile
 from typing import Any
 
 
-HOME = Path.home().resolve()
+USER_HOME = Path.home().resolve()
 
 
 def display(path: Path) -> str:
     absolute = path.expanduser().absolute()
     try:
-        relative = absolute.relative_to(HOME)
+        relative = absolute.relative_to(USER_HOME)
     except ValueError:
         return str(absolute)
     return "~" if relative == Path(".") else f"~/{relative.as_posix()}"
@@ -41,103 +44,141 @@ def contained(path: Path, root: Path) -> bool:
 
 
 def load_manifest(path: Path) -> dict[str, Any]:
-    value = json.loads(path.expanduser().read_text(encoding="utf-8"))
-    if not isinstance(value, dict) or value.get("schema_version") != 1:
-        raise ValueError("manifest schema check failed; expected schema_version=1")
-    moves = value.get("moves")
-    if not isinstance(moves, list) or not moves:
-        raise ValueError("manifest move check failed; expected one or more move records")
-    return value
+    return json.loads(path.expanduser().read_text(encoding="utf-8"))
+
+
+def validate_shape(manifest):
+    if not isinstance(manifest, dict) or set(manifest) != {'schema_version', 'moves'} or type(manifest['schema_version']) not in (int, float) or manifest['schema_version'] != 1:
+        raise ValueError('manifest must contain schema_version integer 1 and moves')
+    if not isinstance(manifest['moves'], list) or not manifest['moves']:
+        raise ValueError('manifest requires a nonempty moves array')
+    required = {'source', 'destination', 'sha256', 'classification', 'candidate_name', 'variant_id'}
+    for record in manifest['moves']:
+        if not isinstance(record, dict) or set(record) != required:
+            raise ValueError('move fields must match the manifest schema')
+        if not all(isinstance(v, str) and v.strip() for v in record.values()):
+            raise ValueError('move fields must be nonempty strings')
+        if record['classification'] != 'reusable-resource' or re.fullmatch(r'[0-9a-f]{64}', record['sha256']) is None:
+            raise ValueError('move classification or sha256 is invalid')
+        if any(re.fullmatch(r'[a-z0-9]+(?:-[a-z0-9]+)*', record[k]) is None for k in ('candidate_name', 'variant_id')):
+            raise ValueError('candidate and variant names must be lowercase hyphen-case')
+
+
+def selected_path(raw, repository):
+    path = Path(os.path.abspath(repository / Path(raw).expanduser()))
+    if not contained(path, repository):
+        raise ValueError('selected path escapes repository')
+    current = repository
+    for part in path.relative_to(repository).parts:
+        current /= part
+        if current.is_symlink():
+            raise ValueError(f'selected path crosses a symlink: {display(current)}')
+    return path
+
+
+def validate_owner(repository, record, destination):
+    owner = repository / 'review-pending-skills/pending-review' / record['candidate_name'] / record['variant_id']
+    if destination == owner or not contained(destination, owner):
+        raise ValueError('destination is outside the declared candidate and variant')
+    for relative in ('intent.md', 'review.json', f"package/{record['candidate_name']}/SKILL.md", f"package/{record['candidate_name']}/agents/openai.yaml"):
+        path = selected_path(str(owner / relative), repository)
+        if not path.is_file():
+            raise ValueError(f'owning variant is incomplete: {display(path)}')
+    metadata = json.loads((owner / 'review.json').read_text(encoding='utf-8'))
+    if not isinstance(metadata, dict) or any(metadata.get(k) != record[k] for k in ('candidate_name', 'variant_id')):
+        raise ValueError('destination owner metadata disagrees with manifest')
+    return owner
+
+
+def identity(path):
+    info = path.lstat()
+    if not stat.S_ISREG(info.st_mode):
+        raise ValueError('selected source is not a regular file')
+    return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns]
 
 
 def validate(repo: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
+    validate_shape(manifest)
     repository = repo.expanduser().resolve(strict=True)
-    scratch = (repository / ".scratchpad").resolve(strict=True)
-    pending = (repository / "review-pending-skills" / "pending-review").resolve(strict=True)
-    seen_sources: set[Path] = set()
-    seen_destinations: set[Path] = set()
-    checked: list[dict[str, Any]] = []
-    for index, record in enumerate(manifest["moves"]):
-        if not isinstance(record, dict):
-            raise ValueError(f"move record {index} must be an object")
-        if record.get("classification") != "reusable-resource":
-            raise ValueError(
-                f"move record {index} classification check failed; "
-                f"expected='reusable-resource'; received={record.get('classification')!r}"
-            )
-        source = Path(record.get("source", "")).expanduser().resolve(strict=False)
-        destination = Path(record.get("destination", "")).expanduser().resolve(strict=False)
-        expected_hash = record.get("sha256")
-        if source in seen_sources or destination in seen_destinations:
-            raise ValueError(f"move ownership uniqueness check failed at record {index}")
-        seen_sources.add(source)
-        seen_destinations.add(destination)
-        if not contained(source, scratch):
-            raise ValueError(
-                f"source containment check failed; expected beneath={display(scratch)}; received={display(source)}"
-            )
-        if not contained(destination, pending):
-            raise ValueError(
-                f"destination containment check failed; expected beneath={display(pending)}; received={display(destination)}"
-            )
-        if source.is_symlink() or not source.is_file():
-            received = "symlink" if source.is_symlink() else "missing-or-not-file"
-            raise ValueError(
-                f"source type check failed; expected=regular-file; received={received}; source={display(source)}"
-            )
-        if destination.exists() or destination.is_symlink():
-            raise ValueError(
-                f"destination absence check failed; expected=absent; received=present; destination={display(destination)}"
-            )
-        if not destination.parent.is_dir() or destination.parent.is_symlink():
-            raise ValueError(
-                f"destination parent check failed; expected=existing-real-directory; received={display(destination.parent)}"
-            )
-        received_hash = sha256(source)
-        if not isinstance(expected_hash, str) or received_hash != expected_hash:
-            raise ValueError(
-                f"source hash check failed; expected={expected_hash!r}; received={received_hash!r}; source={display(source)}"
-            )
-        checked.append(
-            {
-                "source": display(source),
-                "destination": display(destination),
-                "sha256": received_hash,
-                "classification": "reusable-resource",
-            }
-        )
+    checked, sources, destinations = [], set(), set()
+    for record in manifest['moves']:
+        source = selected_path(record['source'], repository)
+        destination = selected_path(record['destination'], repository)
+        if not contained(source, repository / '.scratchpad'):
+            raise ValueError('source must be beneath repository scratchpad')
+        validate_owner(repository, record, destination)
+        if source in sources or destination in destinations:
+            raise ValueError('move ownership uniqueness check failed')
+        sources.add(source); destinations.add(destination)
+        source_identity = identity(source)
+        if os.path.lexists(destination):
+            raise FileExistsError(f'destination already exists: {display(destination)}')
+        if not destination.parent.is_dir():
+            raise ValueError('destination parent must already exist')
+        if sha256(source) != record['sha256']:
+            raise ValueError('source hash differs from manifest')
+        checked.append(dict(record, source=display(source), destination=display(destination),
+                            source_identity=source_identity, repository=display(repository)))
     return checked
 
 
+class MoveFailure(RuntimeError):
+    def __init__(self, cause, moved, remaining, partial):
+        super().__init__(str(cause))
+        self.moved, self.remaining, self.partial = moved, remaining, partial
+
+
+def publish_resource(record, progress):
+    source = Path(record['source']).expanduser()
+    destination = Path(record['destination']).expanduser()
+    repository = Path(record['repository']).expanduser()
+    selected_path(str(source), repository)
+    selected_path(str(destination), repository)
+    validate_owner(repository, record, destination)
+    if identity(source) != record['source_identity']:
+        raise ValueError('source identity changed after validation')
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f'.{destination.name}.move.', dir=destination.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, 'wb') as output:
+            source_descriptor = os.open(source, os.O_RDONLY | getattr(os, 'O_NOFOLLOW', 0))
+            with os.fdopen(source_descriptor, 'rb') as input_file:
+                info = os.fstat(input_file.fileno())
+                if [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns] != record['source_identity']:
+                    raise ValueError('opened source differs from selected source')
+                shutil.copyfileobj(input_file, output)
+            output.flush(); os.fsync(output.fileno())
+            os.fchmod(output.fileno(), stat.S_IMODE(info.st_mode))
+        if sha256(temporary) != record['sha256']:
+            raise ValueError('copied resource hash differs from manifest')
+        os.utime(temporary, ns=(info.st_atime_ns, info.st_mtime_ns))
+        os.link(temporary, destination)  # Exclusive publication; never replace a late destination.
+        progress.append(dict(record, phase='destination-published-source-retained'))
+        selected_path(str(source), repository)
+        if identity(source) != record['source_identity'] or sha256(source) != record['sha256']:
+            raise ValueError('source changed before removal; published destination retained')
+        source.unlink()
+        progress[-1]['phase'] = 'source-removed'
+        if os.path.lexists(source) or sha256(destination) != record['sha256']:
+            raise ValueError('post-move source absence or destination integrity failed')
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def execute(checked: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    moved: list[dict[str, Any]] = []
-    for record in checked:
-        source = Path(record["source"]).expanduser()
-        destination = Path(record["destination"]).expanduser()
-        completed = subprocess.run(
-            ["mv", "--", str(source), str(destination)],
-            stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
-            text=True,
-        )
-        if completed.returncode != 0:
-            raise RuntimeError(
-                f"mv failed; condition=exit code 0; expected=0; received={completed.returncode}; "
-                f"source={record['source']}; destination={record['destination']}; stderr={completed.stderr.strip()!r}"
-            )
-        if source.exists() or source.is_symlink():
-            raise RuntimeError(
-                f"source removal check failed after mv; expected=absent; received=present; source={record['source']}"
-            )
-        if not destination.is_file() or sha256(destination) != record["sha256"]:
-            received = sha256(destination) if destination.is_file() else "missing-or-not-file"
-            raise RuntimeError(
-                f"destination integrity check failed; expected={record['sha256']}; received={received}; destination={record['destination']}"
-            )
+    moved = []
+    for index, record in enumerate(checked):
+        progress = []
+        try:
+            publish_resource(record, progress)
+        except (OSError, ValueError, RuntimeError) as error:
+            raise MoveFailure(error, moved, checked[index + 1:] if progress else checked[index:], progress) from error
         moved.append(record)
     return moved
+
+
+def diagnostic(value):
+    return re.sub(re.escape(str(USER_HOME)) + r"(?=$|[/\s\x27\x22:,)])", '~', str(value))
 
 
 def self_test() -> dict[str, Any]:
@@ -158,6 +199,12 @@ def self_test() -> dict[str, Any]:
         source.parent.mkdir(parents=True)
         destination.parent.mkdir(parents=True)
         source.write_text("resource\n", encoding="utf-8")
+        owner = destination.parents[3]
+        (owner / 'intent.md').write_text('fixture owner')
+        (owner / 'review.json').write_text(json.dumps(dict(candidate_name='candidate', variant_id='variant-001')))
+        (owner / 'package/candidate/SKILL.md').write_text('fixture skill')
+        (owner / 'package/candidate/agents').mkdir()
+        (owner / 'package/candidate/agents/openai.yaml').write_text('interface: {}')
         manifest = {
             "schema_version": 1,
             "moves": [
@@ -166,6 +213,7 @@ def self_test() -> dict[str, Any]:
                     "destination": str(destination),
                     "sha256": sha256(source),
                     "classification": "reusable-resource",
+                    "candidate_name": "candidate", "variant_id": "variant-001",
                 }
             ],
         }
@@ -175,7 +223,7 @@ def self_test() -> dict[str, Any]:
         assert not source.exists()
         assert destination.read_text(encoding="utf-8") == "resource\n"
         assert sha256(destination) == moved[0]["sha256"]
-    return {"status": "passed", "assertions": 4, "operation": "mv"}
+    return {"status": "passed", "assertions": 4, "operation": "exclusive-resource-transfer"}
 
 
 def parse_args() -> argparse.Namespace:
@@ -197,8 +245,16 @@ def main() -> int:
     if arguments.self_test:
         print(json.dumps(self_test(), sort_keys=True))
         return 0
-    checked = validate(arguments.repo, load_manifest(arguments.manifest))
-    moved = execute(checked) if arguments.execute else []
+    try:
+        checked = validate(arguments.repo, load_manifest(arguments.manifest))
+    except (OSError, ValueError, RuntimeError, RecursionError) as error:
+        print(json.dumps(dict(status='failure', code='invalid-manifest', error=diagnostic(error), moved=[], partial=[], remaining=[])))
+        return 2
+    try:
+        moved = execute(checked) if arguments.execute else []
+    except MoveFailure as error:
+        print(json.dumps(dict(status='failure', code='move-failed', error=diagnostic(error), moved=error.moved, remaining=error.remaining, partial=error.partial)))
+        return 3
     print(
         json.dumps(
             {

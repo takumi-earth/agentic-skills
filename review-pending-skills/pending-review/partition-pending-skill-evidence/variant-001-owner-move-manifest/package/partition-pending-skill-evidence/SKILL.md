@@ -16,7 +16,7 @@ Apply the `variant-001-owner-move-manifest` design without silently merging it w
 
 ## Apply this design
 
-Classify every artifact as evidence instance or reusable contract, require source existence and destination absence, create all candidate destinations first, execute mv exactly once per resource, verify hashes and empty source slots, and update provenance without moving evidence instances.
+Classify artifacts as evidence instances or reusable resources. Require the declared candidate and variant to exist completely, validate the selected source without following symlinks, publish verified bytes without replacing a destination, remove only the unchanged selected source, and report completed, partial, and remaining effects. Update task-required provenance without moving evidence instances.
 
 Use this sequence:
 
@@ -52,4 +52,4 @@ Report assertions and process exit status separately. A nonzero command is diagn
 - Read `references/scope-guard-adapter.md` before using the home-normalizing scope-guard adapter.
 - Read `references/storage-boundary.md` when its named contract is load-bearing.
 - Run `scripts/move_pending_resources.py` for the deterministic operation it owns; use its `--self-test` before relying on it.
-- Run `scripts/run_home_normalized_skill_guard.py` when the packaged scope guard must persist paths beneath the user home as `~/...`.
+- Run `scripts/run_home_normalized_skill_guard.py` when an authorized snapshot requires exclusive publication; the canonical guard already normalizes home paths.

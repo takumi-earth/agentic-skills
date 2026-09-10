@@ -8,14 +8,18 @@
     },
     "event_id": {
       "minLength": 1,
+      "pattern": "\\S",
       "type": "string"
     },
     "event_type": {
       "minLength": 1,
+      "pattern": "\\S",
       "type": "string"
     },
     "evidence": {
       "items": {
+        "format": "home-presented-path",
+        "minLength": 1,
         "type": "string"
       },
       "type": "array"
@@ -23,10 +27,12 @@
     "expected": {},
     "received": {},
     "schema_version": {
-      "const": 1
+      "const": 1,
+      "type": "integer"
     },
     "status": {
       "minLength": 1,
+      "pattern": "\\S",
       "type": "string"
     }
   },
@@ -37,5 +43,6 @@
     "status"
   ],
   "title": "Automatic skill evidence record",
-  "type": "object"
+  "type": "object",
+  "x-model-sha256": "5eb42f6cc75556825dabc363b81a5ec4c463c3fe2fc95c1fc1d86154601e6b77"
 }

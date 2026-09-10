@@ -8,7 +8,7 @@ Keep run-specific evidence instances in scratch while placing reusable evidence 
 
 Assign each reusable resource to one owning variant and move pre-existing scratch resources through a validated source-to-destination manifest.
 
-Classify every artifact as evidence instance or reusable contract, require source existence and destination absence, create all candidate destinations first, execute mv exactly once per resource, verify hashes and empty source slots, and update provenance without moving evidence instances.
+Classify artifacts as evidence instances or reusable resources. Require the declared candidate and variant to exist completely, validate the selected source without following symlinks, publish verified bytes without replacing a destination, remove only the unchanged selected source, and report completed, partial, and remaining effects. Update task-required provenance without moving evidence instances.
 
 ## Difference from sibling variants
 

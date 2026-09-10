@@ -12,7 +12,8 @@
           },
           "destination": {
             "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
           },
           "sha256": {
             "pattern": "^[0-9a-f]{64}$",
@@ -20,14 +21,25 @@
           },
           "source": {
             "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "candidate_name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "variant_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
           }
         },
         "required": [
           "source",
           "destination",
           "sha256",
-          "classification"
+          "classification",
+          "candidate_name",
+          "variant_id"
         ],
         "type": "object"
       },
@@ -35,7 +47,8 @@
       "type": "array"
     },
     "schema_version": {
-      "const": 1
+      "const": 1,
+      "type": "integer"
     }
   },
   "required": [
