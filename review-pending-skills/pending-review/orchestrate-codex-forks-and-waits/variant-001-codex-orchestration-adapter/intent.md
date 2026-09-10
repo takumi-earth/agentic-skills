@@ -6,11 +6,11 @@ Translate a delegation request written for another coding harness into current C
 
 ## Approach
 
-Use an instruction-only adapter: confirm explicit delegation authority, extract semantic requirements rather than foreign commands, choose Codex fork context, send a self-contained assignment, and wait through the native mailbox mechanism.
+Use an instruction-only adapter: distinguish inert translation from execution, preserve semantic requirements, choose exact Codex context controls, and launch or wait only under existing delegation authority. Unsupported explicit constraints remain visible instead of being silently discarded.
 
 ## Preserved nuance
 
-The default full-history rule yields to the user's explicit no-full-history instruction for the named workflow. Long waits do not authorize extra work or repeated progress polls.
+The default full-history rule yields to explicit history restrictions. No prior history means no inherited turns; a small positive count requires permission for limited history. Parent wait interruption does not stop a worker, and long waits grant no extra work.
 
 ## Relationships and uncertainty
 
@@ -18,5 +18,5 @@ This overlaps `$orchestrate-strict-work` and Codex collaboration-tool guidance. 
 
 ## Review questions
 
-- How much recent context is the minimum safe fork when the user rejects full history?
+- Preserve the exact context request; do not replace zero history with a positive turn count.
 - Which foreign-harness concepts should be translated and which should be rejected as unsupported?

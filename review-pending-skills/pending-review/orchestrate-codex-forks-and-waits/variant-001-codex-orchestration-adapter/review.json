@@ -22,13 +22,13 @@
     }
   ],
   "review_notes": [
-    "User disposition: retain pending correction as a distinct general Codex adapter whose cross-repository trigger extends beyond `orchestrate-strict-work`. The instruction package remains uncorrected and pending.",
+    "All approved adapter corrections applied; retain the general Codex alternative pending adoption only.",
     "The user approved consolidating corrected guidance from `variant-002-wait-budget-protocol` into the optional `orchestrate-strict-work/references/interruptible-worker-waits.md` reference, pruning that draft, and narrowing the owner's rejected-spawn retry rule. Candidate-root Git history preserves the specialized alternative.",
-    "Before adoption, distinguish inert translation from delegation execution. Translating a quoted foreign-harness prompt does not authorize launching the workers described inside it.",
-    "Honor the exact context request. No prior conversation history requires no inherited history; a small positive turn count is appropriate only when the user permits limited history.",
-    "Preserve ownership, budget, concurrency, model, context, and stopping semantics when translating tools. Surface unsupported combinations rather than silently discarding an explicit user requirement. Remove rejected overrides only when they were unnecessary additions by the agent.",
-    "Reconcile steering at the actual effect boundary. Interruption of the parent's mailbox wait does not stop a worker; interrupt workers whose continuing effects are no longer authorized. Answer ordinary status questions and resume authorized work without requiring a renewed continue instruction.",
-    "Use live tool contracts for timeout selection and returned-state interpretation. A timeout without an update does not itself confirm worker status. Keep interruption, idleness, failure, and completion distinct, and preserve existing integration and wave boundaries. Waiting grants no authority for optional work or additional workers."
+    "Distinguish inert prompt translation from authorized worker execution, and preserve exact zero-history or explicitly limited-history requirements.",
+    "Preserve ownership, budget, concurrency, model, context, and stop constraints. Surface unsupported combinations and remove only unnecessary agent-added overrides.",
+    "Distinguish parent wait interruption from worker interruption. Revoke affected worker effects explicitly, answer status questions, and resume remaining authorized work without renewed continue permission.",
+    "Use live timeout and returned-state contracts; timeout alone does not establish worker status. Preserve wave boundaries and grant no optional effects.",
+    "Nine written scenarios evaluated locally covered inert translation, full/zero/limited history, unsupported constraints, timeout uncertainty, revoked effects, status steering, and completion. No worker was spawned."
   ],
   "schema_version": 1,
   "status": "pending",
