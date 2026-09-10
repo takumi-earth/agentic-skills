@@ -18,13 +18,13 @@ This remains a mechanical alternative to `variant-001-readiness-invariant-model`
 
 ## Current review disposition
 
-Retain pending correction. The comparator has not been adopted into the official owner. Before adoption:
+Retain the corrected comparator as an adoption alternative. The approved correction contract is applied:
 
 - Validate nested guard and restore records, complete effect-path coverage, and actual replacement availability; unchanged invalid inputs must not produce a ready result.
 - Clarify deletion-only operations, operation identity beyond path names, and recovery methods that explicitly require an exact `HEAD` or index identity.
 - Preserve the distinction between supplied evidence comparison and independently established application readiness, and normalize home paths in diagnostics.
 
-These requirements record the review findings; the executable remains unchanged pending correction.
+The executable validates these supplied claims and keeps independent repository verification and application authority explicitly unestablished.
 
 ## Review questions
 

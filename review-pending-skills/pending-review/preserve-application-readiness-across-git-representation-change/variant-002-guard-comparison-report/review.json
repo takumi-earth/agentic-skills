@@ -28,5 +28,12 @@
   ],
   "schema_version": 1,
   "status": "pending",
-  "variant_id": "variant-002-guard-comparison-report"
+  "variant_id": "variant-002-guard-comparison-report",
+  "review_notes": [
+    "All approved comparator corrections applied; pending status concerns adoption only.",
+    "Validate content digests, restore records, complete effect coverage, operation identity, and recovery-method requirements. Matching unavailable replacements cannot produce readiness; deletion-only operations need no replacement objects.",
+    "Keep representation changes separately visible and block when the declared recovery contract requires exact HEAD or index identity. Preserve current index capability as an independent requirement.",
+    "Report readiness only against supplied claims, with independent verification and authorization explicitly unestablished. Normalize operational diagnostic paths.",
+    "Six direct tests cover representation drift, exact-identity recovery, availability, malformed nested inputs, deletion-only operations, identity changes, and read-only CLI behavior."
+  ]
 }
