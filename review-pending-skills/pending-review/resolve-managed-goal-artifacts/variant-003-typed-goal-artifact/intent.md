@@ -2,19 +2,21 @@
 
 ## Concrete use
 
-Resolve an exact harness-managed goal artifact from a structured goal objective without coupling harness state to skill package topology.
+Consume exactly one selected typed producer profile and verify its current goal/event binding before selecting a file. A role declaration, an old response, or transport success alone does not establish current authority.
 
 ## Preserved approach
 
 Carry managed objective artifacts as typed goal-response data and stop recovering them from prose.
 
-Read a versioned managed_objective_artifacts list from the successful goal response, require exactly one supported file for the completion handoff, validate its containment and existence, and use objective prose only for human display.
+Consume one selected durable or response-only `managedObjectiveArtifacts` profile. Verify current goal/event binding, selection provenance, and exact locator mode; invalid typed data never falls back to arbitrary prose.
 
 ## Difference from sibling variants
 
 Keep this approach distinct from `variant-001-environment-root`, `variant-002-hook-context-root`, `variant-004-objective-path-validation`, `variant-005-installation-relative-root`. Do not converge implementation authority, activation effects, or failure semantics merely because common text could be shared.
 
 ## Causal evidence
+
+The following records describe the original failure. Current owner locations and protocol limits are attributed separately in the corrected references.
 
 The production hook derived codex_home from Path(__file__).resolve().parents[3]. Canonical execution through a synchronized symlink made that value ~, so the resolver searched ~/attachments and found zero candidates even though the objective contained one exact existing file under ~/.codex/attachments.
 
@@ -31,13 +33,13 @@ The production hook derived codex_home from Path(__file__).resolve().parents[3].
 
 ## Uncertainty and risk
 
-- Trusting arbitrary objective paths outside the managed attachments root.
+- Confusing an unselected path in prose with a current explicit user designation.
 - Treating custom CODEX_HOME as equivalent to a package location.
 - Schema version skew between Codex and hook packages.
 - Overfitting the current pasted-text wrapper wording.
 - Retaining the installation-relative approach even though it is known to be fragile.
 
-The candidate remains pending because structural validity does not decide whether this design should be promoted or merged into an existing owner.
+The approved specification corrections are complete. Retention now concerns adoption of this inert alternative, not deferred repairs. Implementation and enablement require a selected producer and separate authority.
 
 ## Questions for review
 

@@ -8,11 +8,11 @@
 
 ## Required behavior
 
-Carry managed objective artifacts as typed goal-response data and stop recovering them from prose.
+Consume exact typed goal-artifact data from one explicitly selected durable or response-only producer profile.
 
-Read a versioned managed_objective_artifacts list from the successful goal response, require exactly one supported file for the completion handoff, validate its containment and existence, and use objective prose only for human display.
+Read `typed-goal-artifact-contract.md` for the paired versioned schemas, verified attribution, role/cardinality rules, and exact locator modes. Read `migration-and-resume.md` for explicit legacy fallback and the distinct producer lifetimes. Invalid typed authority never triggers a prose fallback.
 
-## Planned resources
+## Resources
 
 - `complete SKILL.md`
 - `agents/openai.yaml`
@@ -21,8 +21,8 @@ Read a versioned managed_objective_artifacts list from the successful goal respo
 
 ## Relationships
 
-- `auto-skill-enhancer`: `possible-enhancement-owner`
-- `maintain-living-goal`: `goal-file-consumer`
+- `auto-skill-enhancer`: `shared-resolver-consumer`
+- `maintain-living-goal`: `shared-resolution-owner`
 - `define-codex-goal-artifacts`: `typed-contract-alternative`
 
 Relationships preserve overlap for review. They do not authorize mutation of the named owner.
@@ -36,6 +36,6 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 
 ## Git and activation boundary
 
-Include the complete candidate root in the single creation-batch commit with every other candidate produced by this invocation; do not commit variants separately.
+Use the interactive review owner's complete candidate-root commit contract for authorized corrections. The automatic creator's invocation-wide rule applies only to automatic creation.
 
 Do not promote, enable, synchronize, register, or publish this pending package without separate explicit user authority.

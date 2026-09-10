@@ -1,50 +1,30 @@
 ---
 name: resolve-managed-goal-artifacts
-description: "Resolve an exact harness-managed goal artifact from a structured goal objective without coupling harness state to skill package topology. Use when a completion hook or resumed workflow must resolve the exact file designated by a structured goal objective or typed goal artifact."
+description: "Specify typed goal-artifact selection for a chosen Codex producer profile. Use when integrating durable or response-local artifact metadata with the shared resolver; preserve exact user paths, role authority, and the selected producer lifetime."
 ---
 
 # Resolve Managed Goal Artifacts
 
-Apply the `variant-003-typed-goal-artifact` design without silently merging it with sibling approaches.
+Consume exactly one selected typed producer profile and verify its current goal/event binding before selecting a file. A role declaration, an old response, or transport success alone does not establish current authority.
 
-## Preserve authority
+This nested package is a corrected inert specification retained for adoption. Its producer profiles are proposed contracts, not fields guaranteed by the running Codex binary.
 
-- Treat this nested package as pending review until the user separately authorizes promotion and enablement.
-- Preserve run-specific evidence in the canonical repository scratchpad and keep reusable product resources in this package.
-- Do not register hooks, edit Codex source, change configuration, synchronize installations, stage unrelated work, or publish as an implied consequence of using this skill.
-- Render paths beneath the user home as `~/...` and invoke environment-selected tools instead of hard-coded interpreter paths.
+## Load the concrete contract
 
-## Apply this design
+- Read `references/approach.md` for this variant's responsibility and relationships.
+- Read `references/typed-goal-artifact-contract.md` and its selected producer reference before applying schema or selection rules.
+- Read `references/migration-and-resume.md` when compatibility, missing authority, or lifecycle behavior matters.
 
-Read a versioned managed_objective_artifacts list from the successful goal response, require exactly one supported file for the completion handoff, validate its containment and existence, and use objective prose only for human display.
+## Preserve selection and ownership
 
-Use this sequence:
+- Keep durable goal associations distinct from event-local observations. Use the selected producer's exact schema, presence, and lifecycle contract; do not infer a model from a version number or combine both fields.
+- Validate every record and its role/cardinality before selecting the sole current artifact. Invalid or unsupported metadata must not silently become objective-prose inference.
+- Allow any exact user-designated pathname, including external and relative paths under an established base. Managed attachment shape is not a universal goal-file requirement.
+- Keep typed selection and filesystem validation in `$maintain-living-goal`; preserve the existing hook consumers and their output/silence contracts.
 
-1. Identify the authority source and exact input facts before making a policy decision.
-2. Apply only the contract documented in `references/approach.md` and its directly named resources.
-3. Emit the checked condition, expected value, received value, and stable outcome whenever the design can fail.
-4. Keep machine-readable output valid and separate from explanatory prose when a harness schema controls stdout.
-5. Stop before any activation, synchronization, external mutation, or scope expansion not explicitly authorized by the user.
+## Authority and evidence
 
-## Validate proportionately
-
-- Prove zero, one, and multiple artifact records.
-- Prove legacy objective-only response.
-- Prove resume serialization.
-- Prove pasted text and future non-text artifact kinds.
-
-Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.
-
-## Guard known risks
-
-- Guard against Trusting arbitrary objective paths outside the managed attachments root.
-- Guard against Treating custom CODEX_HOME as equivalent to a package location.
-- Guard against Schema version skew between Codex and hook packages.
-- Guard against Overfitting the current pasted-text wrapper wording.
-- Guard against Retaining the installation-relative approach even though it is known to be fragile.
-
-## Load resources
-
-- Read `references/approach.md` before applying this variant's design.
-- Read `references/migration-and-resume.md` when its named contract is load-bearing.
-- Read `references/typed-goal-artifact-contract.md` when its named contract is load-bearing.
+- Apply only the user-authorized task. Specification maintenance does not authorize source implementation, goal changes, hook registration, configuration, promotion, installation, synchronization, or publication.
+- Use existing responses or authorized records for condition, expected/received, stage, code, and selection-source diagnostics. Classification does not authorize execution or a new persisted audit.
+- Normalize home paths as `~/...` at actual component boundaries while preserving original input bytes and file identity.
+- Validate the changed package and evaluate relevant positive and negative contract cases locally. Structural validation and written scenarios do not establish a working producer, live hook event, cross-platform execution, or migration. Report assertions and process exit status separately.

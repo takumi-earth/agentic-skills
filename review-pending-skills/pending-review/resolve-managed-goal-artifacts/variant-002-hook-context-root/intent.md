@@ -2,19 +2,21 @@
 
 ## Concrete use
 
-Resolve an exact harness-managed goal artifact from a structured goal objective without coupling harness state to skill package topology.
+Consume the paired `codex-runtime-context/v1` specification under explicit profile selection. Use a valid bound event root for managed references and preserve the independent exact-user-path operation.
 
 ## Preserved approach
 
-Add a typed codex_home or attachments_root field to PostToolUse and prefer that event value over process environment.
+Consume the paired versioned `runtime_context.codex_home` profile and prefer its valid bound root over process environment.
 
-Consume a versioned hook-context root supplied by Codex, validate it as the managed harness root, retain CODEX_HOME and ~/.codex only as backwards-compatible fallbacks, and report which authority source selected the root.
+Use the explicit event/legacy profile contract, trusted namespace/home binding, and absent/invalid distinction. Keep exact user-designated paths independent from managed-root resolution.
 
 ## Difference from sibling variants
 
 Keep this approach distinct from `variant-001-environment-root`, `variant-003-typed-goal-artifact`, `variant-004-objective-path-validation`, `variant-005-installation-relative-root`. Do not converge implementation authority, activation effects, or failure semantics merely because common text could be shared.
 
 ## Causal evidence
+
+The following records describe the original failure. Current owner locations and protocol limits are attributed separately in the corrected references.
 
 The production hook derived codex_home from Path(__file__).resolve().parents[3]. Canonical execution through a synchronized symlink made that value ~, so the resolver searched ~/attachments and found zero candidates even though the objective contained one exact existing file under ~/.codex/attachments.
 
@@ -31,13 +33,13 @@ The production hook derived codex_home from Path(__file__).resolve().parents[3].
 
 ## Uncertainty and risk
 
-- Trusting arbitrary objective paths outside the managed attachments root.
+- Confusing an unselected path in prose with a current explicit user designation.
 - Treating custom CODEX_HOME as equivalent to a package location.
 - Schema version skew between Codex and hook packages.
 - Overfitting the current pasted-text wrapper wording.
 - Retaining the installation-relative approach even though it is known to be fragile.
 
-The candidate remains pending because structural validity does not decide whether this design should be promoted or merged into an existing owner.
+The approved specification corrections are complete. Retention now concerns adoption of this inert alternative, not deferred repairs. Implementation and enablement require a selected producer and separate authority.
 
 ## Questions for review
 

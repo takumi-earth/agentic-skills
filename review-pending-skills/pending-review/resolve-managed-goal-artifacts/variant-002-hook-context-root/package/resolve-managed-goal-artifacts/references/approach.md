@@ -8,11 +8,11 @@
 
 ## Required behavior
 
-Add a typed codex_home or attachments_root field to PostToolUse and prefer that event value over process environment.
+Consume the paired `codex-runtime-context/v1` producer profile; prefer its valid bound root over process environment.
 
-Consume a versioned hook-context root supplied by Codex, validate it as the managed harness root, retain CODEX_HOME and ~/.codex only as backwards-compatible fallbacks, and report which authority source selected the root.
+Read `codex-hook-context-contract.md` for exact schema, trusted profile binding, path modes, and the shared resolver owner. Read `compatibility-fallback.md` for the full absent/invalid/conflict matrix. Only declared legacy absence permits environment/default fallback; exact user-designated paths remain independently supported.
 
-## Planned resources
+## Resources
 
 - `complete SKILL.md`
 - `agents/openai.yaml`
@@ -21,8 +21,8 @@ Consume a versioned hook-context root supplied by Codex, validate it as the mana
 
 ## Relationships
 
-- `auto-skill-enhancer`: `possible-enhancement-owner`
-- `maintain-living-goal`: `goal-file-consumer`
+- `auto-skill-enhancer`: `shared-resolver-consumer`
+- `maintain-living-goal`: `shared-resolution-owner`
 - `define-codex-goal-artifacts`: `typed-contract-alternative`
 
 Relationships preserve overlap for review. They do not authorize mutation of the named owner.
@@ -36,6 +36,6 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 
 ## Git and activation boundary
 
-Include the complete candidate root in the single creation-batch commit with every other candidate produced by this invocation; do not commit variants separately.
+Use the interactive review owner's complete candidate-root commit contract for authorized corrections. The automatic creator's invocation-wide rule applies only to automatic creation.
 
 Do not promote, enable, synchronize, register, or publish this pending package without separate explicit user authority.

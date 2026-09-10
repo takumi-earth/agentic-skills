@@ -14,12 +14,12 @@
   ],
   "relationships": [
     {
-      "kind": "possible-enhancement-owner",
+      "kind": "shared-resolver-consumer",
       "mutation_authority": "none",
       "target": "auto-skill-enhancer"
     },
     {
-      "kind": "goal-file-consumer",
+      "kind": "shared-resolution-owner",
       "mutation_authority": "none",
       "target": "maintain-living-goal"
     },
@@ -30,13 +30,12 @@
     }
   ],
   "review_notes": [
-    "Retain pending contract completion as a distinct typed managed_objective_artifacts consumer. Align its schema with the selected durable-goal or event-local producer under define-codex-goal-artifacts before implementation or adoption.",
-    "Define artifact roles, active-objective selection, cardinality, duplicates, unsupported records, absent fields, and invalid records. A typed role declaration must not substitute for verified attribution to the current goal.",
-    "Bind response artifacts to the exact goal and event. Define stale and replayed response handling separately from current authority, and specify lifecycle, legacy-goal, and resume behavior for the selected producer model.",
-    "Specify compatibility fallback explicitly. Invalid authoritative typed records must not silently become arbitrary objective-prose inference; preserve the selected runtime-root, containment, and file-identity checks.",
-    "Replace summary-only references with the concrete typed contract and migration/resume rules. Distinguish planned from executed evidence and use proportional recording without inventing a new persisted gate.",
-    "Reconcile the consumer with the shared resolver in maintain-living-goal and its auto-skill-enhancer caller. Preserve the user's ability to designate any exact goal-file pathname, including a path outside attachments with an established base when relative; managed attachment layout is not a universal goal-file requirement.",
-    "The pruned environment-root predecessor remains reconstructable in candidate-root Git history. Retention does not authorize a Codex protocol implementation, goal mutation, hook registration, installation, or activation."
+    "Approved contract-completion corrections are applied. Retain this corrected inert typed consumer for adoption; no Codex producer, goal mutation, or hook activation has been implemented.",
+    "Pair explicit durable and response-only profiles with the concrete producer contracts corrected in 516fe93. Keep the profile choice and metadata lifetime explicit.",
+    "Define exact metadata location, role/cardinality, duplicate and unsupported handling, current goal/event binding, and legacy absence versus invalid records.",
+    "Define resume/fork/replay and unavailable-file outcomes without restoring files, creating a ledger, or turning missing typed authority into arbitrary prose selection.",
+    "Preserve arbitrary exact user-designated paths and their bases; reconcile ownership with maintain-living-goal and its enhancer caller. Attribute inspected sources to agentic-skills c761c38 and codex-orig 3d2ee51ca2d5db578f328aa75e20aa22c0197c9a.",
+    "The pruned predecessor remains in candidate-root Git history. Contract cases are local specification evidence; no Codex build, live hook event, new persisted audit, or runtime deployment was performed."
   ],
   "schema_version": 1,
   "status": "pending",
