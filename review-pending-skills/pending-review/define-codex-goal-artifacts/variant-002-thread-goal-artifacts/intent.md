@@ -2,13 +2,13 @@
 
 ## Concrete use
 
-Define a typed Codex protocol contract for managed goal-objective artifacts so hooks do not recover machine state from display prose.
+Persist a versioned `managedObjectiveArtifacts` association with the exact goal and objective revision. Preserve it across status changes; explicitly replace or clear it when the objective changes.
 
 ## Preserved approach
 
 Persist managed objective artifacts on ThreadGoal state and protocol events.
 
-Add a versioned artifact list to internal goal state and protocol ThreadGoal, preserve it across update, pause, resume, and completion, and expose it in tool responses without changing human objective text.
+Persist the exact goal/revision association across status-only changes and explicitly replace or clear it when objective text changes. Expose it through the selected protocol without rewriting human objective text.
 
 ## Difference from sibling variants
 
@@ -16,7 +16,7 @@ Keep this approach distinct from `variant-001-post-tool-use-codex-home`, `varian
 
 ## Causal evidence
 
-Codex correctly preserved the objective prose, so the missing typed field did not cause this failure. A typed artifact contract would nevertheless remove prose parsing and root inference from future hook designs.
+The recorded failure preserved objective prose; the missing typed field was not its demonstrated cause. An attributable durable association can remove future consumers' prose-based selection. The trusted designation input and lossless lifecycle migration must actually be implemented before that behavior can be claimed.
 
 - `user-designated authoritative source` at `~/rust-forks/codex-orig`: This checkout is the source for the running Codex binary.
 - `direct source inspection` at `codex-source-findings.json`: ThreadGoal carries objective text but no managed artifact field; PostToolUse carries tool input and response but no typed codex_home.
@@ -37,7 +37,7 @@ Codex correctly preserved the objective prose, so the missing typed field did no
 - Ambiguous ownership between goal state and hook event context.
 - Expanding scope beyond the confirmed hook bug.
 
-The candidate remains pending because structural validity does not decide whether this design should be promoted or merged into an existing owner.
+The approved specification corrections are complete. The candidate remains pending adoption as a distinct inert design; runtime implementation and enablement are separate effects. Concrete types, outcomes, compatibility rules, and attributed source seams are in the packaged references.
 
 ## Questions for review
 

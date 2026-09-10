@@ -2,7 +2,7 @@
 
 ## Concrete use
 
-Define a typed Codex protocol contract for managed goal-objective artifacts so hooks do not recover machine state from display prose.
+Attach `managedObjectiveArtifacts` to the selected goal-tool response profile from the same committed goal snapshot and an attributable invocation input. Keep the metadata event-local.
 
 ## Preserved approach
 
@@ -16,7 +16,7 @@ Keep this approach distinct from `variant-001-post-tool-use-codex-home`, `varian
 
 ## Causal evidence
 
-Codex correctly preserved the objective prose, so the missing typed field did not cause this failure. A typed artifact contract would nevertheless remove prose parsing and root inference from future hook designs.
+The recorded failure preserved objective prose; the missing typed field was not its demonstrated cause. A response sidecar can carry a typed observation. It removes downstream prose parsing only if its producer receives an independent authoritative designation; event-local metadata alone cannot recover an association after resume.
 
 - `user-designated authoritative source` at `~/rust-forks/codex-orig`: This checkout is the source for the running Codex binary.
 - `direct source inspection` at `codex-source-findings.json`: ThreadGoal carries objective text but no managed artifact field; PostToolUse carries tool input and response but no typed codex_home.
@@ -36,7 +36,7 @@ Codex correctly preserved the objective prose, so the missing typed field did no
 - Ambiguous ownership between goal state and hook event context.
 - Expanding scope beyond the confirmed hook bug.
 
-The candidate remains pending because structural validity does not decide whether this design should be promoted or merged into an existing owner.
+The approved specification corrections are complete. The candidate remains pending adoption as a distinct inert design; runtime implementation and enablement are separate effects. Concrete types, outcomes, compatibility rules, and attributed source seams are in the packaged references.
 
 ## Questions for review
 

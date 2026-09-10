@@ -1,4 +1,4 @@
 interface:
   display_name: "Define Codex Goal Artifacts"
   short_description: "Define typed Codex goal artifact contracts"
-  default_prompt: "Use $define-codex-goal-artifacts to apply the variant-002-thread-goal-artifacts pending design with explicit evidence and authority boundaries."
+  default_prompt: "Use $define-codex-goal-artifacts to specify the durable goal-artifact alternative, including selection authority and lifecycle migration."

@@ -23,13 +23,12 @@
     }
   ],
   "review_notes": [
-    "User disposition: retain pending correction as a distinct runtime-context alternative. The instruction package remains uncorrected and pending; this disposition records requirements without selecting or implementing a Codex protocol change.",
-    "Separate runtime-root authority from artifact identity. Supplying `codex_home` or `attachments_root` can remove root inference but does not identify the goal's artifact or eliminate objective-prose parsing. Narrow the broader claim accordingly.",
-    "Define the exact field or relationship between the proposed fields, its type and optionality, its trusted producer, and precedence with inherited `CODEX_HOME`. Specify absent, invalid, and conflicting values, including a custom runtime root.",
-    "Define whose home `~/...` denotes across processes or machines and distinguish a portable artifact identity from a path presentation. Do not infer runtime authority from package installation topology.",
-    "Establish compatibility for the supported event consumers, including any that reject unknown fields. Define the versioning and serialization contract, and keep resume and fork parity checks attributable to their supported invocation contexts.",
-    "Replace the repeated approach summaries in the schema and source-map references with concrete definitions and revision-attributed producer and consumer locations before implementation. Treat the recorded checkout and running-binary claims as historical provenance until their source evidence is verified for the intended task.",
-    "Keep planned validation distinct from executed evidence. Render diagnostics in the existing authorized response or record; classification and review do not require another persisted artifact or authorize source mutation, promotion, or activation."
+    "Approved contract corrections are applied. Retain this completed inert specification as an adoption alternative; no Codex protocol implementation has been selected or enabled.",
+    "Define one strict runtime_context.codex_home contract with typed version, namespace, home, pathname grammar, and a derived attachment root. Keep runtime location separate from artifact identity.",
+    "Specify trusted local launch binding, event-over-environment precedence, absent/invalid/unsupported outcomes, and strict-consumer profile compatibility, including mixed-handler serialization.",
+    "Define custom-root, home-path, copied-event, resume, and fork boundaries without inferring authority from package topology.",
+    "Replace both summary-only resources with concrete fields and revision-attributed source/consumer maps. Current source was read at codex-orig 3d2ee51ca2d5db578f328aa75e20aa22c0197c9a and agentic-skills c761c38; running-binary provenance was not re-established.",
+    "Contract cases are specification evidence only. No Codex build, live hook event, goal mutation, or new persisted audit was run to complete this inert design."
   ],
   "schema_version": 1,
   "status": "pending",

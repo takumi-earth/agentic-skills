@@ -8,11 +8,11 @@
 
 ## Required behavior
 
-Add codex_home or attachments_root to the versioned PostToolUse event context.
+Supply one versioned `runtime_context.codex_home` through a trusted `PostToolUse` input profile. Derive `attachments` from that root; do not create competing root fields.
 
-Extend hook schema construction at the runtime boundary, serialize the configured root home-relatively where appropriate, retain backwards compatibility for handlers that ignore the field, and document trust and platform semantics.
+Read `post-tool-use-schema.md` for exact fields, namespace/home binding, profile negotiation, and failure behavior. This removes package-topology root inference only; exact artifact identity and user authority remain separate. Read `source-change-map.md` when planning integration against the attributed source revision.
 
-## Planned resources
+## Resources
 
 - `complete SKILL.md`
 - `agents/openai.yaml`
@@ -35,6 +35,6 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 
 ## Git and activation boundary
 
-Include the complete candidate root in the single creation-batch commit; do not edit ~/rust-forks/codex-orig during pending creation.
+Use the interactive review owner's complete candidate-root commit contract for an authorized correction. The automatic creator's invocation-wide commit rule applies only to automatic creation. This specification does not authorize editing `~/rust-forks/codex-orig`.
 
 Do not promote, enable, synchronize, register, or publish this pending package without separate explicit user authority.

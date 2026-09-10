@@ -25,13 +25,12 @@
     }
   ],
   "review_notes": [
-    "User disposition: retain pending contract completion as a distinct event-local alternative. Keep its metadata lifetime separate from durable `ThreadGoal` state. The instruction package remains incomplete and pending; no Codex protocol implementation is selected or authorized.",
-    "Name the authoritative input from which response artifact metadata is derived. Parsing objective prose at response construction moves that parsing into the producer rather than eliminating it; narrow any stronger claim unless the producer has an independent authoritative input.",
-    "Bind the metadata to the response, its goal, and its artifact references. Preserve the distinction between an event-local observation and current goal authority so replayed or stale responses cannot select another current goal's artifact.",
-    "Define consumer behavior after resume without an earlier response and when metadata is unavailable. Event-local metadata alone does not supply a durable artifact association.",
-    "Specify the response field types, optionality, versioning, and `PostToolUse` pass-through contract. Keeping `ThreadGoal` unchanged does not by itself establish compatibility for `GoalToolResponse` or event consumers.",
-    "Replace the repeated approach summaries in the schema and source-map references with concrete definitions and revision-attributed producer and consumer locations before implementation. Treat the recorded checkout and running-binary claims as historical provenance until their source evidence is verified for the intended task.",
-    "Keep planned validation distinct from executed evidence. Render diagnostics in the existing authorized response or record; metadata and review do not require another persisted artifact or authorize source mutation, promotion, or activation."
+    "Approved contract-completion corrections are applied. Retain this completed inert event-local specification for adoption; no producer or Codex protocol change has been implemented or enabled.",
+    "Define the required trusted invocation input and explicitly return unavailable when it is absent. Preserve the distinction between independent designation and relocated prose parsing.",
+    "Bind metadata to the same returned goal snapshot, objective hash, thread, turn, and tool call; separate live-event attribution, replay evidence, and current-goal authority.",
+    "Specify resume without metadata, null/absent/invalid fields, arbitrary designated paths, strict response compatibility, and unchanged PostToolUse pass-through.",
+    "Replace schema and source-map summaries with concrete definitions attributed to codex-orig 3d2ee51ca2d5db578f328aa75e20aa22c0197c9a and agentic-skills c761c38; source observations do not establish a running deployment.",
+    "Contract cases are specification evidence only. No Codex build, live hook event, goal mutation, or new persisted audit was run to complete this inert design."
   ],
   "schema_version": 1,
   "status": "pending",

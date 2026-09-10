@@ -1,49 +1,29 @@
 ---
 name: define-codex-goal-artifacts
-description: "Define a typed Codex protocol contract for managed goal-objective artifacts so hooks do not recover machine state from display prose. Use when planning or implementing Codex goal/protocol changes involving pasted objective files, goal persistence, or PostToolUse consumers."
+description: "Specify event-local artifact metadata for Codex goal-tool responses. Use for an explicitly scoped response/protocol design or implementation; this alternative requires attributable invocation input and does not provide durable artifact associations after resume."
 ---
 
 # Define Codex Goal Artifacts
 
-Apply the `variant-003-goal-response-artifacts` design without silently merging it with sibling approaches.
+Attach `managedObjectiveArtifacts` to the selected goal-tool response profile from the same committed goal snapshot and an attributable invocation input. Keep the metadata event-local.
 
-## Preserve authority
+This nested package is a corrected inert specification retained for adoption review. Apply its design only within the user's authorized task; do not silently merge sibling alternatives.
 
-- Treat this nested package as pending review until the user separately authorizes promotion and enablement.
-- Preserve run-specific evidence in the canonical repository scratchpad and keep reusable product resources in this package.
-- Do not register hooks, edit Codex source, change configuration, synchronize installations, stage unrelated work, or publish as an implied consequence of using this skill.
-- Render paths beneath the user home as `~/...` and invoke environment-selected tools instead of hard-coded interpreter paths.
+## Load the concrete contract
 
-## Apply this design
+- Read `references/approach.md` for this variant's responsibility and relationships.
+- Read `references/goal-tool-response-schema.md` for exact fields, producer input, invocation/current-goal binding, compatibility, and missing metadata behavior.
+- Read `references/source-change-map.md` when the revision-attributed response producer and shared consumer seams affect the task.
 
-Derive and attach managed artifact metadata at goal-tool response construction, pass it unchanged through PostToolUse, and document that it is event-local rather than durable goal state.
+## Preserve the distinctions
 
-Use this sequence:
+- An authoritative user-input/attachment designation must reach the producer. Moving objective-prose parsing upstream does not eliminate parsing or create that authority.
+- Bind artifacts to the exact response, goal, objective, and live invocation. A replay or timestamp does not establish current authority or authorize another effect.
+- Report missing metadata after resume as unavailable. Do not add a hidden durable cache or select a historical response to change this alternative's lifetime.
 
-1. Identify the authority source and exact input facts before making a policy decision.
-2. Apply only the contract documented in `references/approach.md` and its directly named resources.
-3. Emit the checked condition, expected value, received value, and stable outcome whenever the design can fail.
-4. Keep machine-readable output valid and separate from explanatory prose when a harness schema controls stdout.
-5. Stop before any activation, synchronization, external mutation, or scope expansion not explicitly authorized by the user.
+## Authority and evidence
 
-## Validate proportionately
-
-- Prove create and update tool response.
-- Prove PostToolUse pass-through.
-- Prove resume without prior response.
-- Prove compatibility with clients deserializing ThreadGoal.
-
-Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.
-
-## Guard known risks
-
-- Guard against Protocol migration and version skew.
-- Guard against Persisting host-specific paths across machines.
-- Guard against Ambiguous ownership between goal state and hook event context.
-- Guard against Expanding scope beyond the confirmed hook bug.
-
-## Load resources
-
-- Read `references/approach.md` before applying this variant's design.
-- Read `references/goal-tool-response-schema.md` when its named contract is load-bearing.
-- Read `references/source-change-map.md` when its named contract is load-bearing.
+- Specification maintenance does not authorize editing Codex source, migrating state, registering hooks, changing configuration, promotion, installation, synchronization, or publication.
+- Use the existing response or authorized record for diagnostics. Preserve condition, expected/received observations, stage, and code; classification does not require a new persisted audit.
+- Present paths beneath the user home as `~/...` at actual path boundaries and preserve original evidence bytes.
+- Validate the changed package and evaluate the contract's applicable positive and negative cases locally. Runtime serialization, lifecycle, and compatibility claims require the selected implementation's authorized tests; planned cases and structural validation do not establish execution. Report assertions and process exit status separately.

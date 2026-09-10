@@ -1,49 +1,29 @@
 ---
 name: define-codex-goal-artifacts
-description: "Define a typed Codex protocol contract for managed goal-objective artifacts so hooks do not recover machine state from display prose. Use when planning or implementing Codex goal/protocol changes involving pasted objective files, goal persistence, or PostToolUse consumers."
+description: "Specify a trusted runtime-root extension for Codex PostToolUse consumers. Use for an explicitly scoped runtime-context protocol design or implementation; this alternative does not identify a goal artifact or supply durable goal associations."
 ---
 
 # Define Codex Goal Artifacts
 
-Apply the `variant-001-post-tool-use-codex-home` design without silently merging it with sibling approaches.
+Supply a versioned `runtime_context.codex_home` from the session runtime. This resolves runtime location only; artifact identity and user designation remain separate.
 
-## Preserve authority
+This nested package is a corrected inert specification retained for adoption review. Apply its design only within the user's authorized task; do not silently merge sibling alternatives.
 
-- Treat this nested package as pending review until the user separately authorizes promotion and enablement.
-- Preserve run-specific evidence in the canonical repository scratchpad and keep reusable product resources in this package.
-- Do not register hooks, edit Codex source, change configuration, synchronize installations, stage unrelated work, or publish as an implied consequence of using this skill.
-- Render paths beneath the user home as `~/...` and invoke environment-selected tools instead of hard-coded interpreter paths.
+## Load the concrete contract
 
-## Apply this design
+- Read `references/approach.md` for this variant's responsibility and relationships.
+- Read `references/post-tool-use-schema.md` for field types, trusted namespace/home binding, event/environment precedence, and input-profile compatibility.
+- Read `references/source-change-map.md` when the inspected producer and consumer integration seams affect the task.
 
-Extend hook schema construction at the runtime boundary, serialize the configured root home-relatively where appropriate, retain backwards compatibility for handlers that ignore the field, and document trust and platform semantics.
+## Preserve the distinctions
 
-Use this sequence:
+- Treat absent legacy context differently from a missing negotiated field, present `null`, invalid data, and unsupported versions. Invalid authority never triggers a fallback.
+- Preserve custom roots and component-boundary home normalization. Package location is not runtime authority; copied events cannot redefine the consumer's home.
+- Select compatible handler profiles before emitting new fields. Recompute context for the runtime performing a supported resume or fork.
 
-1. Identify the authority source and exact input facts before making a policy decision.
-2. Apply only the contract documented in `references/approach.md` and its directly named resources.
-3. Emit the checked condition, expected value, received value, and stable outcome whenever the design can fail.
-4. Keep machine-readable output valid and separate from explanatory prose when a harness schema controls stdout.
-5. Stop before any activation, synchronization, external mutation, or scope expansion not explicitly authorized by the user.
+## Authority and evidence
 
-## Validate proportionately
-
-- Prove schema serialization fixture.
-- Prove old handler compatibility.
-- Prove custom CODEX_HOME.
-- Prove resume and fork event parity.
-
-Report assertions and process exit status separately. A nonzero command is diagnostic evidence, not a passing gate.
-
-## Guard known risks
-
-- Guard against Protocol migration and version skew.
-- Guard against Persisting host-specific paths across machines.
-- Guard against Ambiguous ownership between goal state and hook event context.
-- Guard against Expanding scope beyond the confirmed hook bug.
-
-## Load resources
-
-- Read `references/approach.md` before applying this variant's design.
-- Read `references/post-tool-use-schema.md` when its named contract is load-bearing.
-- Read `references/source-change-map.md` when its named contract is load-bearing.
+- Specification maintenance does not authorize editing Codex source, migrating state, registering hooks, changing configuration, promotion, installation, synchronization, or publication.
+- Use the existing response or authorized record for diagnostics. Preserve condition, expected/received observations, stage, and code; classification does not require a new persisted audit.
+- Present paths beneath the user home as `~/...` at actual path boundaries and preserve original evidence bytes.
+- Validate the changed package and evaluate the contract's applicable positive and negative cases locally. Runtime serialization, lifecycle, and compatibility claims require the selected implementation's authorized tests; planned cases and structural validation do not establish execution. Report assertions and process exit status separately.

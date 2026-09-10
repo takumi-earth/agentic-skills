@@ -8,11 +8,11 @@
 
 ## Required behavior
 
-Persist managed objective artifacts on ThreadGoal state and protocol events.
+Persist the versioned `managedObjectiveArtifacts` association on `ThreadGoal` and expose it through the selected native protocol.
 
-Add a versioned artifact list to internal goal state and protocol ThreadGoal, preserve it across update, pause, resume, and completion, and expose it in tool responses without changing human objective text.
+Read `thread-goal-artifact-schema.md` for authoritative selection, roles, exact locators, and field semantics. Read `persistence-migration.md` for atomic objective revision changes, status preservation, legacy rows, fork/resume behavior, and the attributed source map. Preserve human objective text and independently owned status authority.
 
-## Planned resources
+## Resources
 
 - `complete SKILL.md`
 - `agents/openai.yaml`
@@ -36,6 +36,6 @@ Relationships preserve overlap for review. They do not authorize mutation of the
 
 ## Git and activation boundary
 
-Include the complete candidate root in the single creation-batch commit; do not edit ~/rust-forks/codex-orig during pending creation.
+Use the interactive review owner's complete candidate-root commit contract for an authorized correction. Automatic creation retains its invocation-wide commit rule. This specification does not authorize editing `~/rust-forks/codex-orig`.
 
 Do not promote, enable, synchronize, register, or publish this pending package without separate explicit user authority.

@@ -2,13 +2,13 @@
 
 ## Concrete use
 
-Define a typed Codex protocol contract for managed goal-objective artifacts so hooks do not recover machine state from display prose.
+Supply a versioned `runtime_context.codex_home` from the session runtime. This resolves runtime location only; artifact identity and user designation remain separate.
 
 ## Preserved approach
 
-Add codex_home or attachments_root to the versioned PostToolUse event context.
+Supply one versioned `runtime_context.codex_home` through a trusted `PostToolUse` input profile.
 
-Extend hook schema construction at the runtime boundary, serialize the configured root home-relatively where appropriate, retain backwards compatibility for handlers that ignore the field, and document trust and platform semantics.
+Use the runtime-context specification's exact field contract, trusted launch binding, and explicit legacy/new consumer profiles. It supplies a root, not an artifact selection.
 
 ## Difference from sibling variants
 
@@ -16,7 +16,7 @@ Keep this approach distinct from `variant-002-thread-goal-artifacts`, `variant-0
 
 ## Causal evidence
 
-Codex correctly preserved the objective prose, so the missing typed field did not cause this failure. A typed artifact contract would nevertheless remove prose parsing and root inference from future hook designs.
+The recorded failure preserved objective prose; the missing typed field was not its demonstrated cause. A runtime root can remove root inference from package topology. It does not identify the objective artifact or eliminate selection from objective prose.
 
 - `user-designated authoritative source` at `~/rust-forks/codex-orig`: This checkout is the source for the running Codex binary.
 - `direct source inspection` at `codex-source-findings.json`: ThreadGoal carries objective text but no managed artifact field; PostToolUse carries tool input and response but no typed codex_home.
@@ -36,7 +36,7 @@ Codex correctly preserved the objective prose, so the missing typed field did no
 - Ambiguous ownership between goal state and hook event context.
 - Expanding scope beyond the confirmed hook bug.
 
-The candidate remains pending because structural validity does not decide whether this design should be promoted or merged into an existing owner.
+The approved specification corrections are complete. The candidate remains pending adoption as a distinct inert design; runtime implementation and enablement are separate effects. Concrete types, outcomes, compatibility rules, and attributed source seams are in the packaged references.
 
 ## Questions for review
 

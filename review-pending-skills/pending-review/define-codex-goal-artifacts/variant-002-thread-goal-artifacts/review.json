@@ -25,12 +25,12 @@
     }
   ],
   "review_notes": [
-    "User disposition: retain pending contract completion as a distinct durable goal-state alternative. It is the strongest starting point if a future task requires artifact identity across pause, resume, and completion, but the instruction package remains incomplete and pending; no Codex protocol implementation is selected or authorized.",
-    "Define concrete artifact fields, authoritative producers, roles, and selection rules. Distinguish the current objective artifact from historical inputs and outputs; an artifact list or declared role alone does not verify current authority.",
-    "Separate status-only updates from objective replacement. Preserve references for the same goal where appropriate, and define replacement or clearing semantics when the objective changes so an earlier artifact does not silently remain current.",
-    "Define legacy absence, multiple-artifact handling, fork and cross-machine identity, and deleted-file outcomes. A stored reference does not prove that its file exists or authorize recreating it.",
-    "Replace the repeated approach summaries in the schema and migration references with concrete field, persistence, and migration definitions plus revision-attributed producer and consumer locations before implementation. Treat the recorded checkout and running-binary claims as historical provenance until their source evidence is verified for the intended task.",
-    "Keep planned serialization and lifecycle checks distinct from executed evidence. Use existing authorized responses or records for diagnostics; review does not require another persisted artifact or authorize source mutation, promotion, or activation."
+    "Approved contract-completion corrections are applied. Retain this completed inert durable-state specification for adoption; no Codex protocol or database migration has been implemented or enabled.",
+    "Define strict artifact fields, designation provenance, exact goal and objective-revision binding, role/cardinality rules, and arbitrary explicitly designated goal paths.",
+    "Specify atomic Keep/Replace/Clear operations, legacy SQL absence, same-goal objective edits, status-only preservation, and lossless state/tool projections.",
+    "Define fork, resume, deleted-file, foreign-home, and store-mapping behavior while preserving references and independent file-effect authority.",
+    "Replace schema and migration summaries with concrete contracts and source maps attributed to codex-orig 3d2ee51ca2d5db578f328aa75e20aa22c0197c9a and agentic-skills c761c38. Source inspection does not establish the running binary.",
+    "Contract cases are specification evidence only. No Codex build, live hook event, goal mutation, or new persisted audit was run to complete this inert design."
   ],
   "schema_version": 1,
   "status": "pending",
