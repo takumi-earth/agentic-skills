@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import subprocess
 import sys
 import tempfile
@@ -72,6 +73,71 @@ class RolloutQueryTest(unittest.TestCase):
             code, _, output = self.run_query(path, "--output-pattern", "[")
         self.assertEqual(code, 2)
         self.assertEqual(output["status"], "invalid-filter")
+
+    def test_supported_envelopes_keep_payload_data_out_of_selectors(self) -> None:
+        records = [
+            {"type": "message", "role": "user", "content": {"status": "failed", "tool_name": "forged", "call_id": "fake", "ordinal": 99, "note": "unselected-path"}},
+            {"kind": "tool_call", "id": "fallback", "tool_name": "exec", "status": "ambiguous", "arguments": {"command": "argument-only", "path": "src/owned.rs"}},
+            {"type": "response_item", "payload": {"type": "custom_tool_call", "name": "exec", "call_id": "nested", "input": "command"}},
+            {"kind": "tool_result", "status": "completed", "exit_code": 9, "output": "actual-output"},
+            {"kind": "tool_result", "status": "completed", "output": "Done!"},
+        ]
+        cases = (
+            (("--tool", "forged"), []),
+            (("--call-id", "fallback"), ["ambiguous"]),
+            (("--call-id", "nested"), ["attempted"]),
+            (("--output-pattern", "argument-only"), []),
+            (("--output-pattern", "^actual-output$"), ["failed"]),
+            (("--path-contains", "unselected-path"), []),
+            (("--path-contains", "src/owned"), ["ambiguous"]),
+            (("--status", "failed"), ["failed"]),
+            (("--status", "unknown"), ["unknown"]),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "index.jsonl"
+            path.write_text("".join(json.dumps(record) + "\n" for record in records))
+            for arguments, statuses in cases:
+                with self.subTest(arguments=arguments):
+                    code, _, output = self.run_query(path, *arguments)
+                    self.assertEqual(code, 0)
+                    self.assertEqual([row["status"] for row in output["matched_rows"]], statuses)
+
+    def test_lf_anchors_total_budget_and_deep_input_are_explicit(self) -> None:
+        source = b'{}\r{}\n{"ordinal":3,"kind":"message"}\n' + b'{malformed\n' * 100
+        source += b'[' * 1200 + b'0' + b']' * 1200 + b'\n'
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "index.jsonl"
+            path.write_bytes(source)
+            code, _, output = self.run_query(path, "--ordinal-min", "3", "--ordinal-max", "3")
+            self.assertEqual(code, 0)
+            self.assertEqual(output["matched_rows"][0]["source_line"], 2)
+            self.assertEqual(output["source_sha256"], hashlib.sha256(source).hexdigest())
+            code, text, output = self.run_query(path, "--max-rows", "0", "--max-bytes", "128")
+            self.assertEqual(code, 0)
+            self.assertLessEqual(len(text.encode("utf-8")), 128)
+            self.assertGreater(output["omitted"][1], 0)
+            self.assertEqual(output["omitted"][0], 1)
+            code, _, output = self.run_query(path, "--ordinal-min", "5", "--ordinal-max", "2")
+            self.assertEqual(code, 2)
+            self.assertEqual(output["status"], "invalid-filter")
+
+    def test_presentation_keeps_original_evidence_hashes(self) -> None:
+        home = str(Path.home().resolve(strict=False))
+        record = {"kind": "message", "content": f"Read `{home}/evidence`."}
+        source = (json.dumps(record) + "\n").encode("utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "index.jsonl"
+            path.write_bytes(source)
+            code, text, output = self.run_query(path)
+        self.assertEqual(code, 0)
+        self.assertNotIn(home + "/", text)
+        self.assertEqual(output["source_sha256"], hashlib.sha256(source).hexdigest())
+        canonical = json.dumps(record, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        self.assertEqual(output["matched_rows"][0]["record_hash"], hashlib.sha256(canonical).hexdigest())
+        code, text, output = self.run_query(Path.home() / "missing-rollout-fixture-657b2eb0")
+        self.assertEqual(code, 2)
+        self.assertNotIn(home + "/", text)
+        self.assertEqual(output["status"], "error")
 
 
 if __name__ == "__main__":

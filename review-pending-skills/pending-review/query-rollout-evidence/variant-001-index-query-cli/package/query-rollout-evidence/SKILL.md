@@ -19,6 +19,6 @@ Narrow with typed filters for ordinal range, record kind, tool name, call ID, pa
 
 ## Bound and classify output
 
-Emit JSON containing matched rows, omitted-row and omitted-byte counts, filter metadata, source hash, malformed-line records, and unsupported-shape records. Truncate large payload fields with their original byte counts and hashes rather than pretending they were complete.
+Emit JSON containing matched rows, omitted-row and omitted-byte counts, filter metadata, source hash, malformed-line records, and unsupported-shape records. Truncate large payload fields with their original byte counts and hashes rather than pretending they were complete. Apply `--max-bytes` to the entire serialized response, including metadata, diagnostics, and the final newline; require at least `128` bytes and report any full-report omission as specified in the query schema.
 
-Do not infer that a tool call landed merely because it was attempted or that a heuristic candidate is authoritative. Keep attempted, completed, failed, ambiguous, and unsupported status distinct. Return nonzero for invalid filters or unreadable input, not for a valid zero-match query.
+Do not infer that a tool call landed merely because it was attempted or that a heuristic candidate is authoritative. Keep attempted, completed, failed, ambiguous, unknown, and unsupported status distinct. Transport completion alone leaves operation success unknown. Return nonzero for invalid filters or unreadable input, not for a valid zero-match query.

@@ -12,13 +12,15 @@ Render reviewable context while preserving exact provenance.
 Read [the context-packet contract](references/context-packet.md). Supply exact source line numbers or raw ordinals and a bounded number of neighboring records:
 
 ```bash
-python3 scripts/render_rollout_context.py <rollout.jsonl> --line 120 --before 2 --after 3
+python3 scripts/render_rollout_context.py <rollout.jsonl> --line 120 --before 2 --after 3 --max-bytes 20000
 ```
 
-The renderer emits chronological packets for recognized user, assistant, tool-call, and tool-result records. Each packet carries source line, raw ordinal when available, record kind, call correlation, interpreted status with confidence, source hash, and payload truncation metadata.
+The renderer emits chronological packets for recognized user, assistant, tool-call, and tool-result records. Each packet carries its LF-delimited source line, declared ordinal when available, record kind, call correlation, interpreted status with confidence, source hash, and payload truncation metadata. `--ordinal` selects the declared field; use `--line` for physical positions. Keep duplicate ordinal matches explicit.
 
 ## Preserve uncertainty
 
 Represent malformed, unsupported, uncorrelated, and contradictory records explicitly. Do not relabel an attempted command as a landed edit, infer success from inner text when the process failed, or omit the fact that a payload was truncated.
+
+Apply `--max-bytes` to the complete emitted response, including metadata, diagnostics, and the final newline. It requires at least `128` bytes; report dropped packets and full-report omissions using the context-packet contract. A copied call ID is distinct from a matched pair, and transport completion alone leaves operation success unknown.
 
 Use the packet for navigation and review. Return to the named raw record for exact quoting, byte-level adjudication, or source-of-truth decisions.

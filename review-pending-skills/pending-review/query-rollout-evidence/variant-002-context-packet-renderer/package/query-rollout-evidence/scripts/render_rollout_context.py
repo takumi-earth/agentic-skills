@@ -10,45 +10,19 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
-
-def find_key(value: Any, keys: tuple[str, ...]) -> Any:
-    if isinstance(value, dict):
-        for key in keys:
-            if key in value:
-                return value[key]
-        for child in value.values():
-            found = find_key(child, keys)
-            if found is not None:
-                return found
-    elif isinstance(value, list):
-        for child in value:
-            found = find_key(child, keys)
-            if found is not None:
-                return found
-    return None
-
+from rollout_records import (
+    CALL_KINDS, RESULT_KINDS, bounded_document, event_record, home_text,
+    kind, lf_lines, operation_status, record_metadata,
+)
 
 def normalize_status(record: dict[str, Any]) -> tuple[str, str, str]:
-    explicit = find_key(record, ("status", "state"))
-    exit_code = find_key(record, ("exit_code", "exit_status"))
-    kind = str(find_key(record, ("kind", "type")) or "").lower()
-    explicit_text = str(explicit).lower() if explicit is not None else ""
-    success = explicit_text in {"success", "passed", "completed", "complete", "ok"}
-    failure = explicit_text in {"failed", "failure", "error"}
-    if isinstance(exit_code, int) and not isinstance(exit_code, bool):
-        if (exit_code == 0 and failure) or (exit_code != 0 and success):
-            return "ambiguous", "explicit-status and exit-code conflict", "high"
-        return ("completed" if exit_code == 0 else "failed"), "exit-code", "high"
-    if success or failure:
-        return ("completed" if success else "failed"), "explicit-status", "medium"
-    if "tool_call" in kind or kind.endswith("call"):
-        return "attempted", "record-kind", "medium"
-    if "tool_result" in kind or "output" in kind:
-        return "completed", "record-kind", "low"
-    return "unknown", "no status evidence", "low"
+    status, evidence = operation_status(record)
+    confidence = "low" if status in {"unknown", "unsupported"} else "medium" if status == "attempted" else "high"
+    return status, evidence, confidence
 
 
 def payload_value(record: dict[str, Any]) -> Any:
+    record = event_record(record)
     for key in ("content", "output", "message", "payload", "arguments"):
         if key in record:
             return record[key]
@@ -56,7 +30,7 @@ def payload_value(record: dict[str, Any]) -> Any:
 
 
 def bound_payload(value: Any, limit: int) -> dict[str, Any]:
-    encoded = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    encoded = json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode("utf-8")
     emitted = encoded[:limit]
     while emitted:
         try:
@@ -67,9 +41,10 @@ def bound_payload(value: Any, limit: int) -> dict[str, Any]:
     else:
         text = ""
     return {
-        "text": text,
+        "text": home_text(text),
         "original_bytes": len(encoded),
-        "emitted_bytes": len(emitted),
+        "emitted_source_bytes": len(emitted),
+        "emitted_bytes": len(home_text(text).encode("utf-8")),
         "omitted_bytes": len(encoded) - len(emitted),
         "sha256": hashlib.sha256(encoded).hexdigest(),
         "truncated": len(emitted) < len(encoded),
@@ -77,16 +52,16 @@ def bound_payload(value: Any, limit: int) -> dict[str, Any]:
 
 
 def record_ordinal(record: Any) -> int | None:
-    value = find_key(record, ("raw_ordinal", "ordinal"))
-    return value if isinstance(value, int) and not isinstance(value, bool) else None
+    return record_metadata(record)["ordinal"] if isinstance(record, dict) else None
 
 
 def packet_for(line_number: int, raw: bytes, payload_limit: int) -> dict[str, Any]:
     try:
         record = json.loads(raw)
-    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+    except (ValueError, RecursionError) as error:
         return {
             "source_line": line_number,
+            "raw_record_sha256": hashlib.sha256(raw).hexdigest(),
             "raw_ordinal": None,
             "record_kind": "malformed",
             "role": None,
@@ -100,6 +75,7 @@ def packet_for(line_number: int, raw: bytes, payload_limit: int) -> dict[str, An
     if not isinstance(record, dict):
         return {
             "source_line": line_number,
+            "raw_record_sha256": hashlib.sha256(raw).hexdigest(),
             "raw_ordinal": record_ordinal(record),
             "record_kind": f"unsupported-{type(record).__name__}",
             "role": None,
@@ -111,17 +87,15 @@ def packet_for(line_number: int, raw: bytes, payload_limit: int) -> dict[str, An
             "payload": bound_payload(record, payload_limit),
         }
     status, evidence, confidence = normalize_status(record)
-    kind = find_key(record, ("kind", "type", "event_type"))
-    role = find_key(record, ("role",))
-    tool = find_key(record, ("tool_name", "tool"))
-    call_id = find_key(record, ("call_id",))
+    meta = record_metadata(record)
     return {
         "source_line": line_number,
+        "raw_record_sha256": hashlib.sha256(raw).hexdigest(),
         "raw_ordinal": record_ordinal(record),
-        "record_kind": str(kind) if kind is not None else "object",
-        "role": str(role) if role is not None else None,
-        "tool": str(tool) if tool is not None else None,
-        "call_id": str(call_id) if call_id is not None else None,
+        "record_kind": meta["kind"],
+        "role": meta["role"],
+        "tool": meta["tool"],
+        "call_id": meta["call_id"],
         "status": status,
         "status_evidence": evidence,
         "status_confidence": confidence,
@@ -147,7 +121,7 @@ def selected_lines(
     for line_number, raw in enumerate(raw_lines, start=1):
         try:
             record = json.loads(raw)
-        except (UnicodeDecodeError, json.JSONDecodeError):
+        except (ValueError, RecursionError):
             continue
         ordinal = record_ordinal(record)
         if ordinal is not None:
@@ -156,6 +130,8 @@ def selected_lines(
         matches = ordinal_map.get(ordinal, [])
         if not matches:
             errors.append(f"ordinal anchor was not found: {ordinal}")
+        elif len(matches) > 1:
+            errors.append(f"ordinal anchor {ordinal} matches multiple source lines: {matches}")
         anchors.update(matches)
     selected: set[int] = set()
     for anchor in anchors:
@@ -163,24 +139,66 @@ def selected_lines(
     return sorted(selected), errors
 
 
+def correlate(packets: list[dict[str, Any]], raw_lines: list[bytes], selected: list[int]) -> int:
+    """Pair unique supported call/result records, including partners outside the window."""
+    index: dict[str, dict[str, list[int]]] = {}
+    unsupported = 0
+    for line_number, raw in enumerate(raw_lines, start=1):
+        try:
+            record = json.loads(raw)
+            if not isinstance(record, dict):
+                unsupported += 1
+                continue
+            meta = record_metadata(record)
+        except (ValueError, RecursionError):
+            unsupported += 1
+            continue
+        if meta["call_id"] is not None and kind(record) in CALL_KINDS | RESULT_KINDS:
+            phase = "calls" if kind(record) in CALL_KINDS else "results"
+            index.setdefault(meta["call_id"], {"calls": [], "results": []})[phase].append(line_number)
+    for packet in packets:
+        packet["correlation"] = correlation_for(packet, index, set(selected))
+    return unsupported
+
+
+def correlation_for(packet: dict[str, Any], index: dict[str, dict[str, list[int]]], selected: set[int]) -> dict[str, Any]:
+    event_kind = packet["record_kind"]
+    call_id = packet["call_id"]
+    if event_kind not in CALL_KINDS | RESULT_KINDS:
+        return {"state": "known-id" if call_id else "not-applicable", "partner_lines": []}
+    if call_id is None:
+        return {"state": "missing-call-id", "partner_lines": []}
+    pair = index[call_id]
+    partners = pair["results" if event_kind in CALL_KINDS else "calls"]
+    if len(pair["calls"]) > 1 or len(pair["results"]) > 1:
+        state = "ambiguous"
+    elif not partners:
+        state = "unmatched"
+    else:
+        state = "matched" if partners[0] in selected else "partner-outside-window"
+    return {"state": state, "partner_lines": partners}
+
+
 def render(path: Path, args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     try:
-        source = path.read_bytes()
-    except OSError as error:
+        source = path.expanduser().read_bytes()
+    except (OSError, ValueError, RuntimeError) as error:
         return 2, {"status": "error", "errors": [str(error)]}
-    raw_lines = source.splitlines()
+    raw_lines = lf_lines(source)
     lines, errors = selected_lines(raw_lines, args.line, args.ordinal, args.before, args.after)
     if not lines:
         if not errors:
             errors.append("at least one --line or --ordinal anchor is required")
         return 1, {"status": "invalid-selection", "errors": errors, "packets": []}
     packets = [packet_for(line, raw_lines[line - 1], args.payload_bytes) for line in lines]
+    unsupported = correlate(packets, raw_lines, lines)
     return (1 if errors else 0), {
         "schema_version": 1,
         "status": "partial" if errors else "ok",
         "source": path.as_posix(),
         "source_sha256": hashlib.sha256(source).hexdigest(),
         "selection_errors": errors,
+        "correlation_unsupported_lines": unsupported,
         "packets": packets,
     }
 
@@ -193,11 +211,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--before", type=int, default=2)
     parser.add_argument("--after", type=int, default=2)
     parser.add_argument("--payload-bytes", type=int, default=4000)
+    parser.add_argument("--max-bytes", type=int, default=20000)
     args = parser.parse_args(argv)
-    if args.before < 0 or args.after < 0 or args.payload_bytes < 1:
-        parser.error("window bounds must be nonnegative and payload bytes positive")
-    code, result = render(args.rollout, args)
-    print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+    if args.before < 0 or args.after < 0 or args.payload_bytes < 1 or args.max_bytes < 128:
+        code, result = 2, {"status": "invalid-selection", "errors": ["windows must be nonnegative, payload bytes positive, and max-bytes >= 128"]}
+    else:
+        try:
+            code, result = render(args.rollout, args)
+        except (ValueError, TypeError, RecursionError, OverflowError):
+            code, result = 2, {"status": "invalid-input", "errors": ["unsupported record value or nesting"]}
+    try:
+        encoded = bounded_document(result, max(128, args.max_bytes), "packets")
+    except (ValueError, TypeError, RecursionError, OverflowError):
+        code = 2
+        encoded = bounded_document({"status": "invalid-input", "errors": ["unsupported presentation value or nesting"]}, max(128, args.max_bytes), "packets")
+    sys.stdout.buffer.write(encoded)
     return code
 
 

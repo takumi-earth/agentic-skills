@@ -11,17 +11,23 @@
     "Need to preserve exact raw ordinals while avoiding oversized raw-record output"
   ],
   "relationships": [
-    {"kind": "complements", "target": "query-rollout-evidence/variant-001-index-query-cli"},
-    {"kind": "overlap", "target": "filesystem-git-observability"}
+    {
+      "kind": "complements",
+      "target": "query-rollout-evidence/variant-001-index-query-cli"
+    },
+    {
+      "kind": "overlap",
+      "target": "filesystem-git-observability"
+    }
   ],
   "review_notes": [
-    "User disposition: retain pending correction as a distinct machine-readable context-packet alternative. Payload hashes and explicit truncation accounting add behavior beyond ordinary visible-context rendering; the executable package remains uncorrected and pending.",
-    "Before adoption, define adapters for supported record layouts and keep event metadata separate from payload data. Recognize Codex `response_item` envelopes containing `custom_tool_call` records, including their tool name and call ID. Do not promote metadata-like fields inside arbitrary user content into event identity.",
-    "Preserve explicit uncertainty such as `ambiguous`. Keep transport completion separate from operation success: `status: completed` can coexist with a nonzero `exit_code` without creating a success/failure contradiction. Reconcile status semantics with the corrected `audit-rollout-damage` owner.",
-    "Bound the complete serialized packet, including metadata and diagnostics, and report omitted content. A payload-preview limit alone is insufficient: the reviewed eight-byte preview invocation emitted 8,987 bytes because an 8,192-character tool name remained unbounded.",
-    "Use one documented line-addressing model for parsing, source locators, and subsequent inspection. Bare carriage returns currently produce anchors that disagree with an LF-delimited reader. Define whether `--ordinal` selects an embedded field or a raw record position and expose multiplicity when duplicate values select several records.",
-    "Implement or narrow the promised call correlation. Distinguish a known call ID, a matched call/result pair, an unmatched record, and a partner outside the selected window; copying an ID alone does not establish correlation. Reconcile this behavior with the existing rollout extraction helpers.",
-    "Return structured failures for deeply nested and malformed input instead of uncaught `RecursionError` with empty stdout. Normalize home paths in successful output and operational diagnostics to `~/...` while preserving hashes of original evidence bytes."
+    "User-approved corrections applied. Retain this distinct alternative for comparison; pending status now concerns adoption, not deferred repairs.",
+    "Explicit adapters recognize flat records and supported Codex envelopes. Metadata never comes from arbitrary message payloads; call records support the declared id fallback.",
+    "Explicit uncertainty remains visible. Transport completion alone leaves operation success unknown and can coexist with a nonzero exit. Conflicting operation semantics remain ambiguous.",
+    "The complete serialized response, including metadata, diagnostics, and newline, obeys the byte budget. Removed items and full-report omissions are explicitly counted.",
+    "LF-delimited source locators and declared outer ordinals are distinct. Deep or malformed input has structured results, and normalized presentation preserves original evidence hashes.",
+    "Duplicate ordinal selections report multiplicity and partial selection. Same-file call correlation distinguishes matched pairs, partners outside the window, unmatched records, duplicate identities, missing IDs, and non-tool known IDs.",
+    "Validation executed seven package tests covering envelopes, correlation, status, LF anchors, duplicate ordinals, malformed input, complete-response bounds, and normalized diagnostics."
   ],
   "schema_version": 1,
   "status": "pending",

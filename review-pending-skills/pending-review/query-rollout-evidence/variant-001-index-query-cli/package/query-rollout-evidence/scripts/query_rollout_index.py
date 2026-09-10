@@ -9,80 +9,53 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
+
+from rollout_records import (
+    RESULT_KINDS, bounded_document, event_record, home_text, kind, lf_lines,
+    object_value, operation_status, record_metadata, serialized,
+)
 
 
 def canonical(value: Any) -> bytes:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
-
-
-def nested_values(value: Any) -> Iterable[Any]:
-    if isinstance(value, dict):
-        for item in value.values():
-            yield from nested_values(item)
-    elif isinstance(value, list):
-        for item in value:
-            yield from nested_values(item)
-    else:
-        yield value
-
-
-def find_key(value: Any, keys: tuple[str, ...]) -> Any:
-    if isinstance(value, dict):
-        for key in keys:
-            if key in value:
-                return value[key]
-        for child in value.values():
-            result = find_key(child, keys)
-            if result is not None:
-                return result
-    elif isinstance(value, list):
-        for child in value:
-            result = find_key(child, keys)
-            if result is not None:
-                return result
-    return None
+    return serialized(value)[:-1]
 
 
 def normalize_status(record: dict[str, Any]) -> tuple[str, str]:
-    explicit = find_key(record, ("status", "state"))
-    exit_code = find_key(record, ("exit_code", "exit_status"))
-    kind = str(find_key(record, ("kind", "type")) or "").lower()
-    explicit_text = str(explicit).lower() if explicit is not None else ""
-    explicit_success = explicit_text in {"success", "passed", "completed", "complete", "ok"}
-    explicit_failure = explicit_text in {"failed", "failure", "error"}
-    if isinstance(exit_code, int) and not isinstance(exit_code, bool):
-        if (exit_code == 0 and explicit_failure) or (exit_code != 0 and explicit_success):
-            return "ambiguous", "explicit-status-conflicts-with-exit-code"
-        return ("completed" if exit_code == 0 else "failed"), "exit-code"
-    if explicit_success:
-        return "completed", "explicit-status"
-    if explicit_failure:
-        return "failed", "explicit-status"
-    if "tool_call" in kind or kind.endswith("call"):
-        return "attempted", "record-kind"
-    if "tool_result" in kind or "output" in kind:
-        return "completed", "record-kind"
-    return "unsupported", "no-status-evidence"
+    return operation_status(record)
 
 
 def metadata(record: dict[str, Any], source_line: int) -> dict[str, Any]:
-    ordinal = find_key(record, ("raw_ordinal", "ordinal"))
-    kind = find_key(record, ("kind", "type", "event_type"))
-    tool = find_key(record, ("tool_name", "tool", "name"))
-    call_id = find_key(record, ("call_id",))
-    classification = find_key(record, ("candidate_class", "classification"))
     status, status_evidence = normalize_status(record)
     return {
+        **record_metadata(record),
         "source_line": source_line,
-        "ordinal": ordinal if isinstance(ordinal, int) and not isinstance(ordinal, bool) else None,
-        "kind": str(kind) if kind is not None else None,
-        "tool": str(tool) if tool is not None else None,
-        "call_id": str(call_id) if call_id is not None else None,
-        "classification": str(classification) if classification is not None else None,
         "status": status,
         "status_evidence": status_evidence,
     }
+
+
+def _event_paths(event: dict[str, Any]) -> list[str]:
+    paths = []
+    for owner in (event, object_value(event.get("arguments"))):
+        for key in ("path", "file_path", "target_path", "source_path", "paths", "files"):
+            value = owner.get(key)
+            values = value if isinstance(value, list) else [value]
+            paths.extend(path for path in values if isinstance(path, str))
+    return paths
+
+
+def _output_matches(record: dict[str, Any], pattern: re.Pattern[str]) -> bool:
+    if kind(record) not in RESULT_KINDS:
+        return False
+    event = event_record(record)
+    for key in ("output", "stdout", "stderr", "result", "tool_response"):
+        if key in event:
+            output = event[key]
+            text = output if isinstance(output, str) else canonical(output).decode("utf-8")
+            if pattern.search(text):
+                return True
+    return False
 
 
 def matches(record: dict[str, Any], meta: dict[str, Any], args: argparse.Namespace, output_pattern: re.Pattern[str] | None) -> bool:
@@ -95,12 +68,10 @@ def matches(record: dict[str, Any], meta: dict[str, Any], args: argparse.Namespa
         expected = getattr(args, attribute)
         if expected is not None and meta[attribute] != expected:
             return False
-    scalar_text = "\n".join(str(value) for value in nested_values(record) if isinstance(value, (str, int, float, bool)))
-    if args.path_contains is not None and args.path_contains not in scalar_text:
-        return False
-    if output_pattern is not None and output_pattern.search(scalar_text) is None:
-        return False
-    return True
+    if args.path_contains is not None:
+        if not any(args.path_contains in path for path in _event_paths(event_record(record))):
+            return False
+    return output_pattern is None or _output_matches(record, output_pattern)
 
 
 def bounded_record(record: dict[str, Any], limit: int) -> tuple[Any, int]:
@@ -119,8 +90,9 @@ def bounded_record(record: dict[str, Any], limit: int) -> tuple[Any, int]:
     return {
         "truncated": True,
         "original_bytes": len(payload),
-        "emitted_preview": preview,
-        "emitted_bytes": len(preview_bytes),
+        "emitted_preview": home_text(preview),
+        "emitted_source_bytes": len(preview_bytes),
+        "emitted_bytes": len(home_text(preview).encode("utf-8")),
         "omitted_bytes": len(payload) - len(preview_bytes),
         "sha256": hashlib.sha256(payload).hexdigest(),
     }, len(payload) - len(preview_bytes)
@@ -128,8 +100,8 @@ def bounded_record(record: dict[str, Any], limit: int) -> tuple[Any, int]:
 
 def query(path: Path, args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     try:
-        source_bytes = path.read_bytes()
-    except OSError as error:
+        source_bytes = path.expanduser().read_bytes()
+    except (OSError, ValueError, RuntimeError) as error:
         return 2, {"status": "error", "errors": [str(error)]}
     try:
         output_pattern = re.compile(args.output_pattern) if args.output_pattern is not None else None
@@ -140,28 +112,29 @@ def query(path: Path, args: argparse.Namespace) -> tuple[int, dict[str, Any]]:
     unsupported: list[dict[str, Any]] = []
     omitted_rows = 0
     omitted_bytes = 0
-    emitted_row_bytes = 0
-    for line_number, raw_line in enumerate(source_bytes.splitlines(), start=1):
+    for line_number, raw_line in enumerate(lf_lines(source_bytes), start=1):
         try:
             record = json.loads(raw_line)
-        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (ValueError, RecursionError) as error:
             malformed.append({"source_line": line_number, "error": str(error)})
             continue
         if not isinstance(record, dict):
             unsupported.append({"source_line": line_number, "shape": type(record).__name__})
             continue
-        meta = metadata(record, line_number)
-        if not matches(record, meta, args, output_pattern):
+        try:
+            meta = metadata(record, line_number)
+            if not matches(record, meta, args, output_pattern):
+                continue
+            rendered, row_omitted = bounded_record(record, args.record_bytes)
+            row = {**meta, "record_hash": hashlib.sha256(canonical(record)).hexdigest(), "raw_record_sha256": hashlib.sha256(raw_line).hexdigest(), "record": rendered}
+        except (ValueError, TypeError, RecursionError, OverflowError):
+            unsupported.append({"source_line": line_number, "shape": "unsupported-record", "error": "unsupported metadata, value, or nesting"})
             continue
-        rendered, row_omitted = bounded_record(record, args.record_bytes)
-        row = {**meta, "record_hash": hashlib.sha256(canonical(record)).hexdigest(), "record": rendered}
-        row_bytes = len(canonical(row))
-        if len(matched_rows) >= args.max_rows or emitted_row_bytes + row_bytes > args.max_bytes:
+        if len(matched_rows) >= args.max_rows:
             omitted_rows += 1
             omitted_bytes += len(canonical(record))
             continue
         matched_rows.append(row)
-        emitted_row_bytes += row_bytes
         omitted_bytes += row_omitted
     result = {
         "schema_version": 1,
@@ -198,17 +171,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--tool")
     parser.add_argument("--call-id")
     parser.add_argument("--path-contains")
-    parser.add_argument("--status", choices=["attempted", "completed", "failed", "ambiguous", "unsupported"])
+    parser.add_argument("--status", choices=["attempted", "completed", "failed", "ambiguous", "unknown", "unsupported"])
     parser.add_argument("--classification")
     parser.add_argument("--output-pattern")
     parser.add_argument("--max-rows", type=int, default=50)
     parser.add_argument("--max-bytes", type=int, default=20000)
     parser.add_argument("--record-bytes", type=int, default=4000)
     args = parser.parse_args(argv)
-    if args.max_rows < 0 or args.max_bytes < 1 or args.record_bytes < 1:
-        parser.error("bounds must be nonnegative rows and positive bytes")
-    code, result = query(args.index, args)
-    print(json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False))
+    if args.max_rows < 0 or args.max_bytes < 128 or args.record_bytes < 1:
+        code, result = 2, {"status": "invalid-filter", "errors": ["bounds require nonnegative rows, positive record bytes, and max-bytes >= 128"]}
+    elif args.ordinal_min is not None and args.ordinal_max is not None and args.ordinal_min > args.ordinal_max:
+        code, result = 2, {"status": "invalid-filter", "errors": ["ordinal-min must not exceed ordinal-max"]}
+    else:
+        code, result = query(args.index, args)
+    try:
+        encoded = bounded_document(result, max(128, args.max_bytes), "matched_rows")
+    except (ValueError, TypeError, RecursionError, OverflowError):
+        code = 2
+        encoded = bounded_document({"status": "invalid-input", "errors": ["unsupported value or nesting in selected records"]}, max(128, args.max_bytes), "matched_rows")
+    sys.stdout.buffer.write(encoded)
     return code
 
 
