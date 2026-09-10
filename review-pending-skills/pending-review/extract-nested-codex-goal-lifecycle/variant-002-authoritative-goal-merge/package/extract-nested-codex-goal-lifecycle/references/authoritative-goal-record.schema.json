@@ -8,11 +8,14 @@
         "properties": {
           "goal_id": {
             "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "pattern": "\\S"
           },
           "observed_at": {
             "minLength": 1,
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$"
           },
           "status": {
             "enum": [
@@ -20,12 +23,18 @@
               "blocked",
               "complete"
             ]
+          },
+          "thread_id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
           }
         },
         "required": [
           "goal_id",
           "status",
-          "observed_at"
+          "observed_at",
+          "thread_id"
         ],
         "type": "object"
       },
@@ -36,5 +45,6 @@
   "required": [
     "records"
   ],
-  "type": "object"
+  "type": "object",
+  "description": "Validate date-time formats with a format checker; the merger also compares actual instants and rejects ambiguous latest snapshots."
 }

@@ -28,14 +28,8 @@
     }
   ],
   "review_notes": [
-    "User disposition: retain pending correction as a distinct alternative combining normalized transcript observations and a caller-supplied authoritative status export. The merger executable remains uncorrected and pending.",
     "The user approved consolidating corrected nested-call extraction from `variant-001-schema-aware-nested-parser` into `skill-researcher` and pruning that draft. Candidate-root Git history preserves the predecessor. Transcript call sites, observed invocations, confirmed operation results, current authoritative state, and user acceptance remain separate facts; analysis does not authorize lifecycle calls or additional goal-store access.",
-    "Before adoption, preserve attributable goal and thread identity for transcript events and explicitly classify unresolved attribution. The reviewed merger accepted a `goal-b` event into a `goal-a` report, discarded its identity, and compared it with the selected authority.",
-    "Reconcile the merger's normalized event input with the official extractor's `nested_goal_call_site` records and explicit `output_confirmation` states. A recovered call site or matching outer call ID alone must not become `output_confirms: true`.",
-    "Compare parsed timestamp instants, reject malformed timestamps, and detect equivalent-time ambiguity across different timezone spellings. Lexical sorting selected `09:30+02:00` over the later `08:00Z`, equivalent instants escaped duplicate detection, and `tomorrow` was accepted as a timestamp.",
-    "Preserve historical transitions instead of labelling every earlier status difference as a contradiction with current authority. Keep event timing and provenance; require incompatible claims about the same relevant state before reporting a contradiction. Preserve explicit failure on missing selected authority without falling back to transcript status.",
-    "Reconcile executable validation with the packaged schema. Reject Boolean or negative line locators, empty call IDs, malformed status types, unknown authority fields, and invalid authority records through controlled failures. Array-valued statuses currently raise an unhandled `TypeError` with exit `1`.",
-    "Normalize operational diagnostic paths to `~/...` while preserving source evidence and attributable locators. Both reviewed CLIs exposed expanded home paths in missing-input diagnostics."
+    "Approved corrections applied: exact goal/thread attribution with unresolved and conflicting identities preserved, official nested output-confirmation states, parsed timestamp ordering and equivalent-time ambiguity, same-state disagreements distinct from history, schema-aligned authority validation, controlled malformed-input errors, and normalized diagnostics. The corrected merger remains pending adoption."
   ],
   "schema_version": 1,
   "status": "pending",
