@@ -21,9 +21,13 @@ For `no-op`, the renderer requires:
 - `desired_state.proven` to be `true`;
 - `write_count` to be `0`.
 
-For `blocked`, the guard must be unmatched and write count zero. For `write`, the guard must match and write count must be positive. For `failed`, provide a nonempty error. For `verified`, provide a passed verification description.
+For `blocked`, the guard must be unmatched and completed write count zero; this count alone says nothing about attempted writes. For `write`, the guard must match and completed write count must be positive. For `failed`, provide a nonempty error and the actual completed write count, including partial effects. Non-failed application outcomes require `error: null`.
 
-The renderer emits JSON containing the validated outcome and one deterministic human sentence. It does not perform the mutation or verification.
+For `verified`, supply `application_outcome` (`write`, `no-op`, `blocked`, or `failed`) and a passed verification description. Apply the underlying outcome's same invariants. Other outcomes omit `application_outcome`; their `verification` field independently records `not-run`, `passed`, or `failed`. Verification can confirm a blocked or failed result without converting that application result into success.
+
+All declared fields are required, with unknown fields rejected at each object level. Conditions and identifying descriptions must contain non-whitespace text. Expected and received strings preserve legitimate empty observations. Passed or failed verification requires a description; `not-run` may have an empty description. The schema and CLI enforce the same outcome conditions.
+
+The renderer emits JSON containing the normalized outcome, its deterministic human explanation, and `input_sha256` for the exact parsed input bytes. Every explanation includes the application result, actual write count, guard observations, desired-state description and proof claim, verification, and any error. A valid render exits `0` even when the reported operation failed; invalid input exits `2`. It performs no mutation, verification, or durable recording.
 
 ## Preserve exact scope
 

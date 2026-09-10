@@ -27,5 +27,12 @@
   ],
   "schema_version": 1,
   "status": "pending",
-  "variant_id": "variant-002-typed-outcome-envelope"
+  "variant_id": "variant-002-typed-outcome-envelope",
+  "review_notes": [
+    "All approved schema and renderer corrections applied; pending status concerns adoption only.",
+    "Align required and unknown fields, string conditions, numeric counts, malformed values, and outcome invariants between the schema and runtime.",
+    "Require an underlying application_outcome for verified envelopes. Always retain completed write counts, partial failures, guard observations, desired-state facts, and verification in human output.",
+    "Normalize presentation paths while hashing exact parsed input bytes. Rendering success is distinct from application success and authorizes no execution or recording.",
+    "Five direct tests include thirty-eight schema/runtime comparison cases plus partial-effect, verification, literal-observation, path, and failure-channel behavior."
+  ]
 }

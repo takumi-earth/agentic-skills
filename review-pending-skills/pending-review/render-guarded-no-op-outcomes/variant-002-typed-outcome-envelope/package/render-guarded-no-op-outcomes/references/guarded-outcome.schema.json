@@ -7,7 +7,8 @@
       "properties": {
         "description": {
           "minLength": 1,
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         },
         "proven": {
           "type": "boolean"
@@ -30,7 +31,8 @@
       "properties": {
         "condition": {
           "minLength": 1,
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         },
         "expected": {
           "type": "string"
@@ -52,7 +54,8 @@
     },
     "operation": {
       "minLength": 1,
-      "type": "string"
+      "type": "string",
+      "pattern": "\\S"
     },
     "outcome": {
       "enum": [
@@ -65,7 +68,8 @@
     },
     "target": {
       "minLength": 1,
-      "type": "string"
+      "type": "string",
+      "pattern": "\\S"
     },
     "verification": {
       "additionalProperties": false,
@@ -90,6 +94,14 @@
     "write_count": {
       "minimum": 0,
       "type": "integer"
+    },
+    "application_outcome": {
+      "enum": [
+        "write",
+        "no-op",
+        "blocked",
+        "failed"
+      ]
     }
   },
   "required": [
@@ -102,5 +114,222 @@
     "verification",
     "error"
   ],
-  "type": "object"
+  "type": "object",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "verified"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "application_outcome"
+        ],
+        "properties": {
+          "verification": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "application_outcome"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verification": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "passed",
+                  "failed"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "verification": {
+            "properties": {
+              "description": {
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "outcome": {
+                "const": "no-op"
+              }
+            }
+          },
+          {
+            "properties": {
+              "outcome": {
+                "const": "verified"
+              },
+              "application_outcome": {
+                "const": "no-op"
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "guard": {
+            "properties": {
+              "matched": {
+                "const": true
+              }
+            }
+          },
+          "desired_state": {
+            "properties": {
+              "proven": {
+                "const": true
+              }
+            }
+          },
+          "write_count": {
+            "const": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "outcome": {
+                "const": "blocked"
+              }
+            }
+          },
+          {
+            "properties": {
+              "outcome": {
+                "const": "verified"
+              },
+              "application_outcome": {
+                "const": "blocked"
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "guard": {
+            "properties": {
+              "matched": {
+                "const": false
+              }
+            }
+          },
+          "write_count": {
+            "const": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "outcome": {
+                "const": "write"
+              }
+            }
+          },
+          {
+            "properties": {
+              "outcome": {
+                "const": "verified"
+              },
+              "application_outcome": {
+                "const": "write"
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "guard": {
+            "properties": {
+              "matched": {
+                "const": true
+              }
+            }
+          },
+          "write_count": {
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "outcome": {
+                "const": "failed"
+              }
+            }
+          },
+          {
+            "properties": {
+              "outcome": {
+                "const": "verified"
+              },
+              "application_outcome": {
+                "const": "failed"
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "error": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
 }
