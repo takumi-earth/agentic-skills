@@ -24,5 +24,11 @@
   ],
   "schema_version": 1,
   "status": "pending",
-  "variant_id": "variant-002-typed-role-report"
+  "variant_id": "variant-002-typed-role-report",
+  "review_notes": [
+    "Approved path-matching and role-attribution corrections applied; pending status concerns adoption only.",
+    "Complete delimited path spellings replace substring matches. Relative mentions resolve from the active goal directory while CLI paths preserve the current-directory contract.",
+    "Caller-declared roles are separate from verified literal mentions. Original active bytes are hashed; secondary contents and authority are explicitly unverified.",
+    "Direct behavioral tests cover supported spellings, prefix and wrong-base rejection, role declarations, duplicate identity, and normalized failure channels."
+  ]
 }

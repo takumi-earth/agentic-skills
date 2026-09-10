@@ -5,7 +5,7 @@ description: "Produce a typed, read-only attribution report for one exact active
 
 # Pin Active Goal Artifact Role
 
-Use the bundled report to prove artifact roles before reasoning about status. Do not use it to discover sibling attachments or to grant any task effect.
+Use the bundled report to distinguish caller-declared roles from verified path mentions before reasoning about status. A matching path does not prove its semantic role, authority, existence, or evidence contents. Do not use it to discover sibling attachments or to grant any task effect.
 
 ## Build the report
 
@@ -15,7 +15,11 @@ Run:
 python3 scripts/render_goal_roles.py --active <exact-goal-path> --reference historical=<path> --reference evidence=<path>
 ```
 
-Pass only paths already designated by the harness, the user, or the active goal. The script reads the active file, requires every secondary path to appear in it, rejects duplicate or conflicting roles, and emits normalized JSON to stdout.
+Pass only paths already designated by the harness, the user, or the active goal. CLI-relative paths resolve from the current working directory. The script reads the active file once, requires each secondary path to have a complete delimited spelling in it, rejects duplicate or conflicting roles, and emits normalized JSON to stdout.
+
+Supported spellings are absolute, `~/...`, or relative to the active goal's directory, including `./...`, in whitespace, code, quotes, or ordinary Markdown link delimiters. Prefix matches such as `goal.md.backup` do not match `goal.md`. Encoded URLs, link-reference indirection, and paths with appended fragments are outside this literal interface. Match lines use LF addressing; the active hash covers the original bytes.
+
+`role_source: caller-declared` applies to every entry. `text_reference_verified` confirms only a matching path mention at `reference_lines`; `artifact_contents_verified: false` makes the secondary-read limit explicit. `status_authority` repeats the supplied designation rather than independently establishing it.
 
 ## Interpret the report narrowly
 

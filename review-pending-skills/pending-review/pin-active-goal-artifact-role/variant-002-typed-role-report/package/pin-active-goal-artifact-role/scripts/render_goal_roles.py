@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 from pathlib import Path
+import re
 import sys
 
 
@@ -38,33 +41,52 @@ def parse_reference(value: str) -> tuple[str, Path]:
     return role, Path(raw_path).expanduser().resolve()
 
 
+def reference_lines(text: str, path: Path, active: Path) -> list[int]:
+    """Match complete path spellings; resolve authored relative paths from the goal."""
+    relative = os.path.relpath(path, active.parent)
+    spellings = {str(path), display_path(path), relative, f"./{relative}"}
+    alternatives = "|".join(re.escape(value) for value in sorted(spellings))
+    pattern = re.compile(r"(?<![^\s`\"'<>(\[=:])(?:" + alternatives + r")(?=$|[\s`\"'<>),;\]])")
+    return [number for number, line in enumerate(text.split("\n"), 1) if pattern.search(line)]
+
+
+def display_error(error: Exception) -> str:
+    home = re.escape(str(Path.home().resolve()))
+    return re.sub(r"(?<![^\s`\"'<>(\[=:])" + home + r"(?=/|$)", "~", str(error))
+
+
 def build_report(active_raw: str, reference_values: list[str]) -> dict[str, object]:
     """Build one role report without discovering any sibling paths."""
 
     active = Path(active_raw).expanduser().resolve()
     if not active.is_file():
         raise RoleError(f"active goal is not a readable file: {display_path(active)}")
-    text = active.read_text(encoding="utf-8")
+    source = active.read_bytes()
+    text = source.decode("utf-8")
     seen = {active}
-    references: list[dict[str, str]] = []
+    references: list[dict[str, object]] = []
     for value in reference_values:
         role, path = parse_reference(value)
         if path in seen:
             raise RoleError(f"artifact has duplicate or conflicting roles: {display_path(path)}")
         seen.add(path)
         rendered = display_path(path)
-        expanded = str(path)
-        if rendered not in text and expanded not in text:
+        matches = reference_lines(text, path, active)
+        if not matches:
             raise RoleError(
                 "secondary artifact is not explicitly referenced by the active goal: "
                 f"role={role}; path={rendered}"
             )
-        references.append({"path": rendered, "role": role})
+        references.append({"path": rendered, "role": role, "role_source": "caller-declared",
+                           "text_reference_verified": True, "reference_lines": matches,
+                           "artifact_contents_verified": False})
     references.sort(key=lambda item: (item["role"], item["path"]))
     return {
-        "active": {"path": display_path(active), "role": "active"},
+        "active": {"path": display_path(active), "role": "active", "role_source": "caller-declared",
+                   "sha256": hashlib.sha256(source).hexdigest()},
         "references": references,
         "status_authority": display_path(active),
+        "status_authority_source": "caller-designation; not independently verified",
     }
 
 
@@ -77,8 +99,8 @@ def main() -> int:
     arguments = parser.parse_args()
     try:
         report = build_report(arguments.active, arguments.reference)
-    except (OSError, UnicodeError, RoleError) as error:
-        print(f"artifact-role report failed: {error}", file=sys.stderr)
+    except (OSError, ValueError, RuntimeError, RoleError) as error:
+        print(f"artifact-role report failed: {display_error(error)}", file=sys.stderr)
         return 2
     json.dump(report, sys.stdout, indent=2, sort_keys=True)
     sys.stdout.write("\n")
