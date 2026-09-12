@@ -42,6 +42,8 @@ For every behavior, identify:
 - adapters and operational consumers;
 - generated outputs and their source workflow;
 - public and compatibility boundaries;
+- each operation's promised execution, required finalization, specified internal recovery and stopping condition, and the consumer workflow decisions beyond that boundary;
+- resource custody and lifetime separately from disposal responsibility, with complete typed outcomes for supported full, partial, and failed paths;
 - positive and negative behavior owned by each layer.
 
 Do not choose an owner from the current file, caller, language, workspace glob, command, or failing diagnostic.
@@ -84,6 +86,8 @@ Ask only when all of these are true:
 4. The user has not already selected it.
 
 Present complete alternatives and consequences. Do not hide consequential subchoices behind a selected top-level option. Do not cite assistant-authored “Decision N” labels as user authorization.
+
+Separate an evidence-preservation repair from any proposed change to resource lifetime, disposal responsibility, or recovery policy. Explain real dependencies between those changes rather than presenting them as one binary choice. Apply already-settled operation contracts directly; a richer typed failure does not itself require a new responsibility transfer or an expanded recovery contract.
 
 If a proposal changes a protected causal edge that the user has not already authorized, state the current edge, proposed edge, affected owner, counterfactual, and evidence needed for the choice. Stop only dependent effects and ask once. If the user already authorized that exact change, plan it directly without another approval gate.
 

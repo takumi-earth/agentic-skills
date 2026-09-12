@@ -26,6 +26,7 @@ Do not turn raw research into policy, synthesis into verbatim evidence, a plan i
 
 - When the active harness supplies an exact living-goal path, that path is the sole mutable goal authority. Read it directly; do not enumerate, compare, or select sibling attachments, and consult another attachment only when the user or harness explicitly designates it as historical input. When no active goal path exists and the user refers to a goal, plan, or specification without an exact path, resolve it from the latest explicit designation and current goal metadata; do not prefer a similarly named repository file merely because it exists, and ask only if more than one source is explicitly active.
 - Put detailed API behavior in inline rustdoc when it is the canonical API source.
+- Document each operation's promised behavior, required finalization, specified recovery boundary, and typed outcomes at its owner. Distinguish resource custody from disposal responsibility and the consumer's subsequent workflow decisions; use repository guidance for the local capability boundary and skills for reusable procedure.
 - Keep `AGENTS.md` and `CLAUDE.md` focused on durable facts that change agent behavior.
 - Keep product-specific guidance in the product owner, not a reusable fragment package.
 - Put reusable Markdown in its fragment owner and regenerate consumers.
@@ -85,6 +86,7 @@ Check that:
 - every claim is sourced from current tracked material or an explicit user decision;
 - ownership and scope match current repository guidance;
 - public behavior is documented at its canonical surface;
+- full, partial, and failed operational outcomes remain distinguishable from fulfillment of the operation contract; do not describe an agreed requirement as implemented behavior without current evidence;
 - researchable facts are not presented as resolved without evidence;
 - upstream implementation is not called a specification without an ADR, spec, or explicit compatibility requirement;
 - raw evidence remains distinguishable from analysis;

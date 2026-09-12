@@ -28,9 +28,11 @@ When the user confirms that a design was always intended, classify the conflicti
 When a real causal edge is disputed or easy to lose, state the minimum facts needed to preserve it:
 
 - the authority or owner before the step;
+- resource custody and lifetime separately from the operation's disposal responsibility and the consumer's workflow decision authority;
 - the allowed mutation and resulting state;
 - the required predecessor or barrier;
 - the next consumer;
+- the contract's required finalization, specified internal recovery, stopping condition, and typed outcome at that handoff;
 - the concrete failure caused by bypassing or reordering the edge;
 - the positive behavior and forbidden-shortcut evidence.
 
@@ -59,6 +61,8 @@ Use `$design-semantic-source-transforms` for production transformation design an
 ## Gate only unresolved architecture
 
 Do not stop already-authorized implementation merely because it changes a mutator, barrier, cleanup step, or test. Gate work only when the requested implementation would force an unresolved architectural choice.
+
+An evidence-preservation fix does not implicitly transfer cleanup to a caller or authorize broader recovery in a shared library. Identify any actual change to resource lifetime, operational responsibility, or the operation's stopping condition separately; carrying a resource in a typed failure can affect the first without transferring the second. Apply settled boundaries without reopening them as bundled alternatives.
 
 Check the actual effects of a command that bundles creation, validation, adoption, installation, or activation. If it combines authorized and unauthorized effects, use a narrower official command when available; otherwise identify the additional effect that needs user authorization. A bundled command does not merge those authorities, and already-authorized effects do not require another approval or a capability matrix.
 

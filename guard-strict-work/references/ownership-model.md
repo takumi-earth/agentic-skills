@@ -11,6 +11,7 @@ For every proposed abstraction or edit, answer:
 3. Which repository can enforce that invariant without copying policy into consumers?
 4. Which layer produces the data, which layer interprets or converges it, and which layer merely performs operational I/O?
 5. Is an apparently unused surface truly obsolete, or is intended wiring incomplete?
+6. What does this operation promise, including finalization and internal recovery, and where does the consumer's workflow decision begin?
 
 Name and place the abstraction around the answers, not around its first caller.
 
@@ -24,6 +25,25 @@ Name and place the abstraction around the answers, not around its first caller.
 - **Harness owner:** owns behavior-observation mechanics, not production policy.
 
 An operational adapter must not absorb cross-language policy merely because it handles the current file. A consumer copy must not become the source of truth merely because a failure appears there.
+
+## Operation contracts and recovery boundaries
+
+Resolve each operation's promised behavior and stopping condition from the user-selected contract and its owning source. A shared implementation can own specific retries or automatic recovery of its sub-actions. Once that defined handling succeeds or is exhausted, return the complete typed outcome; the consuming workflow decides how to respond. Neither moving all recovery to consumers nor collecting every conceivable recovery mechanism in the library follows from shared ownership.
+
+Keep four related facts distinct:
+
+- Operational responsibility identifies who implements execution, required cleanup, and the recovery specified by this contract.
+- Resource custody identifies the value holding a resource and the lifetime or effects of retaining, consuming, transferring, or dropping it.
+- Evidence preserves the actual typed observations, completed effects, results, failures, identities, and known or uncertain remaining state.
+- Decision authority identifies who can choose the next workflow action once the operation reaches its contractual boundary.
+
+A resource carried by a typed failure can enable recovery without making its recipient implement disposal. Required library-owned cleanup still runs; its failure preserves the original operation outcome, cleanup failure, and recoverable state. A subsequent attempt can reuse the appropriate capability where its contract supports that action; this does not require a new recovery API for every failure. Equally, a public resource may intentionally have a caller-controlled useful lifetime while its library provides disposal mechanics. Account for actual lifetime changes instead of treating an owning value as passive evidence.
+
+Consume resources through deliberate contract-owned lifecycle steps and preserve the resulting evidence. Do not turn evidence preservation into indefinite retention, invent a new public resource transfer, or discard an owning failure field through incidental error mapping. Strengthen the existing subject-specific outcome rather than replacing it with a generic status record. Represent only applicable observed states; cleanup that was unnecessary, unreached, or failed is not successful cleanup, and an uncertain effect is not proof that nothing changed.
+
+For example, a shared `git` operation might promise to represent staged and unstaged worktree changes as two commits on a backup branch, with specific internal recovery for its sub-actions. If those attempts also fail, its typed result retains any created commits, relevant branch state, original failures, and recovery outcomes. One consumer can stop its workflow while another defers or selects a different approach. This illustrates an ownership boundary; it does not prescribe that `git` feature, recovery algorithm, or consumer policy elsewhere.
+
+A full, partial, or failed outcome can fulfill the operation contract. Check whether required handling was performed and all remaining obligations and failures were accounted for. Detailed errors cannot compensate for omitted required cleanup, while an accurately returned failure does not authorize an unpromised recovery workflow.
 
 ## Durable decisions evidenced in the trace study
 

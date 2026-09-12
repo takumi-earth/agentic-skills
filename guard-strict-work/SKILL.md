@@ -58,7 +58,11 @@ Walk outward from the symptom:
 4. Classify each downstream repository as owner, adapter, operational consumer, generated consumer, or test consumer.
 5. Change the owner, then converge consumers through the supported workflow.
 
-Do not infer destination architecture from an incomplete starting snapshot. Do not use physical location as proof of semantic ownership. Read [the ownership model](references/ownership-model.md) when the task crosses repository, generator, or adapter boundaries.
+Do not infer destination architecture from an incomplete starting snapshot. Do not use physical location as proof of semantic ownership. Read [the ownership model](references/ownership-model.md) when the task crosses repository, generator, or adapter boundaries, or changes operation contracts, recovery, or resource lifetimes.
+
+Distinguish operational responsibility, resource custody and lifetime, typed evidence, and consumer decision authority. The operation's declared contract assigns required execution, finalization, and any specified internal recovery or retries. At its defined boundary, return the complete typed outcome so the consumer can apply its own workflow. Neither an encountered failure nor the existence of a conceivable recovery mechanism expands that contract.
+
+Preserve known observations, completed work, results, original and recovery failures, identities, and remaining state in their complete subject-specific types. Evidence preservation does not itself transfer lifecycle work to callers or require keeping every resource alive: resources can be consumed by their owning contract's finalization steps with the resulting evidence preserved. Returning an owning value can change its lifetime; establish that effect separately from who implements disposal. Contractual correctness can include a partial or failed operation when the owner follows the required handling and accurately reports the reached state and any failed obligations.
 
 In mixed-ownership workspaces, distinguish first-party quality from policy reach. First-party crates must satisfy the strict standard through their own lint declarations and configuration; integration into a larger workspace must not leak that policy through ancestor files, inheritance, environment, or blanket flags. Authorized toolchain, edition, and dependency alignment does not transfer lint/format ownership of upstream crates. Fix a first-party failure structurally without weakening its standard or imposing that standard on unrelated consumers.
 

@@ -59,6 +59,10 @@ Narrow source inspection required to implement a known edit is not verification.
 
 ## Separate diagnostics from acceptance
 
+For operation or lifecycle changes, use authorized behavior evidence to check the declared operation boundary: ordinary success, applicable partial completion, required finalization, specified recovery succeeding or exhausting its contract, and the complete typed outcome returned afterward. Exercise supported paths rather than forcing every operation into a generic success/failure matrix or adding speculative recovery scenarios.
+
+Check completed effects, original and recovery failures, resource identities, and remaining state together. Resource custody alone proves neither disposal completion nor a transfer of workflow responsibility. A test can correctly pass by observing the promised typed failure after required handling; preserve the distinction between that contractual correctness and the operation's failure. Consumer evidence should exercise the consumer's response without reimplementing shared handling or requiring all workflows to respond identically.
+
 Treat planned, written, compiled, and executed as separate observations. Test source does not prove compilation or execution; a successful build establishes compilation only for the tests and configuration it actually included, not that a test body ran. Report a newly written, unexecuted test as unexecuted rather than failed or behaviorally covered.
 
 Attribute execution evidence to the actual command, scope, source and configuration, timestamp, and underlying result or evidence locator available. Missing attribution limits the claim; it does not authorize another read, command, or artifact. After a source, configuration, or scope change, reconcile only the affected current claims. Preserve the earlier result as an observation of its original inputs, even when it no longer supports current acceptance.
