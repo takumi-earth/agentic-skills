@@ -1,0 +1,2 @@
+# Preserve exported bytes, including the space on blank context lines.
+*.patch -text -whitespace
