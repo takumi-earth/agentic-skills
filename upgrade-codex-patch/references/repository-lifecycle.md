@@ -1,6 +1,6 @@
 # Canonical repository and patch resources
 
-Every upgrade starts by refreshing the canonical `agentic-skills` checkout and ends by retaining the audited patch and committing all changes in that repository. Keep these Git effects separate from the protected Codex checkout. A current user instruction may narrow or override them.
+Every upgrade starts by refreshing the canonical `agentic-skills` checkout and ends by retaining the audited patch, committing all changes in that repository, and pushing them to its canonical upstream. Keep these Git effects separate from the protected Codex checkout. A current user instruction may narrow or override them.
 
 ## Refresh before choosing or applying a patch
 
@@ -42,7 +42,7 @@ Keep `assets/patches/.gitattributes` with the resources. It disables Git text co
 
 Use `--skill-root "<canonical-package>"` only when explicitly selecting the already-resolved canonical package. Installed copies are not retention destinations. Keep supporting audit snapshots and command logs under `.scratchpad/`; the versioned patch itself is a deployable package resource.
 
-## Commit everything at the conclusion
+## Commit and push everything at the conclusion
 
 After retaining the exact audited bytes, inspect all changes in the canonical repository and stage its complete normal Git scope, including pre-existing edits, new files, and deletions:
 
@@ -54,6 +54,17 @@ git -C "<skills-repo>" diff --cached --name-status
 
 This is an explicit whole-repository commit boundary, not a path-limited skill commit. Keep ignored scratch evidence ignored; do not force-add it. Verify that the retained patch is tracked in the index and matches the audited digest. Use the repository's required commit message format and HEREDOC with `git commit -m`; let normal hooks run. Hook failure requires reporting or resolving the actual failure, not an inferred `--no-verify` exception.
 
-If nothing is staged because the complete desired state is already committed, report that exact state and the existing commit instead of creating an empty commit. Otherwise confirm the new commit and inspect remaining status; report any hook fallout or concurrent changes rather than claiming a clean repository. A failed resource copy or commit leaves the upgrade's repository conclusion unfinished.
+If nothing is staged because the complete desired state is already committed, use the existing commit instead of creating an empty commit, then continue with publication. Otherwise confirm the new commit and inspect remaining status; report any hook fallout or concurrent changes rather than claiming a clean repository.
 
-Report the refresh result, both successor destinations and their shared digest, the commit hash and staged scope, remaining worktree/index changes, and outgoing commits. A local commit becomes available to another machine only after publication to its upstream. Pushes require separate user authorization; this workflow reports unpublished commits without silently publishing them.
+Verify every configured push URL for the upstream remote has the canonical repository identity. Resolve the destination branch from the current branch's configured upstream; use an explicit branch refspec so other branches and tags are not selected. Publish the committed state, including any previously unpublished local commits:
+
+```bash
+git -C "<skills-repo>" push --no-follow-tags "<upstream-remote>" "HEAD:<upstream-branch-ref>"
+git -C "<skills-repo>" fetch "<upstream-remote>"
+git -C "<skills-repo>" merge-base --is-ancestor "<pushed-commit>" '@{upstream}'
+git -C "<skills-repo>" rev-list --left-right --count 'HEAD...@{upstream}'
+```
+
+Use the full branch ref, such as `refs/heads/main`. Require a successful push and fresh confirmation that the upstream contains the pushed commit; report incoming and outgoing counts separately. A rejected push stops publication without force-pushing, rewriting local history, or bypassing hooks. Apply the same escalation rule to network and permission restrictions as during refresh. A failed resource copy, commit, push, or publication check leaves the upgrade's repository conclusion unfinished.
+
+Report the refresh result, both successor destinations and their shared digest, the commit hash and staged scope, push destination and exit status, verified upstream publication, remaining worktree/index changes, and outgoing commits. The committed skill and patch must be available from the upstream before reporting completion.

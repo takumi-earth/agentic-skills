@@ -1,4 +1,4 @@
 interface:
   display_name: "Upgrade Codex Patch"
   short_description: "Rebase Codex patches across releases"
-  default_prompt: "Use `$upgrade-codex-patch` to refresh the canonical `agentic-skills` repo, rebase and audit the Codex patch with only its four Cargo commands, install `codex`, `logs_client`, and `codex-code-mode-host`, retain the successor in skill resources, and commit everything in `agentic-skills`."
+  default_prompt: "Use `$upgrade-codex-patch` to refresh the canonical `agentic-skills` repo, rebase and audit the Codex patch with only its four Cargo commands, install `codex`, `logs_client`, and `codex-code-mode-host`, retain the successor in skill resources, and commit and push everything in `agentic-skills`."
