@@ -1,6 +1,6 @@
 ---
 name: commit-strict-work
-description: "Execute low-freedom commit workflows for `strict*` ecosystem repositories. Use only when the user explicitly asks to commit, author a commit message, commit what is staged, preserve staged-versus-unstaged state, use `--no-verify`, or follow a hook-specific commit protocol. This skill does not authorize staging, unstaging, verification, pushes, history repair, or worktree inspection beyond the user's exact request."
+description: "Execute explicitly requested strict commit/message workflows, including staged-only and `--no-verify` requests. Derive staged messages from cached content only; do not implicitly stage, read unstaged source, verify, push, amend, or repair history."
 ---
 
 # Commit Strict Work
@@ -22,6 +22,8 @@ Extract:
 Do not commit before explicit go-ahead. A plan, completed implementation, or green gate is not commit authority.
 
 ## Use the staged-only protocol
+
+Establish index-only scope before the first Git command. Derive module behavior, counts, and message wording from cached material such as `git show :path`; worktree `wc`, `sed`, source previews, or discovery scans are outside this protocol even when they would improve the message. Read the smallest sufficient cached content, without adding a completeness audit.
 
 When the user says `staged`, `staged-only`, `commit what is staged`, or `do not look at unstaged`:
 

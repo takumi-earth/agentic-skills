@@ -1,4 +1,4 @@
 interface:
   display_name: "Maintain Living Goal"
-  short_description: "Preserve living goals and user-owned status"
-  default_prompt: "Use `$maintain-living-goal` to answer status questions from this goal's designated authority, preserve settled decisions and verification limits, and reconcile stale facts after substantive changes."
+  short_description: "Keep living goals focused on unfinished work"
+  default_prompt: "Use `$maintain-living-goal` to maintain this designated goal under the user's retention model, prune completed narration and verification history, and preserve unfinished requirements and goal-owned authority."

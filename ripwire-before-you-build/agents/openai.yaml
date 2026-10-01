@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Before You Build"
+  short_description: "Use ripwire-before-you-build from the canonical skills source"
+  default_prompt: "Use `$ripwire-before-you-build` for the matching current task while preserving its authority, scope, and evidence limits."

@@ -1,7 +1,7 @@
 interface:
   display_name: "Commit Strict Work"
   short_description: "Execute exact staged strict commit workflows"
-  default_prompt: "Use $commit-strict-work to commit the authorized strict-ecosystem change without crossing index or verification boundaries."
+  default_prompt: "Use `$commit-strict-work` to execute the exact requested commit or message protocol, deriving staged-only wording from cached content without worktree inspection or added verification."
 
 policy:
   allow_implicit_invocation: true

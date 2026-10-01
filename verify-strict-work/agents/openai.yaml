@@ -1,7 +1,7 @@
 interface:
   display_name: "Verify Strict Work"
   short_description: "Honor exact strict verification contracts"
-  default_prompt: "Use $verify-strict-work to execute and interpret only the authorized verification contract for this strict-ecosystem task."
+  default_prompt: "Use `$verify-strict-work` to enforce this strict task's verification ban or execute only its authorized command protocol, without loading execution detail for a ban-only request."
 
 policy:
   allow_implicit_invocation: true

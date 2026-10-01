@@ -1,117 +1,40 @@
 ---
 name: verify-strict-work
-description: "Preserve the exact verification contract for `strict*` ecosystem work. Use whenever a task mentions or implies testing, linting, formatting, CI, coverage, mutation testing, duplicate detection, audits, snapshots, generated checks, runtime matrices, acceptance gates, “green,” “clean,” “verify,” a verification ban, or the user's intent to run verification themselves."
+description: "Honor strict verification authority, bans, scope, order, and acceptance claims. Ban-only or commit-only work uses the compact core; load command, matrix, or lifecycle detail only for its authorized mode. No substitute checks or automatic ledgers."
 ---
 
 # Verify Strict Work
 
-Treat verification as an explicit authorization and acceptance protocol. More commands, broader scope, longer timeouts, or substitute evidence are not automatically safer.
+Treat verification as an authorization and acceptance protocol. An invocation does not authorize commands, a ledger, a baseline, broader scope, or substitute evidence.
 
-## Identify the verification contract
+## Establish authority before commands
 
-Before running a command, identify in the existing task context or authorized record:
+Use the current task contract: who owns verification, what is permitted or prohibited, the exact command/scope/order, and the accepted pass criteria. Implementation or a command written in a plan does not grant verification authority. Preserve purpose-bound exceptions without erasing a wider prohibition. Apply already-loaded unchanged instructions rather than rereading them at every gate.
 
-- who owns verification;
-- permitted and prohibited command categories;
-- exact canonical commands and order;
-- working directory, packages, features, filters, configurations, and runtime versions;
-- whether formatting, generation, mutation, network, Git, or external services are separately authorized;
-- pass criteria, expected duration, baseline, timeout, and stop condition;
-- whether a focused command is diagnostic only or an acceptance gate;
-- allowed repair scope if verification exposes unrelated failures;
-- failure iteration policy: whether the batch continues after a nonzero result or stops immediately, how corrections are batched, and the exact restart point.
-- post-format evidence policy: which symbol, stale-vocabulary, or reachability scans must be repeated after formatting shifts lines or names.
-
-A command written in a plan is not authorization to run it. Implementation authority is not verification authority. Classification grants neither execution nor persistence authority: apply these distinctions in the existing response or authorized record, without automatically creating a ledger.
-
-Treat a baseline as already-established timing or behavior evidence. Do not create a historical checkout, archive, revert, or provenance comparison merely to decide whether a current failure is “pre-existing” unless the user explicitly requests baseline attribution. Classify current findings by authorized scope and structural owner, not by age.
-
-Treat Git inspection like every other verification mechanism: honor the current purpose-scoped authorization. A general prohibition remains active, while a later explicit request may authorize a named diff audit only for that audit.
+For a ban-only task, enforce the rules below without loading execution, matrix, recovery, or long-run detail. A staged-only `--no-verify` commit follows `$commit-strict-work` and keeps all source inspection inside the authorized index.
 
 ## Respect bans semantically
 
 If verification is prohibited or reserved to the user:
 
-- Do not run focused tests, lint commands, format checks, metadata probes, mutation tools, or “cheap gates.”
-- Do not replace commands with broad `rg`, `awk`, `find`, source audits, reachability scans, or manual completeness proofs.
+- Do not run focused tests, lint, format checks, metadata probes, mutation tools, or cheap gates.
+- Do not substitute broad searches, source audits, reachability scans, or manual absence/completeness proofs.
 - Do not establish new correctness, cleanliness, reachability, or acceptance claims through prohibited verification.
-- Preserve previously obtained results and the current claims they still support for the relevant inputs and scope. A later ban stops new verification; it does not erase still-applicable evidence.
-- Report implementation state, distinguish prior evidence from newly unverified work, and request or await the user's evidence where verification remains required.
+- Preserve earlier results that still apply to the relevant inputs and scope; a ban does not erase valid existing evidence.
+- Report implementation state and the limits of existing evidence; await the user's results where required.
 
-Narrow source inspection required to implement a known edit is not verification. Inspection intended to prove absence, completeness, or correctness is.
+Narrow source inspection needed to implement a known edit is not verification. Inspection intended to prove absence, completeness, or correctness is. Git inspection remains purpose-scoped, and a verification ban does not authorize worktree inspection during a staged-only task.
 
-## Use the canonical surface exactly
+## Disclose the authorized mode
 
-- Verify a closed snapshot. Do not audit while a dependent implementer can still edit, has pending fixes, lacks its required handoff, or has not completed its worker gates.
-- When the user defines an immutable iterative ledger, run every authorized command in the batch in the declared order without source edits between commands, even after an early failure. Preserve and adjudicate the complete result set, apply the full owned correction set, and only then begin the next batch.
-- When the ledger instead stops on the first nonzero result, preserve the complete known diagnostic set, leave verification, apply the full authorized correction set, and restart at the ledger's first command only after no known issue remains. Do not alternate one local fix with one gate rerun or broaden repair beyond the authorized scope.
-- When one run reports several independent failures, enumerate every failure and resolve the complete authorized set before rerunning any gate. Do not use a quick rerun to discover the next item from an already-known batch.
-- Run the repository-owned command rather than a raw substitute when one exists.
-- Run the normal formatter for implementation work; do not use `fmt --check` merely because the tree is dirty.
-- Run required symbol and stale-vocabulary scans after formatting, not before it, so shifted lines and renamed symbols cannot invalidate the evidence silently.
-- Do not narrow or broaden packages, features, paths, configs, reporters, reruns, randomization, coverage, or timeout policy without approval.
-- Do not introduce sharding, process isolation, alternate configs, exclusions, or acceptance-policy changes to make a gate pass.
-- Test the primary supported runtime first. Test a compatibility floor separately after primary behavior is healthy.
-- Treat each supported configuration independently when the matrix exists to reveal configuration-specific failures.
-- Coordinate shared target directories and long-running tools with active user or agent work.
-- Run verification output unfiltered. Let the harness retain oversized output; do not redirect stdout or stderr to a scratch file merely to reread it.
-- Use a command's native artifact-writing option when the artifact is part of the contract. Do not synthesize reports, summaries, or snapshots with shell redirection.
+Before preparing or running an authorized formatter, generator, diagnostic, or acceptance command, load [command-protocol.md](references/command-protocol.md). It owns exact scope and ordering, closed snapshots, whole diagnostic batches, post-format checks, canonical surfaces, unfiltered output, duration limits, and failure handling. Do not preload it for a future command phase or reread it while unchanged and retained.
 
-## Separate diagnostics from acceptance
+When designing or adjudicating operation/lifecycle behavior, test execution, or canonical acceptance evidence, load [behavior-evidence.md](references/behavior-evidence.md). It preserves complete typed outcomes and attribution without making every task create a behavior matrix or durable ledger.
 
-For operation or lifecycle changes, use authorized behavior evidence to check the declared operation boundary: ordinary success, applicable partial completion, required finalization, specified recovery succeeding or exhausting its contract, and the complete typed outcome returned afterward. Exercise supported paths rather than forcing every operation into a generic success/failure matrix or adding speculative recovery scenarios.
+## Keep claims precise
 
-Check completed effects, original and recovery failures, resource identities, and remaining state together. Resource custody alone proves neither disposal completion nor a transfer of workflow responsibility. A test can correctly pass by observing the promised typed failure after required handling; preserve the distinction between that contractual correctness and the operation's failure. Consumer evidence should exercise the consumer's response without reimplementing shared handling or requiring all workflows to respond identically.
+Keep planned, written, compiled, executed, assertion outcomes, process exit, canonical gate status, and user acceptance separate. A successful build does not prove a test body ran; exit `0` alone does not prove behavioral or canonical acceptance. Successful inner assertions with a nonzero process status are not a passing gate. A focused success cannot replace the required canonical gate.
 
-Treat planned, written, compiled, and executed as separate observations. Test source does not prove compilation or execution; a successful build establishes compilation only for the tests and configuration it actually included, not that a test body ran. Report a newly written, unexecuted test as unexecuted rather than failed or behaviorally covered.
+Reconcile only claims affected by changed inputs. Classification and attribution do not authorize another inspection, command, historical checkout, audit, or persisted record. Use existing task context or an already-authorized artifact; do not copy verification history into a minimal implementation goal.
 
-Attribute execution evidence to the actual command, scope, source and configuration, timestamp, and underlying result or evidence locator available. Missing attribution limits the claim; it does not authorize another read, command, or artifact. After a source, configuration, or scope change, reconcile only the affected current claims. Preserve the earlier result as an observation of its original inputs, even when it no longer supports current acceptance.
-
-A focused nonzero command is diagnostic evidence even when its test assertions say `N pass, 0 fail`.
-
-Report independently:
-
-- assertions or test cases;
-- process exit status;
-- policy thresholds;
-- artifact generation;
-- canonical gate status.
-
-Do not call exit code `1` passing, successful, clear, or green. Exit `0` alone establishes neither passing behavior nor an accepted focused or canonical gate: the observed scope and results must satisfy that gate's declared criteria, including its required assertions and policy thresholds. Close a behavioral claim only when executed evidence observes its named semantic owner and contract. Do not call focused checks equivalent to an unrun top-level gate. Worker or verifier summaries are not proof without the underlying authorized artifact or command result.
-
-## Handle long-running commands
-
-Before a command expected to exceed `10m`, state:
-
-- why it is necessary;
-- the evidence-backed expected duration;
-- what output or condition ends it;
-- the user-visible checkpoint.
-
-Stop and ask before an interactive verification command exceeds `15m` or twice its known baseline. Do not exceed `30m` cumulative long-running verification without an explicit user checkpoint.
-
-Do not turn a timeout into a larger timeout by default. First compare primary-runtime isolated and aggregate behavior, inspect lifecycle/resource ownership and contention, and treat runtime above twice a known healthy baseline as a performance failure even when assertions eventually pass.
-
-Do not send more than two consecutive liveness-only updates. CPU, RSS, process existence, or a progress marker proves liveness, not health or correctness.
-
-## Treat findings as evidence, not authority
-
-When a gate exposes a failure:
-
-- Classify it against the authorized implementation scope.
-- Trace diagnostics to their structural owner.
-- Do not silently repair unrelated findings or relax policy.
-- Stop and report when repair requires a new repository, public API, compatibility decision, or user-owned policy choice.
-- Preserve command fallout rather than redesigning the gate to hide it.
-
-## Completion language
-
-Use precise outcomes:
-
-- “Implementation complete; verification not authorized.”
-- “Focused diagnostic passed; canonical gate not run.”
-- “Assertions passed; command exited `1` because the coverage threshold failed.”
-- “Canonical `just ci` passed with the requested matrix.”
-- “Gate blocked by an external dependency after the authorized command.”
-
-Never infer a broader state than the exact authorized evidence supports.
+Report the actual state, for example `Implementation complete; verification not authorized`, or `Assertions passed; the command exited 1 because the coverage threshold failed`. Never infer a broader state than the authorized evidence supports.

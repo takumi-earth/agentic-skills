@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Mcp"
+  short_description: "Use ripwire-mcp from the canonical skills source"
+  default_prompt: "Use `$ripwire-mcp` for the matching current task while preserving its authority, scope, and evidence limits."

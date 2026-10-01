@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Reuse First"
+  short_description: "Use ripwire-reuse-first from the canonical skills source"
+  default_prompt: "Use `$ripwire-reuse-first` for the matching current task while preserving its authority, scope, and evidence limits."

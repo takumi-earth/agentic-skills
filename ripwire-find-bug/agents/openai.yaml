@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Find Bug"
+  short_description: "Use ripwire-find-bug from the canonical skills source"
+  default_prompt: "Use `$ripwire-find-bug` for the matching current task while preserving its authority, scope, and evidence limits."

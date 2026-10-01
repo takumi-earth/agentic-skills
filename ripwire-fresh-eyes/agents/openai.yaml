@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Fresh Eyes"
+  short_description: "Use ripwire-fresh-eyes from the canonical skills source"
+  default_prompt: "Use `$ripwire-fresh-eyes` for the matching current task while preserving its authority, scope, and evidence limits."

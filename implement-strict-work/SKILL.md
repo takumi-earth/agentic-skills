@@ -1,6 +1,6 @@
 ---
 name: implement-strict-work
-description: "Implement owner-first, capability-preserving changes in the `strict*` ecosystem. Use for feature work, refactors, migrations, compile or Clippy remediation, mutation survivors, coverage gaps, duplicate code, dead code, generated-code lint, parser or macro changes, fixtures, and multi-repository convergence. This skill forbids diagnostic-driven local carve-outs and does not grant verification or commit authority."
+description: "Implement owner-first structural strict changes: features, refactors, migrations, diagnostics, generated failures, behavior evidence, and consumer convergence. Stay in the user-selected phase; no local suppressions, automatic verification, or commit authority."
 ---
 
 # Implement Strict Work
@@ -24,6 +24,8 @@ Before editing a new owner-level slice:
 - Treat a dirty worktree as a merge-safety condition only.
 
 Do not implement the work that depends on unresolved load-bearing ownership, public API, compatibility, or end-state choices. Surface the missing choice rather than deciding it silently, and continue every authorized owner-level slice that is causally independent of it.
+
+Choose the slice from the user's current selected phase and unfinished requirements. An unresolved implementation decision does not make standalone test migration, evidence collection, cleanup, or a future audit an independent lane. When the user limits work to integration, preparation, or dependencies, stay on those implementation owners until the user changes that scope; required test work waits for its authorized phase. Preserve already-written work without treating it as evidence that the intended implementation is complete.
 
 Work one complete vertical slice at a time: identify the owner and intended behavior, implement the structural change, add the required positive and negative evidence, format when authorized, and continue. Update a living goal only when its authoritative requirements or material status changed. If repeated attempts expose a real unresolved owner-level decision, stop that dependent slice and continue any independent authorized work.
 

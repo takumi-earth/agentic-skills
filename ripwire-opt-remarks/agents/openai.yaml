@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Opt Remarks"
+  short_description: "Use ripwire-opt-remarks from the canonical skills source"
+  default_prompt: "Use `$ripwire-opt-remarks` for the matching current task while preserving its authority, scope, and evidence limits."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Security Scan"
+  short_description: "Use ripwire-security-scan from the canonical skills source"
+  default_prompt: "Use `$ripwire-security-scan` for the matching current task while preserving its authority, scope, and evidence limits."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Router"
+  short_description: "Use ripwire-router from the canonical skills source"
+  default_prompt: "Use `$ripwire-router` for the matching current task while preserving its authority, scope, and evidence limits."

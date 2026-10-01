@@ -67,3 +67,31 @@ Stop and investigate before:
 - relaxing lint, coverage, mutation, duplication, snapshot, or generated-source policy.
 
 After the owner is established, preserve intended capability, add positive and negative behavior evidence, converge every in-scope consumer, and remove obsolete paths in the same end-state migration.
+
+## Resolve ownership before location
+
+Ask what capability and invariant own the behavior if the current caller, file extension, language, command, and diagnostic name are removed.
+
+Walk outward from the symptom:
+
+1. Identify the observed site and behavior.
+2. Find the producer of the shape: generator, macro, parser/model, schema, API, feature boundary, workflow, or harness.
+3. Find the product or ecosystem owner responsible for the invariant.
+4. Classify each downstream repository as owner, adapter, operational consumer, generated consumer, or test consumer.
+5. Change the owner, then converge consumers through the supported workflow.
+
+Do not infer destination architecture from an incomplete starting snapshot or use physical location as proof of semantic ownership.
+
+Distinguish operational responsibility, resource custody and lifetime, typed evidence, and consumer decision authority. The operation's declared contract assigns required execution, finalization, and any specified internal recovery or retries. At its defined boundary, return the complete typed outcome so the consumer can apply its own workflow. Neither an encountered failure nor the existence of a conceivable recovery mechanism expands that contract.
+
+Preserve known observations, completed work, results, original and recovery failures, identities, and remaining state in their complete subject-specific types. Evidence preservation does not itself transfer lifecycle work to callers or require keeping every resource alive: resources can be consumed by their owning contract's finalization steps with the resulting evidence preserved. Returning an owning value can change its lifetime; establish that effect separately from who implements disposal. Contractual correctness can include a partial or failed operation when the owner follows the required handling and accurately reports the reached state and any failed obligations.
+
+In mixed-ownership workspaces, distinguish first-party quality from policy reach. First-party crates must satisfy the strict standard through their own lint declarations and configuration; integration into a larger workspace must not leak that policy through ancestor files, inheritance, environment, or blanket flags. Authorized toolchain, edition, and dependency alignment does not transfer lint/format ownership of upstream crates. Fix a first-party failure structurally without weakening its standard or imposing that standard on unrelated consumers.
+
+When integration, configuration placement, or validation-command changes can alter that policy boundary, read [the mixed-workspace policy guidance](mixed-workspace-policy.md). An ordinary lint fix that leaves policy scope unchanged does not need this reference.
+
+## Challenge apparent blockers
+
+Before reporting that a user decision, external constraint, or another owner blocks progress, inspect the applicable guidance, manifests, comments, source, lockfile, feature and patch tables, generators, consumers, and canonical command surfaces; trace the symptom to its upstream owner; distinguish repository policy from an actual external limitation; and exhaust safe alternatives inside the current authority. Record a decision that stops one dependent lane as a local boundary and continue independent authorized work. For an active living goal, use `$maintain-living-goal` before any whole-goal `blocked` transition; do not turn a review request or incomplete slice into an early exit.
+
+For an already-established, unchanged review or authority boundary, reuse the established evidence and report it once. Do not repeat ownership research, rescan manifests, or create another audit because a continuation arrived. A newly observed blocker still requires the relevant owner-level investigation above.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Graph Query"
+  short_description: "Use ripwire-graph-query from the canonical skills source"
+  default_prompt: "Use `$ripwire-graph-query` for the matching current task while preserving its authority, scope, and evidence limits."

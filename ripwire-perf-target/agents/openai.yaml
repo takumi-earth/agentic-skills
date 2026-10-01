@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Perf Target"
+  short_description: "Use ripwire-perf-target from the canonical skills source"
+  default_prompt: "Use `$ripwire-perf-target` for the matching current task while preserving its authority, scope, and evidence limits."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Orient"
+  short_description: "Use ripwire-orient from the canonical skills source"
+  default_prompt: "Use `$ripwire-orient` for the matching current task while preserving its authority, scope, and evidence limits."

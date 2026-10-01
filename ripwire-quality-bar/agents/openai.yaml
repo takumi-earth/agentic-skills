@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Quality Bar"
+  short_description: "Use ripwire-quality-bar from the canonical skills source"
+  default_prompt: "Use `$ripwire-quality-bar` for the matching current task while preserving its authority, scope, and evidence limits."

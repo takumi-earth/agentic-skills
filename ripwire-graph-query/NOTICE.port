@@ -1,0 +1,5 @@
+Ported from ripwire, copyright 2026 David Brewster.
+Canonical user-level source: ~/agentic-skills/ripwire-graph-query/
+This maintained port may include local instruction, interface, and reference adaptations.
+Original upstream license: LICENSE.upstream.
+Upstream comparisons and tracked bases: $manage-ripwire-skills.

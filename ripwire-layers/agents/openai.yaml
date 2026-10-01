@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Layers"
+  short_description: "Use ripwire-layers from the canonical skills source"
+  default_prompt: "Use `$ripwire-layers` for the matching current task while preserving its authority, scope, and evidence limits."

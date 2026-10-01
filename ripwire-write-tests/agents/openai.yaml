@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Write Tests"
+  short_description: "Use ripwire-write-tests from the canonical skills source"
+  default_prompt: "Use `$ripwire-write-tests` for the matching current task while preserving its authority, scope, and evidence limits."

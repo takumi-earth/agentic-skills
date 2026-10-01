@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Change Check"
+  short_description: "Use ripwire-change-check from the canonical skills source"
+  default_prompt: "Use `$ripwire-change-check` for the matching current task while preserving its authority, scope, and evidence limits."

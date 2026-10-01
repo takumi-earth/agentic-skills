@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage Ripwire Skills"
+  short_description: "Refresh canonical ports without losing local edits"
+  default_prompt: "Use `$manage-ripwire-skills` to compare the updated committed ripwire definitions with their archived bases and our canonical ports, reconcile authorized changes while preserving our customizations, and report deferred work."

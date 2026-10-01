@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ripwire Handoff"
+  short_description: "Use ripwire-handoff from the canonical skills source"
+  default_prompt: "Use `$ripwire-handoff` for the matching current task while preserving its authority, scope, and evidence limits."
