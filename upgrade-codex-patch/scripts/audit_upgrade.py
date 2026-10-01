@@ -212,6 +212,13 @@ def snapshot(
 
     index = git(repo, "ls-files", "--stage", "-z").stdout
     tag = git(repo, "describe", "--tags", "--exact-match", "HEAD", check=False)
+    predecessor_export = (
+        git(
+            repo, "diff", "--binary", "--no-ext-diff", "HEAD", "--", *predecessor["paths"]
+        ).stdout
+        if predecessor["paths"]
+        else b""
+    )
     return {
         "schema_version": 1,
         "kind": "snapshot",
@@ -219,6 +226,7 @@ def snapshot(
         "head": git(repo, "rev-parse", "HEAD").stdout.decode().strip(),
         "tag": tag.stdout.decode().strip() if tag.returncode == 0 else None,
         "previous_patch": predecessor,
+        "predecessor_worktree_export_sha256": digest(predecessor_export),
         "excluded_paths": relative_paths(excluded),
         "included_paths": relative_paths(included),
         "index_sha256": digest(index),
@@ -272,6 +280,17 @@ def read_snapshot(path: Path) -> dict:
     ):
         raise AuditError(
             "snapshot predecessor is complete", "patch metadata", predecessor
+        )
+    export_digest = value.get("predecessor_worktree_export_sha256")
+    if export_digest is not None and (
+        not isinstance(export_digest, str)
+        or len(export_digest) != 64
+        or any(character not in "0123456789abcdef" for character in export_digest)
+    ):
+        raise AuditError(
+            "snapshot predecessor export digest is valid",
+            "SHA-256 or an older snapshot without this field",
+            export_digest,
         )
     for key in ("excluded_paths", "included_paths", "changed_paths", "untracked_paths"):
         if not all(isinstance(name, str) for name in value[key]):
@@ -377,10 +396,19 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
         [],
         sorted(set(metadata["paths"]) - set(intended)),
     )
+    recorded_predecessor_paths = (
+        set(baseline["previous_patch"]["paths"])
+        if baseline.get("predecessor_worktree_export_sha256")
+        == baseline["previous_patch"]["sha256"]
+        else set()
+    )
     require(
-        "pre-existing edits are excluded from export paths",
+        "pre-existing export edits have recorded predecessor provenance",
         [],
-        sorted(set(baseline["changed_paths"]) & set(metadata["paths"])),
+        sorted(
+            (set(baseline["changed_paths"]) & set(metadata["paths"]))
+            - recorded_predecessor_paths
+        ),
     )
     require(
         "intended paths are tracked before export",

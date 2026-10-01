@@ -282,6 +282,61 @@ class AuditUpgradeTests(unittest.TestCase):
         self.assertEqual(report["applicability"]["reverse"]["status"], "passed")
         self.assertEqual(index, self.git("ls-files", "--stage", "-z").stdout)
 
+    def test_already_applied_predecessor_can_carry_an_authorized_addition(self):
+        self.git("apply", str(self.previous))
+        baseline = self.capture(self.baseline)
+        self.assertEqual(
+            baseline["predecessor_worktree_export_sha256"],
+            baseline["previous_patch"]["sha256"],
+        )
+        self.write("codex-rs/image/src/lib.rs", "after\nauthorized addition\n")
+        self.successor.write_bytes(
+            self.git(
+                "diff",
+                "--binary",
+                "--no-ext-diff",
+                "HEAD",
+                "--",
+                "codex-rs/image/src/lib.rs",
+            ).stdout
+        )
+        index = self.git("ls-files", "--stage", "-z").stdout
+        report = self.audit()
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(
+            {name: value["status"] for name, value in report["applicability"].items()},
+            {"cached": "passed", "reverse": "passed"},
+        )
+        self.assertEqual(index, self.git("ls-files", "--stage", "-z").stdout)
+
+    def test_already_applied_predecessor_with_extra_user_edits_is_unresolved(self):
+        self.git("apply", str(self.previous))
+        self.write("codex-rs/image/src/lib.rs", "after\nexisting user addition\n")
+        self.capture(self.baseline)
+        self.successor.write_bytes(
+            self.git(
+                "diff",
+                "--binary",
+                "--no-ext-diff",
+                "HEAD",
+                "--",
+                "codex-rs/image/src/lib.rs",
+            ).stdout
+        )
+        report = self.audit(expected_exit=1)
+        self.assertEqual(
+            self.failed_conditions(report),
+            {"pre-existing export edits have recorded predecessor provenance"},
+        )
+
+    def test_older_snapshot_without_predecessor_export_digest_remains_supported(self):
+        baseline = self.capture()
+        del baseline["predecessor_worktree_export_sha256"]
+        self.baseline.write_text(json.dumps(baseline), encoding="utf-8")
+        self.apply_and_export()
+        report = self.audit()
+        self.assertEqual(report["status"], "passed")
+
     def test_audit_rejects_excluded_lockfile_in_the_artifact(self):
         self.capture(self.baseline)
         self.apply_and_export()
@@ -393,7 +448,7 @@ class AuditUpgradeTests(unittest.TestCase):
         report = self.audit(expected_exit=1)
         self.assertEqual(
             self.failed_conditions(report),
-            {"pre-existing edits are excluded from export paths"},
+            {"pre-existing export edits have recorded predecessor provenance"},
         )
 
     def test_index_change_fails_without_unstaging_it(self):
