@@ -11,6 +11,7 @@ Continue the shared-fork integration from its durable record. Preserve the user'
 
 - Read [the living plan](references/plan.md) before starting or resuming this project. Reuse a complete unchanged reference already retained in context; a new symbol, status question, or continuation does not require another read.
 - Read [the runtime investigation](references/runtime-investigation.md) when tracing package selection, daemon lifecycle, desktop attachment, transport, or message authority. Use its semantic owners and unresolved questions instead of repeating discovery.
+- Read [the upstream maintenance strategy](references/upstream-maintenance.md) when designing integration points, carrying the feature to a newer Codex release, or reducing recurring upgrade effort. Its automation design is a proposal, not an implemented updater.
 - Keep user decisions, verified facts, hypotheses, and proposed work distinct. A historical process snapshot or source locator is evidence at its recorded checkpoint, not proof of current state.
 - Update the existing plan after material user steering, implementation progress, source changes, or external-state changes. Preserve settled decisions and refresh only the affected evidence. Do not create competing plans or new audit versions to restate unchanged findings.
 - A plan records authority; it does not grant additional implementation, verification, installation, restart, activation, delegation, or Git authority. An exact active goal supplied by the harness keeps its separate lifecycle authority.

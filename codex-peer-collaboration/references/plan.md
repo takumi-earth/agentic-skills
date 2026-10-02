@@ -14,6 +14,7 @@ The required client and host combinations are:
 2. Mac sessions and Ubuntu sessions collaborating with each other while the user monitors both through the desktop app.
 3. The same collaboration while the user connects through the ChatGPT phone app to the desktop app. The user reports that phone access to sessions on both hosts already works.
 4. Continued use of the source-built Codex CLI/TUI on both Mac and Ubuntu.
+5. Minimize recurring effort to pull upstream changes and carry the peer feature forward, while preserving the selected architecture and correctness.
 
 The selected architecture is one enhanced Codex fork, built for each platform, with peer collaboration owned by the app-server runtime. Each host has its own runtime, session state, and filesystem. Desktop and TUI clients attach to the appropriate runtime; the two runtimes exchange peer messages through an authenticated connection.
 
@@ -23,6 +24,7 @@ Authority provenance is the actual user statements in session `01a0f6cc-3471-74b
 - The user requested a shared enhanced Codex repo and its app-server in both locations, with the desktop app using their own primary runtime.
 - The user stated that the desktop app has no such UI configuration and explicitly directed source investigation.
 - The user requested durable documentation outside the Codex repo, then explicitly requested a new skill with the plan in its references.
+- The user requested an approach with the minimum practical overhead for updating upstream Codex and reapplying the changes.
 
 These decisions are protected project requirements. Reopen them only when the user changes the requirement or a concrete incompatibility needs their decision. Assistant proposals and status do not create new authority.
 
@@ -61,6 +63,7 @@ The similarly named checkout `~/rust-forks/codex/codex-rs/bun` belongs to separa
 | Mac-Ubuntu peer routing | Not implemented |
 | Phone use of native peer tools | Not verified; current phone access to both hosts is user-reported existing behavior |
 | Durable skill and plan | Created in the canonical skill source; `skills-ref validate` and the harness `quick_validate.py` passed; harness enablement and Git publication remain separate |
+| Low-overhead upstream maintenance | Objective requested by the user; the strategy in `upstream-maintenance.md` is proposed and has not been implemented |
 
 ## Completed patch checkpoint
 
@@ -106,6 +109,8 @@ Counterfactual regressions to prevent:
 
 Mac attachment investigation and the native peer boundary/local implementation can progress independently within the current phase's authority. Do not make a missing Mac probe or UI control a prerequisite for source work that does not depend on it.
 
+Design the peer boundary using [the upstream maintenance strategy](upstream-maintenance.md): keep substantive behavior in owned code, maintain a small inventory of upstream integration points, and evaluate semantic reapplication before creating another patch engine. Minimal maintenance effort cannot justify moving the feature out of runtime ownership or weakening delivery and authorization behavior.
+
 1. **Establish Mac attachment through source-defined runtime interfaces.** Trace or observe which executable, package, socket, and transport the Mac desktop app actually uses. Exercise the selected managed-daemon/package path with proportionate authority. Verify whether desktop startup reuses it or creates a separate backend. Use process/socket evidence, not a requested UI selector or an invented config key.
 2. **Finalize the native local peer boundary.** Choose the focused runtime component and thin integration with the session registry and tool pipeline. Keep peer operations separate from child control. Define eligible-session discovery, bounded reads/waits, sender attribution, approval policy, delivery receipts, and duplicate handling.
 3. **Implement and prove local peer collaboration.** Establish runtime-owned model tools for desktop and TUI sessions, including an Ubuntu-to-Ubuntu desktop exchange with no TUI listener dependency.
@@ -138,6 +143,6 @@ These remain evidence questions, not reasons to reconsider the selected shared-f
 
 ## Documentation checkpoint
 
-The user-requested package consists of `SKILL.md`, `agents/openai.yaml`, this plan, and `runtime-investigation.md`. It is ordinary canonical skill source, so it can be versioned and transferred with the skill repository rather than depending on an ignored task report.
+The package consists of `SKILL.md`, `agents/openai.yaml`, this plan, `runtime-investigation.md`, and the conditional `upstream-maintenance.md` design reference. It is ordinary canonical skill source, so it can be versioned and transferred with the skill repository rather than depending on an ignored task report.
 
-Both structural validators exited successfully on `2026-10-02`. No new executable helper was added, no runtime behavior was exercised as part of skill creation, no harness link was created, and no staging, commit, or push was performed. Structural validity does not establish correct activation or end-to-end peer behavior.
+Both structural validators exited successfully on `2026-10-02`. No new executable helper or runtime behavior was introduced by these documentation changes. The package was observed committed and clean before the maintenance-strategy update; its most recent recorded package commit was `a7c4505`. Subsequent updates follow the current `$manage-agentic-skills-repo` pull and complete-repository commit contract. Pushes and harness enablement remain separate effects. Structural validity does not establish correct activation or end-to-end peer behavior.
