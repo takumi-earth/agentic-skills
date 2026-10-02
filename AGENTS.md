@@ -1,5 +1,12 @@
 # Agentic Skills Repository
 
+## Repository Git workflow
+
+- Use `$manage-agentic-skills-repo` first whenever an agent works in this repository, for any reason. If the synchronized skill is unavailable, read its [canonical `SKILL.md`](manage-agentic-skills-repo/SKILL.md) directly.
+- Pull before task-specific reads, research, planning, review, validation, or edits. Read the minimum applicable guidance and coordinate overlapping work first; reuse the successful pull within the same task.
+- After making changes, run `git add .` from the Git top-level and commit the complete uncommitted repository scope, including pre-existing, unrelated, and unfamiliar changes. Read all staged diffs and make the commit message reflect every material change group.
+- This is standing user authorization for pulling and, after changes, staging and committing. Do not ask again merely because some changes were made by someone else. A current explicit user instruction for the task, such as a staged-only request or command ban, takes precedence. Pushes and other enablement remain separately authorized.
+
 ## Purpose and authority
 
 - Treat this repository as the canonical source for the user's user-level skills across machines, operating systems, agent harnesses, and model providers.
@@ -36,7 +43,7 @@
 2. Read every directly referenced instruction file needed for the requested behavior, plus any script or metadata file that the change can affect.
 3. Identify the existing semantic owner and trigger boundary. Extend that owner when the behavior belongs there; create a separate skill only when the trigger or responsibility is genuinely distinct.
 4. Keep `SKILL.md` focused on information an agent would not reliably infer. Move conditional detail into a named resource and state exactly when to load it.
-5. Preserve explicit authorization boundaries. A review or proposal does not authorize implementation, and a skill edit does not authorize adjacent hooks, configuration, memory, installed copies, staging, commits, or external changes.
+5. Preserve explicit authorization boundaries. A review or proposal does not authorize implementation, and a skill edit does not authorize adjacent hooks, configuration, memory, installed copies, pushes, or external changes. Apply the standing repository refresh and commit workflow separately.
 6. Update `agents/openai.yaml` when the skill name, invocation-facing description, default prompt, implicit-invocation policy, or other OpenAI interface behavior changes. Do not regenerate it for a body-only change that leaves the interface contract intact.
 7. Treat scripts as product code. Keep deterministic logic in scripts when it is more reliable than prose, route their scratch and generated output through the resolved repository `.scratchpad/`, and test every added or changed executable path directly.
 8. Make surgical edits. Preserve unrelated user changes and do not normalize neighboring packages merely because they are present.
@@ -65,9 +72,9 @@
 ## Worktree discipline
 
 - Treat a dirty worktree as a merge-safety condition, not a reason to reduce scope, weaken design, skip expected generated outputs, or replace a real command with a check-only variant.
-- Preserve unrelated changes. Do not revert, overwrite, stage, unstage, or otherwise normalize them.
+- Preserve unrelated file contents. Do not revert or overwrite them. The standing `$manage-agentic-skills-repo` workflow includes their changes in the complete repository commit after task changes.
 - If a file in scope is already modified, read and edit its current contents instead of assuming the index or `HEAD` version is authoritative.
-- Do not stage, unstage, commit, push, restore, reset, or rewrite history unless the user explicitly authorizes that exact operation.
+- Follow the standing repository pull and complete stage/commit instruction after task changes. Do not independently unstage, push, restore, reset, or rewrite history without explicit authority.
 - When implementation formatting exists, run the repository's real formatting command. Do not substitute `--check` merely because the tree is dirty.
 - Report incidental changes made by legitimate repository commands plainly; do not hide or silently discard them.
 
@@ -81,7 +88,7 @@
 
 ## Commit convention
 
-- Do not infer commit authority from implementation authority. Commit only when the user explicitly asks.
+- The standing `$manage-agentic-skills-repo` instruction explicitly requires a complete repository commit after task changes. Other commit workflows require their own explicit authority; current user instructions can narrow or override this repository default.
 - Use the subject form `type(scope): structural imperative description`.
 - Always include a scope. Never use `chore`; choose the structural type that describes the change, such as `feat`, `fix`, `refactor`, `build`, `ci`, `docs`, `test`, or `style`.
 - Add `!` before the colon for a breaking change, for example `feat(distribution)!: replace copied skills with package selection`.

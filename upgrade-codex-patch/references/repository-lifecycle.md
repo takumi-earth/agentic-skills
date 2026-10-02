@@ -1,29 +1,12 @@
 # Canonical repository and patch resources
 
-Every upgrade starts by refreshing the canonical `agentic-skills` checkout and ends by retaining the audited patch, committing all changes in that repository, and pushing them to its canonical upstream. Keep these Git effects separate from the protected Codex checkout. A current user instruction may narrow or override them.
+Every upgrade starts by refreshing the canonical `agentic-skills` checkout and ends by retaining the audited patch, committing all changes in that repository, and pushing them to its canonical upstream. `$manage-agentic-skills-repo` owns the shared pull and complete repository commit workflow; this reference owns patch retention and the upgrade's required publication. Keep these Git effects separate from the protected Codex checkout. A current user instruction may narrow or override them.
 
 ## Refresh before choosing or applying a patch
 
-Resolve the activated package through directory symlinks and use its canonical Git top-level. If the installation is a copy, resolve the user-selected canonical checkout, `AGENTIC_SKILLS_REPO`, or `~/agentic-skills`; verify its fetch remote identity is `github.com/takumi-earth/agentic-skills`. Do not treat a matching directory name, push URL, or unrelated Git parent as proof. Use the refreshed canonical package for the rest of the invocation. If that checkout or its upstream cannot be resolved, report the missing fact and stop before changing Codex.
+Use `$manage-agentic-skills-repo` before choosing a predecessor, changing the Codex checkout, applying a patch, or running Cargo. Resolve the activated package through directory symlinks; for an installed copy, use the selected canonical checkout, `AGENTIC_SKILLS_REPO`, or `~/agentic-skills`. If the synchronized shared skill is unavailable, read `manage-agentic-skills-repo/SKILL.md` in that canonical checkout directly. Before the shared pull, verify that the configured upstream's fetch remote identity is `github.com/takumi-earth/agentic-skills`. Do not treat a matching directory name, push URL, or unrelated Git parent as proof. If the checkout or canonical upstream cannot be resolved, stop before changing Codex.
 
-Inspect the current branch, configured upstream and fetch URL, worktree/index changes, and any in-progress Git operation. Preserve existing commits and changes. A detached checkout, missing or noncanonical upstream, or unfinished merge/rebase needs resolution before refreshing; do not silently switch branches or change tracking configuration.
-
-From the resolved source repository, fetch the verified upstream remote:
-
-```bash
-git -C "<skills-repo>" fetch "<upstream-remote>"
-git -C "<skills-repo>" rev-list --left-right --count 'HEAD...@{upstream}'
-```
-
-The first count is outgoing commits and the second is incoming commits. A fresh fetch and zero incoming commits prove that all commits from the observed upstream are present locally; outgoing commits are preserved and reported. If there are incoming commits and no outgoing commits, record the fetched upstream commit and incorporate it with:
-
-```bash
-git -C "<skills-repo>" merge --ff-only --no-autostash --no-overwrite-ignore "<fetched-upstream-commit>"
-```
-
-Let Git preserve compatible local work and refuse obstructing changes. Do not stash, reset, clean, rebase, force an update, manufacture a merge commit, or overwrite ignored artifacts to make refresh succeed. If both counts are nonzero, stop and report the two counts and refs. On network or permission restrictions, request the harness's escalation for the same command; a failed refresh is not permission to continue with stale resources.
-
-After a successful fast-forward, confirm zero incoming commits and read the refreshed canonical `AGENTS.md`, `upgrade-codex-patch/SKILL.md`, and required resources completely. Continue the same invocation under the refreshed contract. Fetch once per invocation unless later evidence shows that another refresh is necessary.
+Follow the shared skill's `git pull --ff-only --no-rebase --no-autostash` workflow and failure boundaries. A successful pull already performed for this invocation satisfies refresh; do not repeat it merely because this reference was loaded. Use the refreshed canonical package for the rest of the invocation, and read refreshed `AGENTS.md`, `upgrade-codex-patch/SKILL.md`, and required resources completely before proceeding.
 
 Use an explicitly named predecessor when supplied. Otherwise inspect the applicable `codex-v*.patch` resources in `upgrade-codex-patch/assets/patches/` alongside local versioned artifacts; compare release versions rather than lexical filenames. Equal release names must have equal SHA-256 digests or require a user decision. Preserve every predecessor and older packaged patch.
 
@@ -44,15 +27,7 @@ Use `--skill-root "<canonical-package>"` only when explicitly selecting the alre
 
 ## Commit and push everything at the conclusion
 
-After retaining the exact audited bytes, inspect all changes in the canonical repository and stage its complete normal Git scope, including pre-existing edits, new files, and deletions:
-
-```bash
-git -C "<skills-repo>" add --all
-git -C "<skills-repo>" diff --cached --stat
-git -C "<skills-repo>" diff --cached --name-status
-```
-
-This is an explicit whole-repository commit boundary, not a path-limited skill commit. Keep ignored scratch evidence ignored; do not force-add it. Verify that the retained patch is tracked in the index and matches the audited digest. Use the repository's required commit message format and HEREDOC with `git commit -m`; let normal hooks run. Hook failure requires reporting or resolving the actual failure, not an inferred `--no-verify` exception.
+After retaining the exact audited bytes, follow `$manage-agentic-skills-repo` to run `git add .` from the canonical Git top-level, review every staged diff, and commit the complete repository scope, including pre-existing and unfamiliar edits, new files, and deletions. Before its commit step, verify that the retained patch is tracked in the index and matches the audited digest. The shared skill owns complete-diff message coverage, the repository's commit convention, normal hooks, and failure handling. Keep ignored scratch evidence ignored.
 
 If nothing is staged because the complete desired state is already committed, use the existing commit instead of creating an empty commit, then continue with publication. Otherwise confirm the new commit and inspect remaining status; report any hook fallout or concurrent changes rather than claiming a clean repository.
 

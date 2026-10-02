@@ -1,0 +1,4 @@
+interface:
+  display_name: "Codex Peer Collaboration"
+  short_description: "Develop shared-runtime Codex peer collaboration"
+  default_prompt: "Use `$codex-peer-collaboration` to continue the shared-runtime peer collaboration work from its maintained plan."
