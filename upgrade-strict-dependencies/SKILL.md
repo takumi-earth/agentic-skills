@@ -28,7 +28,7 @@ Do not infer scope from whichever manifest currently fails.
 
 ## Verify versions and provenance
 
-- Use current local checkouts beneath `~/strict-rs/*` as the first source for strict-owned crate ownership, manifests, safety policy, tests, and repository guidance.
+- Use [`$locate-strict-repos`](../locate-strict-repos/SKILL.md) when a needed strict-owned checkout is unknown, missing, or stale. Use the verified owner as the first source for crate ownership, manifests, safety policy, tests, and repository guidance.
 - Use current primary sources for the latest version, features, release notes, and migration requirements.
 - Preserve exact Cargo source identity: registry, Git URL, revision, branch, tag, or path.
 - Do not replace a strict-owned fork with a crates.io package merely because names match.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Locate Strict Repos"
+  short_description: "Find strict repository checkouts on the current host"
+  default_prompt: "Use $locate-strict-repos to locate and verify the strict repository needed for this task."

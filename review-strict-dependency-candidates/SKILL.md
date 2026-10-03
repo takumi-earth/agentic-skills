@@ -37,7 +37,7 @@ For every serious candidate, retain:
 - known advisories and the scope/date of the advisory check;
 - acceptance, rejection, or unresolved reason.
 
-Use local `~/strict-rs/*` checkouts first for strict-owned repositories. Use official manifests, source, releases, and advisories as primary external evidence. Do not rely on a wrapper's marketing summary for safety or lifecycle semantics.
+Use [`$locate-strict-repos`](../locate-strict-repos/SKILL.md) when a needed strict-owned checkout is unknown, missing, or stale, then prefer the verified owner. For authorized external research, use official manifests, source, releases, and advisories as primary evidence. Do not rely on a wrapper's marketing summary for safety or lifecycle semantics.
 
 Retain rejected candidates and reasons so compaction does not trigger the same research again. Refresh only facts likely to have drifted or when the required capability changes.
 
