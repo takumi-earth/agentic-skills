@@ -1,6 +1,6 @@
 # Codex peer collaboration: living plan
 
-Last materially updated: `2026-10-02`, `Asia/Hong_Kong`.
+Last materially updated: `2026-10-03`, `Asia/Hong_Kong`.
 
 This is the maintained project record requested by the user, outside the Codex checkout. Keep this file current rather than creating parallel plans. [Runtime investigation](runtime-investigation.md) owns the detailed source findings.
 
@@ -44,6 +44,7 @@ These decisions are protected project requirements. Reopen them only when the us
 | --- | --- |
 | Authoritative Ubuntu Codex source | `~/rust-forks/codex-orig`; Rust workspace `codex-rs/` |
 | Source checkpoint inspected | `rust-v0.159.2`, Git `HEAD` `ff6aec96948b70d94983af2641a6b67c94faeff5`, with the user's existing patch and peer-approval edits |
+| Latest audited release upgrade | `rust-v0.160.0`, Git `HEAD` `a956835d020762cb2b570053af06f643a11c0ecc`; matching CLI and Code Mode host installed on Ubuntu |
 | Canonical skill source | `~/agentic-skills/codex-peer-collaboration` |
 | Mac source checkout and active local backend | Not yet established by on-host evidence |
 | Conversation provenance | `01a0f6cc-3471-74bd-ac52-cf42b069b52a` |
@@ -55,14 +56,14 @@ The similarly named checkout `~/rust-forks/codex/codex-rs/bun` belongs to separa
 | Requirement or lane | State and evidence |
 | --- | --- |
 | Standing peer permission and subagent distinction | Added to `~/.codex/AGENTS.md` in the earlier work; user supplied the policy again in this conversation |
-| TUI peer-message approval setting | Implemented, built, installed, and retained in the saved patch |
+| TUI peer-message approval setting | Carried unchanged, built, installed, and retained in the `0.160.0` successor patch |
 | Shared-runtime local peer tools | Not implemented; current `collaboration` tools expose only the current agent tree |
 | Package selection and pinning | Confirmed in source; complete local packages can be selected with `update --from-cli` |
-| Current Ubuntu desktop connection | Observed using the source-built `0.159.2` app-server on the shared Unix socket |
+| Ubuntu desktop connection | Observed using the source-built `0.159.2` app-server on the shared Unix socket at the `2026-10-02` checkpoint; the `0.160.0` upgrade installs binaries without activating or verifying a new client runtime |
 | Mac desktop attachment to our selected runtime | Unverified; no UI selector is available or required as an investigation prerequisite |
 | Mac-Ubuntu peer routing | Not implemented |
 | Phone use of native peer tools | Not verified; current phone access to both hosts is user-reported existing behavior |
-| Durable skill and plan | Created in the canonical skill source; `skills-ref validate` and the harness `quick_validate.py` passed; harness enablement and Git publication remain separate |
+| Durable skill and plan | Created in canonical source; the Codex skill projection resolves there; prior structural validation and Ubuntu synchronization are recorded, with release retention and publication owned by the current upgrade workflow |
 | Low-overhead upstream maintenance | Objective requested by the user; the strategy in `upstream-maintenance.md` is proposed and has not been implemented |
 
 ## Completed patch checkpoint
@@ -78,6 +79,22 @@ The earlier patch adds `tui.peer_message_approval_mode`. The user selected `"app
 - Intrinsic upgrade evidence is under `~/agentic-skills/.scratchpad/upgrade-codex-patch/20261001T095604Z-peer-messages/`.
 
 The later native-peer work must retain this lineage in a successor patch without overwriting predecessor artifacts.
+
+## Latest release upgrade checkpoint
+
+The user invoked `$upgrade-codex-patch $codex-peer-collaboration` on `2026-10-03`. This phase carries the existing peer-approval lineage onto the selected release and preserves the native-peer implementation and client acceptance work below.
+
+- Target: `rust-v0.160.0`, base `a956835d020762cb2b570053af06f643a11c0ecc`, in `~/rust-forks/codex-orig`. The checkout and index were clean before application; the base and index stayed unchanged.
+- Predecessor: `~/rust-forks/codex-v0.159.2-peer-messages.patch`, identical to its packaged resource, SHA-256 `d50d1f0c2e6b723b3c4c2e589a54776af0070a830a3ed334338b2f63ee021f46`. Forward application succeeded without rejects; all initial carried edit streams were identical across `55` files.
+- Successor: `~/rust-forks/codex-v0.160.0.patch`, retained byte-identically at `~/agentic-skills/upgrade-codex-patch/assets/patches/codex-v0.160.0.patch`. SHA-256 `cd4d8060ee4f43877f64483e0d3502f2a4151f5921a4027bd1dd94cfbd4ee555`; `130190` bytes, `3262` lines, `56` paths, `193` hunks.
+- Comparison: `191` carried hunk edit streams are identical. One dependency hunk upgrades `insta` from `1.48.0` to `1.49.0` and `libc` from `0.2.189` to `0.2.190`; one new manifest hunk pins `cc`. No carried peer-approval edits were removed or rewritten.
+- Build remediation: both initial installers failed because `cc 1.6.0` snapshots compiler environment variables before `aws-lc-sys 0.45.0` applies its jitter entropy `CFLAGS` guard. Pin `cc = "=1.2.55"` in `codex-rs/utils/rustls-provider/Cargo.toml`, using the target's original lockfile version. `cargo update --recursive` selected that pin, and both installer retries succeeded. The carried workspace pins for `blake3`, `time`, and `zune-core` remain intact.
+- Installations: successful Cargo output confirms `codex`, `logs_client`, and `codex-code-mode-host` at `0.160.0`. The CLI retry took `1238.677` seconds; the Code Mode host retry took `136.728` seconds. Compiler warnings remain recorded in the complete logs.
+- Artifact audit: cached forward applicability and reverse applicability both passed separately with exit `0`; predecessor preservation, base/index preservation, intended-path accounting, and exact Git-export bytes passed. `codex-rs/Cargo.lock` changed during dependency resolution and remains excluded from the artifact. Installer retries changed no tracked or untracked source paths.
+- Evidence: `~/agentic-skills/.scratchpad/upgrade-codex-patch/20261003T062435Z-v0.160.0-peer/` contains the baseline, phase and per-command snapshots, comparisons, final audit, and complete command streams/status/durations. Only the four authorized Cargo command forms were used, including resolution and installer retries. Rust tests, formatting, linting, and generators were outside this upgrade's command contract.
+- Runtime boundary: at this upgrade checkpoint, app-server process `14761` runs `/xdg/cargo/bin/codex (deleted)` and Code Mode host process `1157247` runs `/xdg/cargo/bin/codex-code-mode-host (deleted)` after binary replacement. This phase performs no daemon restart or runtime activation; installation does not establish desktop, Mac, cross-host, or phone acceptance.
+
+The next unfinished project actions remain the native local peer boundary/implementation and Mac attachment investigation. Preserve the selected runtime ownership and the acceptance matrix below.
 
 ## Causal chains to preserve
 
@@ -145,4 +162,4 @@ These remain evidence questions, not reasons to reconsider the selected shared-f
 
 The package consists of `SKILL.md`, `agents/openai.yaml`, this plan, `runtime-investigation.md`, and the conditional `upstream-maintenance.md` design reference. It is ordinary canonical skill source, so it can be versioned and transferred with the skill repository rather than depending on an ignored task report.
 
-Both structural validators exited successfully on `2026-10-02`. No new executable helper or runtime behavior was introduced by these documentation changes. The package was observed committed and clean before the maintenance-strategy update; its most recent recorded package commit was `a7c4505`. Subsequent updates follow the current `$manage-agentic-skills-repo` pull and complete-repository commit contract. Pushes and harness enablement remain separate effects. Structural validity does not establish correct activation or end-to-end peer behavior.
+Both structural validators exited successfully on `2026-10-02`. On `2026-10-03`, `skills-ref validate ./codex-peer-collaboration` and `skills-ref validate ./upgrade-codex-patch` exited `0` after the release patch was retained and this checkpoint was added. The canonical pull was already up to date; existing documentation/workflow commits `a7c4505` and `feaf409` are preserved. The current `$manage-agentic-skills-repo` contract owns the complete repository commit, and the invoked upgrade workflow requires publication. Runtime activation and harness synchronization keep their separate authority. Structural validity does not establish correct activation or end-to-end peer behavior.
