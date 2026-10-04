@@ -8,7 +8,7 @@ Use `$manage-agentic-skills-repo` before choosing a predecessor, changing the Co
 
 Follow the shared skill's `git pull --ff-only --no-rebase --no-autostash` workflow and failure boundaries. A successful pull already performed for this invocation satisfies refresh; do not repeat it merely because this reference was loaded. Use the refreshed canonical package for the rest of the invocation, and read refreshed `AGENTS.md`, `upgrade-codex-patch/SKILL.md`, and required resources completely before proceeding.
 
-Use an explicitly named predecessor when supplied. Otherwise inspect the applicable `codex-v*.patch` resources in `upgrade-codex-patch/assets/patches/` alongside local versioned artifacts; compare release versions rather than lexical filenames. Equal release names must have equal SHA-256 digests or require a user decision. Preserve every predecessor and older packaged patch.
+Use an explicitly named predecessor when supplied; that selection settles differing copies. Do not substitute a local artifact with the same release name or demand that it match. Otherwise inspect the applicable `codex-v*.patch` resources in `upgrade-codex-patch/assets/patches/` alongside local versioned artifacts; compare release versions rather than lexical filenames and resolve genuinely ambiguous provenance. Preserve predecessor bytes and older packaged patches.
 
 ## Retain the audited successor
 
@@ -20,6 +20,12 @@ python3 "<skills-repo>/upgrade-codex-patch/scripts/retain_patch.py" \
 ```
 
 The helper resolves its package through symlinks and atomically publishes the bytes without replacing an existing resource. An identical existing file is an unchanged result; different bytes, a destination symlink, or an escaping resource directory stop retention without overwriting existing work. Successful JSON gives the source, resource, digest, byte size, outcome, and resource write count; failures report the checked condition, expected value, and received value. Exit `0` means retained or already identical; exit `2` means retention failed. The helper does not perform the patch audit or any Git operation.
+
+For an explicitly requested same-release revision, follow the selection contract:
+preserve the selected artifact's original bytes in evidence, audit a separate
+candidate, then guard replacement of only the selected destination against its
+recorded original digest. The normal retention helper's conflicting-file refusal
+does not authorize deleting the resource or publishing an alternate patch variant.
 
 Keep `assets/patches/.gitattributes` with the resources. It disables Git text conversion for `*.patch`, preserving the audited bytes on machines with different `core.autocrlf` settings. It also preserves the required space on blank unified-diff context lines without treating that literal patch syntax as a whitespace error.
 

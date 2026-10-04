@@ -1,0 +1,9 @@
+# Install a complete source-built Codex package for this machine.
+export CODEX_UPGRADE_SKILL_ROOT := source_directory()
+
+[positional-arguments]
+[script("bun", "--no-env-file")]
+i *args:
+    const { pathToFileURL } = await import("node:url");
+    const { main } = await import(pathToFileURL(process.env.CODEX_UPGRADE_SKILL_ROOT + "/scripts/install_codex.ts").href);
+    await main(process.argv.slice(2));

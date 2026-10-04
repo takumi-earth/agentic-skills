@@ -40,9 +40,18 @@ def digest(data: bytes) -> str:
 
 def git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess:
     result = subprocess.run(
-        ["git", "--literal-pathspecs", "-C", str(repo), *args],
+        [
+            "git",
+            "--literal-pathspecs",
+            "-c",
+            "core.fsmonitor=false",
+            "-C",
+            str(repo),
+            *args,
+        ],
         capture_output=True,
         check=False,
+        env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
     )
     if check and result.returncode:
         raise AuditError(
@@ -214,11 +223,38 @@ def snapshot(
     tag = git(repo, "describe", "--tags", "--exact-match", "HEAD", check=False)
     predecessor_export = (
         git(
-            repo, "diff", "--binary", "--no-ext-diff", "HEAD", "--", *predecessor["paths"]
+            repo,
+            "diff",
+            "--binary",
+            "--no-ext-diff",
+            "--no-textconv",
+            "HEAD",
+            "--",
+            *predecessor["paths"],
         ).stdout
         if predecessor["paths"]
         else b""
     )
+    predecessor_index_export = (
+        git(
+            repo,
+            "diff",
+            "--cached",
+            "--binary",
+            "--no-ext-diff",
+            "--no-textconv",
+            "HEAD",
+            "--",
+            *predecessor["paths"],
+        ).stdout
+        if predecessor["paths"]
+        else b""
+    )
+    index_path = Path(
+        os.fsdecode(git(repo, "rev-parse", "--git-path", "index").stdout).strip()
+    )
+    if not index_path.is_absolute():
+        index_path = repo / index_path
     return {
         "schema_version": 1,
         "kind": "snapshot",
@@ -227,9 +263,11 @@ def snapshot(
         "tag": tag.stdout.decode().strip() if tag.returncode == 0 else None,
         "previous_patch": predecessor,
         "predecessor_worktree_export_sha256": digest(predecessor_export),
+        "predecessor_index_export_sha256": digest(predecessor_index_export),
         "excluded_paths": relative_paths(excluded),
         "included_paths": relative_paths(included),
         "index_sha256": digest(index),
+        "index_bytes_sha256": digest(index_path.read_bytes()),
         "index_pristine": not git(
             repo, "diff", "--cached", "--name-only", "-z", "HEAD"
         ).stdout,
@@ -281,17 +319,25 @@ def read_snapshot(path: Path) -> dict:
         raise AuditError(
             "snapshot predecessor is complete", "patch metadata", predecessor
         )
-    export_digest = value.get("predecessor_worktree_export_sha256")
-    if export_digest is not None and (
-        not isinstance(export_digest, str)
-        or len(export_digest) != 64
-        or any(character not in "0123456789abcdef" for character in export_digest)
+    for field in (
+        "predecessor_worktree_export_sha256",
+        "predecessor_index_export_sha256",
+        "index_bytes_sha256",
     ):
-        raise AuditError(
-            "snapshot predecessor export digest is valid",
-            "SHA-256 or an older snapshot without this field",
-            export_digest,
-        )
+        export_digest = value.get(field)
+        if export_digest is not None and (
+            not isinstance(export_digest, str)
+            or len(export_digest) != 64
+            or any(character not in "0123456789abcdef" for character in export_digest)
+        ):
+            raise AuditError(
+                "snapshot export/index digest is valid",
+                {
+                    "field": field,
+                    "value": "SHA-256 or an older snapshot without this field",
+                },
+                export_digest,
+            )
     for key in ("excluded_paths", "included_paths", "changed_paths", "untracked_paths"):
         if not all(isinstance(name, str) for name in value[key]):
             raise AuditError("snapshot paths are strings", key, value[key])
@@ -322,6 +368,17 @@ def changes(before: dict, after: dict) -> dict:
             ("previous patch is unchanged", "previous_patch"),
         )
     ]
+    if "index_bytes_sha256" in before:
+        checks.append(
+            {
+                "condition": "index bytes are unchanged",
+                "expected": before["index_bytes_sha256"],
+                "received": after.get("index_bytes_sha256"),
+                "status": "passed"
+                if before["index_bytes_sha256"] == after.get("index_bytes_sha256")
+                else "failed",
+            }
+        )
     return {
         "schema_version": 1,
         "kind": "changes",
@@ -350,7 +407,63 @@ def changes(before: dict, after: dict) -> dict:
     }
 
 
-def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
+def check_target_base(
+    repo: Path, head: str, successor: Path, paths: list[str], scratch_root: Path
+):
+    scratch_root = scratch_root.expanduser().resolve()
+    if scratch_root.is_relative_to(repo.resolve()) or not scratch_root.is_dir():
+        raise AuditError(
+            "applicability scratch is an existing external directory",
+            "external scratch directory",
+            display(scratch_root),
+        )
+    git_dir = os.fsdecode(git(repo, "rev-parse", "--absolute-git-dir").stdout).strip()
+    with tempfile.TemporaryDirectory(
+        dir=scratch_root, prefix="target-base-"
+    ) as temporary:
+        tree = Path(temporary)
+        for name in paths:
+            entry = git(repo, "ls-tree", "-z", head, "--", name).stdout
+            if not entry:
+                continue
+            descriptor, actual_name = entry.rstrip(b"\0").split(b"\t", 1)
+            mode, kind, object_id = descriptor.split()
+            if kind != b"blob" or os.fsdecode(actual_name) != name:
+                raise AuditError(
+                    "patch base entries are exact blobs", name, os.fsdecode(entry)
+                )
+            destination = tree / name
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            data = git(repo, "cat-file", "blob", object_id.decode("ascii")).stdout
+            if mode == b"120000":
+                destination.symlink_to(os.fsdecode(data))
+            elif mode in {b"100644", b"100755"}:
+                destination.write_bytes(data)
+                destination.chmod(int(mode, 8) & 0o777)
+            else:
+                raise AuditError(
+                    "patch base blob mode is supported",
+                    "regular file or symlink",
+                    mode.decode(),
+                )
+        return git(
+            tree,
+            f"--git-dir={git_dir}",
+            f"--work-tree={tree}",
+            "apply",
+            "--check",
+            str(successor),
+            check=False,
+        )
+
+
+def audit(
+    baseline: dict,
+    successor: Path,
+    included: list[str],
+    selected_export: Path,
+    scratch_root: Path,
+) -> dict:
     repo = Path(baseline["repo"]).expanduser()
     predecessor = Path(baseline["previous_patch"]["path"]).expanduser()
     current = snapshot(
@@ -360,6 +473,16 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
         sorted(set(baseline["included_paths"]) | set(included)),
     )
     metadata = patch_metadata(successor)
+    selection = patch_metadata(selected_export)
+    if (
+        selected_export.resolve() == successor.resolve()
+        or selected_export.resolve().is_relative_to(repo.resolve())
+    ):
+        raise AuditError(
+            "reviewed selection is a separate external input",
+            "frozen reviewed export outside the audited repository",
+            display(selected_export),
+        )
     comparison = compare_patches(parse_patch(predecessor), parse_patch(successor))
     intended = sorted(
         (set(baseline["previous_patch"]["paths"]) | set(current["included_paths"]))
@@ -381,6 +504,12 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
     require(
         "index entries are unchanged", baseline["index_sha256"], current["index_sha256"]
     )
+    if "index_bytes_sha256" in baseline:
+        require(
+            "index bytes are unchanged",
+            baseline["index_bytes_sha256"],
+            current["index_bytes_sha256"],
+        )
     require(
         "previous patch is unchanged",
         baseline["previous_patch"],
@@ -398,8 +527,11 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
     )
     recorded_predecessor_paths = (
         set(baseline["previous_patch"]["paths"])
-        if baseline.get("predecessor_worktree_export_sha256")
-        == baseline["previous_patch"]["sha256"]
+        if baseline["previous_patch"]["sha256"]
+        in {
+            baseline.get("predecessor_worktree_export_sha256"),
+            baseline.get("predecessor_index_export_sha256"),
+        }
         else set()
     )
     require(
@@ -411,9 +543,11 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
         ),
     )
     require(
-        "intended paths are tracked before export",
+        "authorized untracked additions are included in the selected export",
         [],
-        sorted(set(current["untracked_paths"]) & set(intended)),
+        sorted(
+            (set(current["untracked_paths"]) & set(intended)) - set(metadata["paths"])
+        ),
     )
     allowed = (
         set(intended) | set(baseline["excluded_paths"]) | set(baseline["changed_paths"])
@@ -430,6 +564,7 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
             set(current["untracked_paths"])
             - set(baseline["untracked_paths"])
             - set(baseline["excluded_paths"])
+            - set(current["included_paths"])
         ),
     )
     preserved = (
@@ -444,23 +579,26 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
             if baseline["files"].get(name) != current["files"].get(name)
         ),
     )
-    exported = git(
-        repo, "diff", "--binary", "--no-ext-diff", "HEAD", "--", *intended
-    ).stdout
     require(
-        "successor bytes equal the intended Git export",
-        digest(exported),
+        "successor bytes equal the reviewed hunk selection",
+        selection["sha256"],
         metadata["sha256"],
     )
     applicability = {}
-    for label, args in (("cached", ["--cached"]), ("reverse", ["--reverse"])):
+    for label, args in (("cached", ["--cached"]), ("target_base", [])):
         if label == "cached" and not current["index_pristine"]:
             applicability[label] = {
                 "status": "not-run",
-                "reason": "index is not pristine; preserve it and use a separately authorized clean target",
+                "reason": "index is not pristine; preserve it and use the private target-base filesystem check",
             }
             continue
-        result = git(repo, "apply", "--check", *args, str(successor), check=False)
+        result = (
+            git(repo, "apply", "--check", *args, str(successor), check=False)
+            if label == "cached"
+            else check_target_base(
+                repo, baseline["head"], successor, metadata["paths"], scratch_root
+            )
+        )
         applicability[label] = {
             "status": "passed" if result.returncode == 0 else "failed",
             "exit_code": result.returncode,
@@ -478,6 +616,7 @@ def audit(baseline: dict, successor: Path, included: list[str]) -> dict:
         "head": current["head"],
         "tag": current["tag"],
         "successor": metadata,
+        "reviewed_selection": selection,
         "intended_paths": intended,
         "excluded_paths": baseline["excluded_paths"],
         "checks": checks,
@@ -563,6 +702,18 @@ def main(argv: list[str] | None = None) -> int:
     finish.add_argument("--baseline", type=Path, required=True)
     finish.add_argument("--successor-patch", type=Path, required=True)
     finish.add_argument("--include", action="append", default=[])
+    finish.add_argument(
+        "--selected-export",
+        type=Path,
+        required=True,
+        help="frozen reviewed hunk selection; never a whole-worktree path export",
+    )
+    finish.add_argument(
+        "--scratch-root",
+        type=Path,
+        required=True,
+        help="existing external directory for a disposable target-base applicability view",
+    )
     for command in (capture, delta, finish):
         command.add_argument(
             "--output",
@@ -588,6 +739,8 @@ def main(argv: list[str] | None = None) -> int:
                 read_snapshot(args.baseline.expanduser()),
                 args.successor_patch.expanduser().absolute(),
                 relative_paths(args.include),
+                args.selected_export.expanduser().absolute(),
+                args.scratch_root,
             )
         emit(report, args.output)
         return 1 if report.get("status") == "failed" else 0

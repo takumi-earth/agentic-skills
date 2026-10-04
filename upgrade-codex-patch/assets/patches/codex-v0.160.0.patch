@@ -1,43 +1,30 @@
 diff --git a/codex-rs/.cargo/config.toml b/codex-rs/.cargo/config.toml
-index 8a6f2c11ee..20f162b9ad 100644
+index 8a6f2c11ee..f1301ffb5e 100644
 --- a/codex-rs/.cargo/config.toml
 +++ b/codex-rs/.cargo/config.toml
-@@ -1,3 +1,11 @@
+@@ -1,3 +1,8 @@
 +[build]
-+rustc-wrapper = "../../codex-v8/rustc-wrapper"
++rustc-wrapper = "../../codex-v8/bin/rustc-wrapper"
 +# Keep wrapped build scripts separate from Cargo's existing intermediate cache.
 +build-dir = "target/codex-v8"
-+
-+[env]
-+CODEX_V8_BUN = "/xdg/bun/bin/bun"
 +
  [target.'cfg(all(windows, target_env = "msvc"))']
  rustflags = ["-C", "link-arg=/STACK:8388608", "-C", "target-feature=+crt-static"]
  
 diff --git a/codex-rs/Cargo.toml b/codex-rs/Cargo.toml
-index 1a60bc36f8..31acdfe629 100644
+index 1a60bc36f8..6bdb94627c 100644
 --- a/codex-rs/Cargo.toml
 +++ b/codex-rs/Cargo.toml
-@@ -320,15 +320,15 @@ core_test_support = { path = "core/tests/common" }
- # External
- learning_mode_windows = { git = "https://github.com/microsoft/mxc", rev = "6cd3d58f05d3447e67109cfb75e042803b843ca4" }
- wxc_common = { git = "https://github.com/microsoft/mxc", rev = "6cd3d58f05d3447e67109cfb75e042803b843ca4" }
--age = "0.11.1"
-+age = "0.11.5"
- ansi-to-tui = "8.0.1"
- anyhow = "1"
- appcontainer_common = { git = "https://github.com/microsoft/mxc", rev = "6cd3d58f05d3447e67109cfb75e042803b843ca4" }
- arboard = { version = "3", features = ["wayland-data-control"] }
--arc-swap = "1.9.0"
-+arc-swap = "1.9.2"
- assert_cmd = "2"
- assert_matches = "1.5.0"
--async-channel = "2.3.1"
-+async-channel = "2.5.0"
- async-io = "2.6.0"
- async-stream = "0.3.6"
- aws-config = "1"
-@@ -339,16 +339,16 @@ aws-smithy-types = { version = "1", features = ["http-body-1-x"] }
+@@ -155,7 +155,7 @@ members = [
+     "plugin",
+     "model-provider",
+ ]
+-resolver = "2"
++resolver = "3"
+ 
+ [workspace.package]
+ version = "0.160.0"
+@@ -339,8 +339,8 @@ aws-smithy-types = { version = "1", features = ["http-body-1-x"] }
  aws-types = "1"
  axum = { version = "0.8", default-features = false }
  base64 = "0.22.1"
@@ -46,282 +33,43 @@ index 1a60bc36f8..31acdfe629 100644
 +bitflags = "2.13.2"
 +blake3 = "=1.8.2"
  bm25 = "2.3.2"
--bytes = "1.10.1"
-+bytes = "1.12.1"
+ bytes = "1.10.1"
  caseless = "0.2.2"
- chardetng = "0.1.17"
--chrono = "0.4.43"
-+chrono = "0.4.45"
- clap = "4"
- clap_complete = "4"
--clatter = { version = "2.2.0", default-features = false, features = [
-+clatter = { version = "2.3.0", default-features = false, features = [
-     "alloc",
-     "getrandom",
-     "use-25519",
-@@ -356,9 +356,9 @@ clatter = { version = "2.2.0", default-features = false, features = [
-     "use-rust-crypto-ml-kem",
-     "use-sha",
- ] }
--color-eyre = "0.6.3"
-+color-eyre = "0.6.5"
- constant_time_eq = "0.3.1"
--crossbeam-channel = "0.5.15"
-+crossbeam-channel = "0.5.17"
- crypto_box = { version = "0.9.1", features = ["seal"] }
- crossterm = "0.29.0"
- ctor = "0.6.3"
-@@ -369,57 +369,57 @@ dirs = "6"
- divan = "0.1.21"
- dns-lookup = "3.0.1"
- dotenvy = "0.15.7"
--dunce = "1.0.4"
-+dunce = "1.0.5"
- ed25519-dalek = { version = "2.2.0", features = ["pkcs8"] }
--encoding_rs = "0.8.35"
-+encoding_rs = "0.8.42"
- eventsource-stream = "0.2.3"
--flate2 = "1.1.8"
-+flate2 = "1.1.10"
- futures = { version = "0.3", default-features = false }
- gethostname = "1.1.0"
- gix = { version = "0.81.0", default-features = false, features = ["sha1"] }
--gix-url = "0.35.2"
-+gix-url = "0.35.3"
- glob = "0.3"
- globset = "0.4"
- hmac = "0.12.1"
--http = "1.3.1"
-+http = "1.5.0"
- httpdate = "1.0.3"
--iana-time-zone = "0.1.64"
--icu_decimal = "2.1"
--icu_locale_core = "2.1"
--icu_provider = { version = "2.1", features = ["sync"] }
--ignore = "0.4.23"
--image = { version = "^0.25.9", default-features = false }
-+iana-time-zone = "0.1.65"
-+icu_decimal = "2.3"
-+icu_locale_core = "2.3"
-+icu_provider = { version = "2.3", features = ["sync"] }
-+ignore = "0.4.33"
-+image = { version = "^0.25.10", default-features = false }
- include_dir = "0.7.4"
--indexmap = "2.12.0"
--insta = "1.46.3"
--inventory = "0.3.19"
-+indexmap = "2.14.2"
-+insta = "1.49.0"
-+inventory = "0.3.24"
- itertools = "0.14.0"
- jsonptr = { version = "0.7.1", default-features = false }
- jsonwebtoken = "9.3.1"
- keyring = { version = "3.6", default-features = false }
--landlock = "0.4.4"
-+landlock = "0.4.7"
- lazy_static = "1"
--libc = "0.2.182"
-+libc = "0.2.190"
- # Keep SQLx's bundled SQLite on a version containing the WAL-reset corruption fix:
- # https://www.sqlite.org/wal.html#the_wal_reset_bug
- libsqlite3-sys = { version = "0.37", default-features = false }
- log = "0.4"
--lru = "0.18.2"
-+lru = "0.18.5"
- maplit = "1.0.2"
--memchr = "2.7.6"
-+memchr = "2.8.3"
- mime_guess = "2.0.5"
--multimap = "0.10.0"
-+multimap = "0.10.1"
- notify = "8.2.0"
- nucleo = { git = "https://github.com/helix-editor/nucleo.git", rev = "4253de9faabb4e5c6d81d946a5e35a90f87347ee" }
--once_cell = "1.20.2"
-+once_cell = "1.21.4"
- openssl-sys = "*"
- opentelemetry = "0.31.0"
--opentelemetry-appender-tracing = "0.31.0"
--opentelemetry-otlp = "0.31.0"
-+opentelemetry-appender-tracing = "0.31.1"
-+opentelemetry-otlp = "0.31.1"
- opentelemetry-semantic-conventions = "0.31.0"
- opentelemetry_sdk = "0.31.0"
--os_info = "3.12.0"
--owo-colors = "4.3.0"
-+os_info = "3.15.0"
-+owo-colors = "4.4.0"
- pathdiff = "0.2"
- portable-pty = "0.9.0"
- predicates = "3"
-@@ -434,49 +434,49 @@ ratatui = { version = "0.30.2", default-features = false, features = [
-     "underline-color",
- ] }
- ratatui-macros = "0.7.2"
--rcgen = { version = "0.14.7", default-features = false, features = [
-+rcgen = { version = "0.14.10", default-features = false, features = [
-     "aws_lc_rs",
-     "pem",
- ] }
--regex = "1.12.3"
--regex-automata = { version = "0.4.13", default-features = false, features = ["std", "syntax", "unicode", "nfa-pikevm"] }
--regex-lite = "0.1.8"
--regex-syntax = "0.8.8"
-+regex = "1.13.1"
-+regex-automata = { version = "0.4.18", default-features = false, features = ["std", "syntax", "unicode", "nfa-pikevm"] }
-+regex-lite = "0.1.9"
-+regex-syntax = "0.8.11"
- reqwest = { version = "0.12", features = ["cookies"] }
- rmcp = { version = "=3.2.0", default-features = false }
- runfiles = { git = "https://github.com/dzbarsky/rules_rust", rev = "b56cbaa8465e74127f1ea216f813cd377295ad81" }
--rustix = { version = "1.1.4", features = ["net"] }
-+rustix = { version = "1.1.5", features = ["net"] }
- rustls = { version = "0.23.45", default-features = false, features = [
-     "aws_lc_rs",
-     "std",
- ] }
--rustls-native-certs = "0.8.3"
--rustls-pki-types = "1.14.0"
-+rustls-native-certs = "0.8.4"
-+rustls-pki-types = "1.15.1"
- schemars = "0.8.22"
- seccompiler = "0.5.0"
- semver = "1.0"
--sentry = "0.46.0"
-+sentry = "0.46.2"
- serde = { version = "1", features = ["rc"] }
- serde_ignored = "0.1.14"
- serde_json = "1"
- serde_path_to_error = "0.1.20"
--serde_with = "3.17"
-+serde_with = "3.24"
- serde_yaml = "0.9"
--serial_test = "3.2.0"
--sha1 = "0.10.6"
-+serial_test = "3.5.0"
-+sha1 = "0.10.7"
- scopeguard = "1.2.0"
- sha2 = "0.10"
- shlex = "1.3.0"
- signal-hook = "0.3.18"
- similar = "2.7.0"
--symphonia = { version = "0.6.0", default-features = false, features = [
-+symphonia = { version = "0.6.1", default-features = false, features = [
-     "isomp4",
-     "mkv",
-     "mp3",
-     "ogg",
-     "wav",
- ] }
--socket2 = "0.6.1"
-+socket2 = "0.6.5"
- # Keep SQLx versions in sync; when bumping, audit the SQLite constructor deny list in clippy.toml.
- sqlx = { version = "=0.9.0", default-features = false, features = [
-     "chrono",
-@@ -500,38 +500,38 @@ syntect = "5"
- sys-locale = "0.3.2"
- system-configuration = "0.7"
- tar = { version = "=0.4.45", default-features = false }
--tempfile = "3.23.0"
--test-log = "0.2.19"
--textwrap = "0.16.2"
--thiserror = "2.0.17"
-+tempfile = "3.27.0"
-+test-log = "0.2.21"
-+textwrap = "0.16.4"
-+thiserror = "2.0.21"
+@@ -505,7 +505,7 @@ test-log = "0.2.19"
+ textwrap = "0.16.2"
+ thiserror = "2.0.17"
  tikv-jemallocator = "=0.7.0"
 -time = "0.3.47"
 +time = "=0.3.47"
  tiny_http = "0.12"
  tokio = "1"
--tokio-rustls = "0.26.4"
--tokio-stream = "0.1.18"
-+tokio-rustls = "0.26.6"
-+tokio-stream = "0.1.19"
- tokio-test = "0.4"
- tokio-tungstenite = { version = "0.28.0", features = [
-     "proxy",
-     "rustls-tls-native-roots",
- ] }
--tokio-util = "0.7.18"
--toml = "0.9.5"
--toml_edit = "0.24.0"
-+tokio-util = "0.7.19"
-+toml = "0.9.12"
-+toml_edit = "0.24.1"
- tracing = "0.1.44"
--tracing-appender = "0.2.3"
--tracing-opentelemetry = "0.32.0"
--tracing-subscriber = "0.3.22"
--tracing-test = "0.2.5"
--tonic = { version = "0.14.3", default-features = false, features = ["channel", "codegen"] }
--tonic-prost = "0.14.3"
-+tracing-appender = "0.2.5"
-+tracing-opentelemetry = "0.32.1"
-+tracing-subscriber = "0.3.23"
-+tracing-test = "0.2.6"
-+tonic = { version = "0.14.6", default-features = false, features = ["channel", "codegen"] }
-+tonic-prost = "0.14.6"
- tree-sitter = "0.25.10"
- tree-sitter-bash = "0.25"
- tree-sitter-powershell = "=0.26.4"
- ts-rs = "11"
- tungstenite = { version = "0.27.0", features = ["deflate", "proxy"] }
--uds_windows = "1.1.0"
--unicode-segmentation = "1.12.0"
-+uds_windows = "1.2.1"
-+unicode-segmentation = "1.13.3"
- unicode-width = "0.2"
- url = "2"
- urlencoding = "2.1"
-@@ -539,16 +539,17 @@ uuid = "1"
- v8 = "=150.4.0"
- vt100 = "0.16.2"
- walkdir = "2.5.0"
--webbrowser = "1.2.2"
-+webbrowser = "1.2.4"
- which = "8"
- whoami = "1.6.1"
- wildmatch = "2.6.1"
+ tokio-rustls = "0.26.4"
+@@ -546,6 +546,7 @@ wildmatch = "2.6.1"
  winapi-util = "0.1.11"
  zip = "2.4.2"
  zstd = "0.13"
 +zune-core = "=0.5.1"
  
  wiremock = "0.6"
--zeroize = "1.8.2"
-+zeroize = "1.9.0"
+ zeroize = "1.8.2"
+diff --git a/codex-rs/app-server/src/lib.rs b/codex-rs/app-server/src/lib.rs
+index d1a622ca8c..3669fbf8fc 100644
+--- a/codex-rs/app-server/src/lib.rs
++++ b/codex-rs/app-server/src/lib.rs
+@@ -1499,9 +1499,12 @@ fn test_user_config_file_from_env() -> Option<std::path::PathBuf> {
+ }
  
- [workspace.lints]
- rust = {}
-diff --git a/codex-rs/app-server/Cargo.toml b/codex-rs/app-server/Cargo.toml
-index 8834c54b7e..1bd1031bdb 100644
---- a/codex-rs/app-server/Cargo.toml
-+++ b/codex-rs/app-server/Cargo.toml
-@@ -153,7 +153,7 @@ serial_test = { workspace = true }
- shlex = { workspace = true }
- sqlx = { workspace = true }
- tar = { workspace = true }
--test-case = "3.3.1"
-+test-case = "3.4.0"
- tokio-rustls = { workspace = true }
- tokio-tungstenite = { workspace = true }
- tracing-opentelemetry = { workspace = true }
-diff --git a/codex-rs/aws-auth/Cargo.toml b/codex-rs/aws-auth/Cargo.toml
-index f9b5e7139a..c4249938bd 100644
---- a/codex-rs/aws-auth/Cargo.toml
-+++ b/codex-rs/aws-auth/Cargo.toml
-@@ -22,8 +22,8 @@ aws-smithy-types = { workspace = true }
- aws-types = { workspace = true }
- bytes = { workspace = true }
- http = { workspace = true }
--http-body = "1.0.1"
--http-body-util = "0.1.3"
-+http-body = "1.1.0"
-+http-body-util = "0.1.5"
- url = { workspace = true }
- thiserror = { workspace = true }
- 
+ fn loader_overrides_with_test_user_config_file(
+-    mut loader_overrides: LoaderOverrides,
++    loader_overrides: LoaderOverrides,
+     test_user_config_file: Option<std::path::PathBuf>,
+ ) -> IoResult<LoaderOverrides> {
++    #[cfg(debug_assertions)]
++    let mut loader_overrides = loader_overrides;
++
+     #[cfg(debug_assertions)]
+     if let Some(path) = test_user_config_file {
+         let path = AbsolutePathBuf::from_absolute_path(path).map_err(|err| {
 diff --git a/codex-rs/chatgpt/src/lib.rs b/codex-rs/chatgpt/src/lib.rs
 index 057478db18..5589621149 100644
 --- a/codex-rs/chatgpt/src/lib.rs
@@ -342,60 +90,33 @@ index bdd7771b3a..8ab8b00759 100644
  use clap::Args;
  use clap::CommandFactory;
  use clap::Parser;
-diff --git a/codex-rs/code-mode-host/Cargo.toml b/codex-rs/code-mode-host/Cargo.toml
-index d56661f7d0..71a475b842 100644
---- a/codex-rs/code-mode-host/Cargo.toml
-+++ b/codex-rs/code-mode-host/Cargo.toml
-@@ -27,7 +27,7 @@ codex-otel = { workspace = true }
- codex-otel-trace-websocket = { workspace = true }
- codex-protocol = { workspace = true }
- futures = { workspace = true }
--prost = "0.14.3"
-+prost = "0.14.4"
- serde_json = { workspace = true }
- tokio = { workspace = true, features = ["io-std", "io-util", "macros", "net", "process", "rt", "sync", "time"] }
- tokio-stream = { workspace = true }
-diff --git a/codex-rs/code-mode-protocol/Cargo.toml b/codex-rs/code-mode-protocol/Cargo.toml
-index cad10b47eb..051fe8f3c8 100644
---- a/codex-rs/code-mode-protocol/Cargo.toml
-+++ b/codex-rs/code-mode-protocol/Cargo.toml
-@@ -14,7 +14,7 @@ workspace = true
- 
- [dependencies]
- codex-protocol = { workspace = true }
--prost = "0.14.3"
-+prost = "0.14.4"
- serde = { workspace = true, features = ["derive"] }
- serde_json = { workspace = true }
- tokio = { workspace = true, features = ["io-util", "sync"] }
-diff --git a/codex-rs/code-mode/Cargo.toml b/codex-rs/code-mode/Cargo.toml
-index b6c0edf251..a7bbb959ff 100644
---- a/codex-rs/code-mode/Cargo.toml
-+++ b/codex-rs/code-mode/Cargo.toml
-@@ -19,8 +19,8 @@ codex-install-context = { workspace = true }
- codex-otel = { workspace = true }
- codex-protocol = { workspace = true }
- futures = { workspace = true }
--http-body-util = "0.1.3"
--prost = "0.14.3"
-+http-body-util = "0.1.5"
-+prost = "0.14.4"
- reqwest = { workspace = true, features = ["stream"] }
- serde_json = { workspace = true }
- tokio = { workspace = true, features = ["io-util", "macros", "net", "process", "rt", "sync", "time"] }
-diff --git a/codex-rs/config/Cargo.toml b/codex-rs/config/Cargo.toml
-index 9be1fb4f47..31043284dc 100644
---- a/codex-rs/config/Cargo.toml
-+++ b/codex-rs/config/Cargo.toml
-@@ -30,7 +30,7 @@ futures = { workspace = true, features = ["alloc", "std"] }
- gethostname = { workspace = true }
- indexmap = { workspace = true, features = ["serde"] }
- multimap = { workspace = true }
--prost = "0.14.3"
-+prost = "0.14.4"
- regex-lite = { workspace = true }
- schemars = { workspace = true }
- serde = { workspace = true, features = ["derive"] }
+diff --git a/codex-rs/cloud-tasks/src/lib.rs b/codex-rs/cloud-tasks/src/lib.rs
+index 6643684166..1c3dea772f 100644
+--- a/codex-rs/cloud-tasks/src/lib.rs
++++ b/codex-rs/cloud-tasks/src/lib.rs
+@@ -13,7 +13,9 @@ use codex_cloud_tasks_client::TaskStatus;
+ use codex_git_utils::current_branch_name;
+ use codex_git_utils::default_branch_name;
+ use codex_http_client::ClientRouteClass;
++#[cfg(debug_assertions)]
+ use codex_http_client::HttpClientFactory;
++#[cfg(debug_assertions)]
+ use codex_http_client::OutboundProxyPolicy;
+ use codex_http_client::RouteAwareClientPool;
+ use codex_login::default_client::get_codex_user_agent;
+diff --git a/codex-rs/code-mode-runtime/src/session_runtime/mod.rs b/codex-rs/code-mode-runtime/src/session_runtime/mod.rs
+index 0d2f453923..9b27e72f3d 100644
+--- a/codex-rs/code-mode-runtime/src/session_runtime/mod.rs
++++ b/codex-rs/code-mode-runtime/src/session_runtime/mod.rs
+@@ -153,7 +153,7 @@ impl SessionRuntime {
+     fn allocate_cell_id(&self) -> Result<CellId, Error> {
+         self.inner
+             .next_cell_id
+-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next_cell_id| {
++            .try_update(Ordering::Relaxed, Ordering::Relaxed, |next_cell_id| {
+                 next_cell_id.checked_add(1)
+             })
+             .map(|cell_id| CellId::new(cell_id.to_string()))
 diff --git a/codex-rs/config/src/types.rs b/codex-rs/config/src/types.rs
 index e44f737c18..d1887e9241 100644
 --- a/codex-rs/config/src/types.rs
@@ -413,19 +134,6 @@ index e44f737c18..d1887e9241 100644
      /// Enable animations (welcome screen, shimmer effects, spinners).
      /// Defaults to `true`.
      #[serde(default = "default_true")]
-diff --git a/codex-rs/core/Cargo.toml b/codex-rs/core/Cargo.toml
-index d5fd95d2de..cb93aa2818 100644
---- a/codex-rs/core/Cargo.toml
-+++ b/codex-rs/core/Cargo.toml
-@@ -157,7 +157,7 @@ maplit = { workspace = true }
- opentelemetry = { workspace = true }
- predicates = { workspace = true }
- pretty_assertions = { workspace = true }
--test-case = "3.3.1"
-+test-case = "3.4.0"
- opentelemetry_sdk = { workspace = true, features = [
-     "experimental_metrics_custom_reader",
-     "metrics",
 diff --git a/codex-rs/core/config.schema.json b/codex-rs/core/config.schema.json
 index ac6171c01c..3e4c73b91d 100644
 --- a/codex-rs/core/config.schema.json
@@ -505,87 +213,57 @@ index 60c6f65353..c1adadb09e 100644
              animations: cfg.tui.as_ref().map(|t| t.animations).unwrap_or(true),
              tui_effects: cfg.tui.as_ref().map(|t| t.effects).unwrap_or_default(),
              tui_rendering: cfg.tui.as_ref().map(|t| t.rendering).unwrap_or_default(),
-diff --git a/codex-rs/exec-server/Cargo.toml b/codex-rs/exec-server/Cargo.toml
-index 3c78a5021c..e91b9c8f48 100644
---- a/codex-rs/exec-server/Cargo.toml
-+++ b/codex-rs/exec-server/Cargo.toml
-@@ -51,7 +51,7 @@ dirs = { workspace = true }
- futures = { workspace = true }
- http = { workspace = true }
- opentelemetry = { workspace = true }
--prost = "0.14.3"
-+prost = "0.14.4"
- serde = { workspace = true, features = ["derive"] }
- serde_json = { workspace = true }
- thiserror = { workspace = true }
-@@ -103,7 +103,7 @@ rcgen = { workspace = true }
- rustls = { workspace = true }
- serial_test = { workspace = true }
- tempfile = { workspace = true }
--test-case = "3.3.1"
-+test-case = "3.4.0"
- tokio = { workspace = true, features = ["test-util"] }
- tracing-opentelemetry = { workspace = true }
- tracing-subscriber = { workspace = true }
-diff --git a/codex-rs/exec-server/tests/support/Cargo.toml b/codex-rs/exec-server/tests/support/Cargo.toml
-index 073d4e3411..3e7e7b42ea 100644
---- a/codex-rs/exec-server/tests/support/Cargo.toml
-+++ b/codex-rs/exec-server/tests/support/Cargo.toml
-@@ -17,7 +17,7 @@ anyhow = { workspace = true }
- codex-exec-server = { workspace = true }
- codex-http-client = { workspace = true }
- futures = { workspace = true }
--prost = "0.14.3"
-+prost = "0.14.4"
- serde_json = { workspace = true }
- tokio = { workspace = true, features = ["macros", "net", "time"] }
- tokio-tungstenite = { workspace = true }
-diff --git a/codex-rs/ext/guardian-reviewer/Cargo.toml b/codex-rs/ext/guardian-reviewer/Cargo.toml
-index 6c7b9cd55b..f7279364ad 100644
---- a/codex-rs/ext/guardian-reviewer/Cargo.toml
-+++ b/codex-rs/ext/guardian-reviewer/Cargo.toml
-@@ -32,5 +32,5 @@ tracing = { workspace = true }
- [dev-dependencies]
- opentelemetry = { workspace = true }
- opentelemetry_sdk = { workspace = true, features = ["experimental_metrics_custom_reader", "metrics"] }
--test-case = "3.3.1"
-+test-case = "3.4.0"
- pretty_assertions = { workspace = true }
-diff --git a/codex-rs/http-client/Cargo.toml b/codex-rs/http-client/Cargo.toml
-index d59c2e78f7..f6df82fbc2 100644
---- a/codex-rs/http-client/Cargo.toml
-+++ b/codex-rs/http-client/Cargo.toml
-@@ -9,7 +9,7 @@ bytes = { workspace = true }
- codex-utils-rustls-provider = { workspace = true }
- futures = { workspace = true }
- http = { workspace = true }
--http-body = "1.0.1"
-+http-body = "1.1.0"
- httpdate = { workspace = true }
- native-tls = "0.2"
- opentelemetry = { workspace = true }
-@@ -31,7 +31,7 @@ zstd = { workspace = true }
- system-configuration = { workspace = true }
+diff --git a/codex-rs/core/src/tools/executed_tool_calls.rs b/codex-rs/core/src/tools/executed_tool_calls.rs
+index ee05b483bd..76421e3322 100644
+--- a/codex-rs/core/src/tools/executed_tool_calls.rs
++++ b/codex-rs/core/src/tools/executed_tool_calls.rs
+@@ -379,7 +379,7 @@ impl ExecutedToolCalls {
+     fn reserve_direct_call(&self) -> Option<DirectCallPermit> {
+         let recording = Arc::downgrade(&self.lock_state().as_ref()?.recording);
+         self.pending_direct_calls
+-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |pending| {
++            .try_update(Ordering::Relaxed, Ordering::Relaxed, |pending| {
+                 (pending < MAX_PENDING_EXECUTED_TOOL_CALLS).then_some(pending + 1)
+             })
+             .ok()?;
+diff --git a/codex-rs/core/src/tools/registry.rs b/codex-rs/core/src/tools/registry.rs
+index 7d88650f59..9ac7b76ebd 100644
+--- a/codex-rs/core/src/tools/registry.rs
++++ b/codex-rs/core/src/tools/registry.rs
+@@ -13,7 +13,6 @@ use crate::memory_usage::shell_script_for_invocation;
+ use crate::session::session::Session;
+ use crate::session::turn_context::TurnContext;
+ use crate::tools::context::FunctionToolOutput;
+-use crate::tools::context::ToolCallSource;
+ use crate::tools::context::ToolCallState;
+ use crate::tools::context::ToolInvocation;
+ use crate::tools::context::ToolOutput;
+diff --git a/codex-rs/diagnostics/src/lib.rs b/codex-rs/diagnostics/src/lib.rs
+index a966e4aee5..91b878b390 100644
+--- a/codex-rs/diagnostics/src/lib.rs
++++ b/codex-rs/diagnostics/src/lib.rs
+@@ -32,7 +32,7 @@ impl Gauge {
+     pub fn decrement(&self) {
+         let _ = self
+             .value
+-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
++            .try_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
+                 Some(value.saturating_sub(1))
+             });
+     }
+diff --git a/codex-rs/linux-sandbox/src/landlock.rs b/codex-rs/linux-sandbox/src/landlock.rs
+index 140daaf8af..bbfe3bf2f7 100644
+--- a/codex-rs/linux-sandbox/src/landlock.rs
++++ b/codex-rs/linux-sandbox/src/landlock.rs
+@@ -157,7 +157,7 @@ fn install_filesystem_landlock_rules_on_current_thread(
+         .create()?
+         .add_rules(landlock::path_beneath_rules(&["/"], access_ro))?
+         .add_rules(landlock::path_beneath_rules(&["/dev/null"], access_rw))?
+-        .set_no_new_privs(true);
++        .no_new_privs(/*yes*/ true);
  
- [target.'cfg(target_os = "windows")'.dependencies]
--rustls-platform-verifier = "0.7.0"
-+rustls-platform-verifier = "0.7.1"
- windows-sys = { version = "0.52", features = [
-     "Win32_Foundation",
-     "Win32_Networking_WinHttp",
-diff --git a/codex-rs/linux-sandbox/Cargo.toml b/codex-rs/linux-sandbox/Cargo.toml
-index 17b3fa14b1..be1bf997e8 100644
---- a/codex-rs/linux-sandbox/Cargo.toml
-+++ b/codex-rs/linux-sandbox/Cargo.toml
-@@ -39,7 +39,7 @@ url = { workspace = true }
- codex-core = { workspace = true }
- pretty_assertions = { workspace = true }
- tempfile = { workspace = true }
--test-case = "3.3.1"
-+test-case = "3.4.0"
- tokio = { workspace = true, features = [
-     "io-std",
-     "macros",
+     if !writable_roots.is_empty() {
+         ruleset = ruleset.add_rules(landlock::path_beneath_rules(&writable_roots, access_rw))?;
 diff --git a/codex-rs/network-proxy/Cargo.toml b/codex-rs/network-proxy/Cargo.toml
 index bda4261602..ffb1376ae7 100644
 --- a/codex-rs/network-proxy/Cargo.toml
@@ -2595,7 +2273,7 @@ index c8e7120c8d..cfb00ab667 100644
          let err = handle_socks5_tcp(
              request,
 diff --git a/codex-rs/network-proxy/src/system_dns.rs b/codex-rs/network-proxy/src/system_dns.rs
-index 5149bccb41..e850a34790 100644
+index 5149bccb41..b65fd64f77 100644
 --- a/codex-rs/network-proxy/src/system_dns.rs
 +++ b/codex-rs/network-proxy/src/system_dns.rs
 @@ -5,7 +5,13 @@
@@ -2631,8 +2309,8 @@ index 5149bccb41..e850a34790 100644
 +        domain: Domain,
 +    ) -> impl Stream<Item = io::Result<Ipv4Addr>> + Send + '_ {
 +        stream::once(async move {
-+            let addresses = lookup_host((domain.as_str(), 0)).await?;
-+            Ok(stream::iter(addresses.filter_map(|addr| match addr.ip() {
++            let addresses = lookup_host((domain.as_str().to_owned(), 0)).await?;
++            Ok::<_, io::Error>(stream::iter(addresses.filter_map(|addr| match addr.ip() {
 +                IpAddr::V4(ip) => Some(Ok(ip)),
                  IpAddr::V6(_) => None,
 -            })
@@ -2651,8 +2329,8 @@ index 5149bccb41..e850a34790 100644
 +        domain: Domain,
 +    ) -> impl Stream<Item = io::Result<Ipv6Addr>> + Send + '_ {
 +        stream::once(async move {
-+            let addresses = lookup_host((domain.as_str(), 0)).await?;
-+            Ok(stream::iter(addresses.filter_map(|addr| match addr.ip() {
++            let addresses = lookup_host((domain.as_str().to_owned(), 0)).await?;
++            Ok::<_, io::Error>(stream::iter(addresses.filter_map(|addr| match addr.ip() {
                  IpAddr::V4(_) => None,
 -                IpAddr::V6(ip) => Some(ip),
 -            })
@@ -3012,19 +2690,6 @@ index a1b7891c6b..f6c8cd1c9b 100644
          }
          .context("convert shared SOCKS5 ingress listener")?;
          let task = spawn_socks_listener(&self.runtime, &self.routes, listener, addr);
-diff --git a/codex-rs/rmcp-client/Cargo.toml b/codex-rs/rmcp-client/Cargo.toml
-index c661aa0ed8..6ab5c1cf0b 100644
---- a/codex-rs/rmcp-client/Cargo.toml
-+++ b/codex-rs/rmcp-client/Cargo.toml
-@@ -48,7 +48,7 @@ rmcp = { workspace = true, default-features = false, features = [
- serde = { workspace = true, features = ["derive"] }
- serde_json = { workspace = true }
- sha2 = { workspace = true }
--sse-stream = "0.2.5"
-+sse-stream = "0.2.6"
- thiserror = { workspace = true }
- tiny_http = { workspace = true }
- tokio = { workspace = true, features = [
 diff --git a/codex-rs/rust-toolchain.toml b/codex-rs/rust-toolchain.toml
 index 910c65114e..67e3d88cb5 100644
 --- a/codex-rs/rust-toolchain.toml
@@ -3177,38 +2842,10 @@ index 4eb78a510c..d20afa6070 100644
                  animations: animations && system_motion == crate::motion::MotionMode::Animated,
                  screen_reader_detection_done: None,
                  effects: config.tui_effects,
-diff --git a/codex-rs/user-verification/Cargo.toml b/codex-rs/user-verification/Cargo.toml
-index fe4d5298f0..59617bcd65 100644
---- a/codex-rs/user-verification/Cargo.toml
-+++ b/codex-rs/user-verification/Cargo.toml
-@@ -17,11 +17,11 @@ tracing = { workspace = true }
- [target.'cfg(target_os = "macos")'.dependencies]
- core-foundation = "0.10"
- dirs = { workspace = true }
--objc2 = "0.6.3"
-+objc2 = "0.6.4"
- objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSString"] }
- objc2-local-authentication = { version = "0.3.2", default-features = false, features = ["std", "LAContext", "LABiometryType"] }
--security-framework = { version = "3.5", features = ["OSX_10_15"] }
--security-framework-sys = "2.15"
-+security-framework = { version = "3.7", features = ["OSX_10_15"] }
-+security-framework-sys = "2.17"
- 
- [dev-dependencies]
- p256 = { version = "0.13", features = ["ecdsa"] }
 diff --git a/codex-rs/utils/image/Cargo.toml b/codex-rs/utils/image/Cargo.toml
-index 3ac43b6df0..f5b403ae32 100644
+index 3ac43b6df0..b4a39977ae 100644
 --- a/codex-rs/utils/image/Cargo.toml
 +++ b/codex-rs/utils/image/Cargo.toml
-@@ -15,7 +15,7 @@ ignored = ["png"]
- [dependencies]
- base64 = { workspace = true }
- image = { workspace = true, features = ["jpeg", "png", "gif", "webp"] }
--png = { version = "0.18.0", features = ["zlib-rs"] }
-+png = { version = "0.18.1", features = ["zlib-rs"] }
- codex-utils-cache = { workspace = true }
- mime_guess = { workspace = true }
- thiserror = { workspace = true }
 @@ -25,6 +25,9 @@ tokio = { workspace = true, features = ["fs", "rt", "rt-multi-thread", "macros"]
  divan = { workspace = true }
  image = { workspace = true, features = ["jpeg", "png", "gif", "webp"] }
@@ -3234,29 +2871,51 @@ index af79eff692..2b4f0dc6b6 100644
  [lib]
  test = false
  doctest = false
-diff --git a/codex-rs/voice-host/Cargo.toml b/codex-rs/voice-host/Cargo.toml
-index 6ce04e3de9..b615761a30 100644
---- a/codex-rs/voice-host/Cargo.toml
-+++ b/codex-rs/voice-host/Cargo.toml
-@@ -30,7 +30,7 @@ webrtc = "=0.20.3"
+diff --git a/codex-rs/vendor/bubblewrap/bubblewrap.c b/codex-rs/vendor/bubblewrap/bubblewrap.c
+index 9039ddfa80..ed1dac23d5 100644
+--- a/codex-rs/vendor/bubblewrap/bubblewrap.c
++++ b/codex-rs/vendor/bubblewrap/bubblewrap.c
+@@ -1110,6 +1110,9 @@ privileged_op (int         privileged_op_socket,
+       break;
  
- [target.'cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu"), all(windows, target_env = "msvc")))'.dependencies]
- cpal = "=0.18.2"
--crossbeam-queue = "0.3.12"
-+crossbeam-queue = "0.3.14"
- gstreamer = { version = "=0.25.3", features = ["v1_28"] }
- gstreamer-app = { version = "=0.25.2", features = ["v1_28"] }
- gstreamer-audio = { version = "=0.25.3", features = ["v1_28"] }
-diff --git a/codex-rs/windows-sandbox-rs/Cargo.toml b/codex-rs/windows-sandbox-rs/Cargo.toml
-index 65332f3506..ab3fcb8a40 100644
---- a/codex-rs/windows-sandbox-rs/Cargo.toml
-+++ b/codex-rs/windows-sandbox-rs/Cargo.toml
-@@ -30,7 +30,7 @@ codex-utils-process = { workspace = true }
- codex-http-client = { workspace = true }
- anyhow = "1.0"
- base64 = { workspace = true }
--chrono = { version = "0.4.42", default-features = false, features = [
-+chrono = { version = "0.4.45", default-features = false, features = [
-     "clock",
-     "std",
- ] }
+     case PRIV_SEP_OP_REMOUNT_RO_NO_RECURSIVE:
++      if (arg2 == NULL)
++        die ("Remount destination is NULL");
++
+       bind_result = bind_mount (proc_fd, NULL, arg2, BIND_READONLY, &failing_path);
+ 
+       if (bind_result != BIND_MOUNT_SUCCESS)
+@@ -1120,6 +1123,9 @@ privileged_op (int         privileged_op_socket,
+       break;
+ 
+     case PRIV_SEP_OP_BIND_MOUNT:
++      if (arg2 == NULL)
++        die ("Bind mount destination is NULL");
++
+       /* We always bind directories recursively, otherwise this would let us
+          access files that are otherwise covered on the host */
+       bind_result = bind_mount (proc_fd, arg1, arg2, BIND_RECURSIVE | flags, &failing_path);
+@@ -1170,6 +1176,9 @@ privileged_op (int         privileged_op_socket,
+     case PRIV_SEP_OP_OVERLAY_MOUNT:
+       if (is_privileged)
+         die ("Overlay mounts are not supported in setuid mode");
++      if (arg2 == NULL)
++        die ("Overlay mount destination is NULL");
++
+       if (mount ("overlay", arg2, "overlay", MS_MGC_VAL | MS_NOSUID | MS_NODEV, arg1) != 0)
+         {
+           /* The standard message for ELOOP, "Too many levels of symbolic
+diff --git a/justfile b/justfile
+index 3614939c72..c256135a84 100644
+--- a/justfile
++++ b/justfile
+@@ -1,5 +1,9 @@
+ set working-directory := "codex-rs"
+ set positional-arguments
++
++# Shared source-package installer; override the canonical checkout location in the environment.
++import? x'${AGENTIC_SKILLS_REPO:-~/agentic-skills}/upgrade-codex-patch/justfile'
++
+ export CODEX_REPO_ROOT := justfile_directory()
+ export JUST_SHELL := justfile_directory() / "scripts/just-shell.py"
+ set shell := ["python3", "-c", 'import os, runpy; runpy.run_path(os.environ["JUST_SHELL"], run_name="__main__")']

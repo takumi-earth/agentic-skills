@@ -1,6 +1,6 @@
 # Patch audit helper
 
-`scripts/audit_upgrade.py` inspects the target repository with read-only Git commands. It neither applies nor exports a patch, runs Cargo, stages files, or edits repository content. Its optional `--output` exclusively publishes a JSON report outside the audited repository; an existing report is preserved. Use Python `3.11` or newer for `tomllib`.
+`scripts/audit_upgrade.py` inspects the target repository with read-only Git commands. It neither applies nor exports a patch, runs Cargo, stages files, or edits repository content. Its optional `--output` exclusively publishes a JSON report outside the audited repository; an existing report is preserved. Applicability uses an automatically cleaned filesystem view under the explicit external `--scratch-root`, without constructing or modifying any Git index. Use Python `3.11` or newer for `tomllib`.
 
 Store task evidence under the canonical skill repository's `.scratchpad/upgrade-codex-patch/<run-id>/`. Use one pre-application baseline and one snapshot per meaningful phase or Cargo invocation, including remediation retries. These reports are workflow evidence, not additional build commands.
 
@@ -11,14 +11,14 @@ Run from the verified target Git top-level. Substitute the resolved predecessor,
 ```bash
 python3 ~/agentic-skills/upgrade-codex-patch/scripts/audit_upgrade.py snapshot \
   --repo . \
-  --previous-patch ../codex-v0.159.0.patch \
+  --previous-patch ~/agentic-skills/upgrade-codex-patch/assets/patches/codex-v0.160.0.patch \
   --exclude codex-rs/Cargo.lock \
   --output ~/agentic-skills/.scratchpad/upgrade-codex-patch/run-id/baseline.json
 ```
 
-The snapshot records predecessor metadata, `HEAD` and exact release tag, semantic index identity, pre-existing tracked changes and untracked paths, and hashes of the expected mutation surface. It queries tracked and changed paths once, then reads carried paths, explicit inclusions/exclusions, changed files, and Cargo manifests/lockfiles. It reports read counts and resolves exact dependency pins through workspace inheritance, including target-specific dependencies.
+The snapshot records predecessor metadata, `HEAD` and exact release tag, semantic index identity and index bytes, pre-existing tracked changes and untracked paths, and hashes of the expected mutation surface. It queries tracked and changed paths once, then reads carried paths, explicit inclusions/exclusions, changed files, and Cargo manifests/lockfiles. It reports read counts and resolves exact dependency pins through workspace inheritance, including target-specific dependencies. Optional Git locks and filesystem-monitor queries are disabled for inspection.
 
-When the predecessor is already applied, the snapshot also hashes the complete Git export of its paths. Only a byte-identical predecessor export establishes provenance for those existing edits. Extra user hunks in a carried file remain unresolved; a successful reverse-application check alone does not establish that provenance. Older snapshots without this digest keep their original conservative boundary.
+When the predecessor is already applied, the snapshot hashes both the worktree and staged exports of its paths. An exact predecessor match establishes that existing selection. An index match does not approve additional unstaged hunks in the same files. Freeze the reviewed selection separately; source paths alone cannot distinguish intended edits from automatic version changes or user work. Older snapshots without these digests keep their conservative boundary.
 
 Add repeatable `--include <repo-relative-file>` options for explicitly authorized additions. These options record intended paths; they grant no edit authority. The same snapshot scope must be used when comparing consecutive snapshots. Preserve output paths beneath home as `~/...` in evidence.
 
@@ -36,17 +36,19 @@ The JSON separates dependency files from other changed paths and reports newly u
 
 ## Audit the final successor
 
-Generate the patch through the skill's explicit path allowlist, applying the recorded exclusions. Then audit it against the original pre-application baseline:
+Prepare the reviewed field/hunk selection under [the selection contract](patch-selection.md), applying the recorded exclusions. Freeze it as a separate input before generating the successor; do not copy an unreviewed candidate merely to satisfy the equality check. The audit has no whole-worktree export fallback. Then audit against the original baseline:
 
 ```bash
 python3 ~/agentic-skills/upgrade-codex-patch/scripts/audit_upgrade.py audit \
   --baseline ~/agentic-skills/.scratchpad/upgrade-codex-patch/run-id/baseline.json \
-  --successor-patch ../codex-v0.159.2.patch \
+  --successor-patch ../codex-v0.161.0.patch \
+  --selected-export ~/agentic-skills/.scratchpad/upgrade-codex-patch/run-id/reviewed-export.patch \
+  --scratch-root ~/agentic-skills/.scratchpad/upgrade-codex-patch/run-id \
   --output ~/agentic-skills/.scratchpad/upgrade-codex-patch/run-id/final-audit.json
 ```
 
-Supply repeatable `--include` options for later explicitly authorized additions. The audit checks predecessor/`HEAD`/index preservation, intended paths and excluded fallout, preservation of unrelated tracked edits, exact Git-export bytes, cached applicability when the index is pristine, and reverse applicability against the patched worktree. It summarizes normalized edit-stream comparisons and current exact pins; inspect differing edits with `scripts/compare_patch_hunks.py` and classify them separately.
+Supply repeatable `--include` options for later authorized additions, including untracked source. The audit checks predecessor/`HEAD`/index preservation, intended paths and excluded fallout, preservation of unrelated tracked edits, exact equality with the frozen reviewed export, cached applicability when the index is pristine, and target-base applicability in a private filesystem view of `HEAD`. It summarizes normalized edit-stream comparisons and current exact pins; inspect differing edits with `scripts/compare_patch_hunks.py` and classify them separately.
 
-Pre-existing edits in exported paths without byte-identical recorded predecessor provenance, and unaccounted new untracked files, are reported as unresolved boundaries; explicitly excluded untracked command fallout remains outside the artifact. A path allowlist cannot distinguish unrelated hunks in the same file, and `git diff HEAD` omits untracked files. Preserve those files and resolve the export provenance through authorized patch mechanics; the helper never stages, cleans, or constructs another checkout. A non-pristine index produces a separate cached-applicability `not-run` result rather than a claim that it passed.
+Pre-existing edits in exported paths without recorded predecessor provenance, and unaccounted untracked files, remain unresolved boundaries. Authorized untracked additions must appear in the selected artifact; they do not need staging. The helper never stages, cleans or creates another Git index. A non-pristine index skips only the additional cached check; target-base applicability still runs independently. Ordinary versions refreshed in the live checkout are not required to match patch context, so reverse application against that checkout is not an audit gate.
 
 Exit status `0` means the inspection completed and applicable checks passed; `1` means preservation or audit checks failed; `2` means inputs, Git inspection, or report publication failed. JSON stdout remains machine-readable, and failures retain their checked condition plus expected and received values. An audit does not prove installation success: retain the exact Cargo exit statuses and installation output for all three executables separately.
