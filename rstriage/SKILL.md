@@ -1,10 +1,12 @@
 ---
 name: rstriage
-description: Triage and resolve Rust Clippy errors/warnings and test failures through clean, principled refactors that improve architecture and clarity.
+description: "Legacy Rust triage guidance. Use only when the user explicitly invokes $rstriage; never select automatically for Rust, Clippy, or test failures."
 user-invocable: true
 disable-model-invocation: true
 allowed-tools: Bash(cargo *)
 ---
+
+This skill is outdated and requires an explicit user invocation as `$rstriage`. Do not load it through automatic task matching or an inter-skill handoff. Ordinary strict ecosystem remediation uses `$guard-strict-work` and the applicable current phase owner.
 
 ## Current State
 
