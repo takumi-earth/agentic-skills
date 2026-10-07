@@ -1,6 +1,6 @@
 # Codex peer collaboration: living plan
 
-Last materially updated: `2026-10-03`, `Asia/Hong_Kong`.
+Last materially updated: `2026-10-07`, `Asia/Hong_Kong`.
 
 This is the maintained project record requested by the user, outside the Codex checkout. Keep this file current rather than creating parallel plans. [Runtime investigation](runtime-investigation.md) owns the detailed source findings.
 
@@ -44,7 +44,8 @@ These decisions are protected project requirements. Reopen them only when the us
 | --- | --- |
 | Authoritative Ubuntu Codex source | `~/rust-forks/codex-orig`; Rust workspace `codex-rs/` |
 | Source checkpoint inspected | `rust-v0.159.2`, Git `HEAD` `ff6aec96948b70d94983af2641a6b67c94faeff5`, with the user's existing patch and peer-approval edits |
-| Latest audited release upgrade | `rust-v0.160.0`, Git `HEAD` `a956835d020762cb2b570053af06f643a11c0ecc`; matching CLI and Code Mode host installed on Ubuntu |
+| Latest audited release upgrade | `rust-v0.161.0`, Git `HEAD` `979011409de0a60b52f179721948e65531d26144`; complete Ubuntu package installed and source daemon selected, pinned, and verified |
+| Previous release upgrade | `rust-v0.160.0`, Git `HEAD` `a956835d020762cb2b570053af06f643a11c0ecc`; matching CLI and Code Mode host installed on Ubuntu at that checkpoint |
 | Canonical skill source | `~/agentic-skills/codex-peer-collaboration` |
 | Mac source checkout and active local backend | Not yet established by on-host evidence |
 | Conversation provenance | `01a0f6cc-3471-74bd-ac52-cf42b069b52a` |
@@ -56,10 +57,10 @@ The similarly named checkout `~/rust-forks/codex/codex-rs/bun` belongs to separa
 | Requirement or lane | State and evidence |
 | --- | --- |
 | Standing peer permission and subagent distinction | Added to `~/.codex/AGENTS.md` in the earlier work; user supplied the policy again in this conversation |
-| TUI peer-message approval setting | Carried unchanged, built, installed, and retained in the `0.160.0` successor patch |
+| TUI peer-message approval setting | Carried, compiled, installed, and retained for `0.161.0`, preserving upstream feature propagation, bootstrap preferences, and boxed lifecycle futures; Rust tests were not executed in this phase |
 | Shared-runtime local peer tools | Not implemented; current `collaboration` tools expose only the current agent tree |
 | Package selection and pinning | Confirmed in source; complete local packages can be selected with `update --from-cli` |
-| Ubuntu desktop connection | Observed using the source-built `0.159.2` app-server on the shared Unix socket at the `2026-10-02` checkpoint; the `0.160.0` upgrade installs binaries without activating or verifying a new client runtime |
+| Ubuntu runtime selection and client boundary | Managed source daemon and matching running Code Mode host verified at `0.161.0` on `2026-10-07`; desktop attachment was observed at the older `0.159.2` checkpoint, and the full desktop/Mac/phone acceptance matrix remains unverified |
 | Mac desktop attachment to our selected runtime | Unverified; no UI selector is available or required as an investigation prerequisite |
 | Mac-Ubuntu peer routing | Not implemented |
 | Phone use of native peer tools | Not verified; current phone access to both hosts is user-reported existing behavior |
@@ -81,6 +82,26 @@ The earlier patch adds `tui.peer_message_approval_mode`. The user selected `"app
 The later native-peer work must retain this lineage in a successor patch without overwriting predecessor artifacts.
 
 ## Latest release upgrade checkpoint
+
+The user invoked `$upgrade-codex-patch $codex-peer-collaboration` on `2026-10-07` for the clean selected `rust-v0.161.0` checkout. This invocation carries the existing peer-approval behavior; native runtime peer tools, cross-host routing, and the client acceptance matrix remain unfinished.
+
+- Target base: `979011409de0a60b52f179721948e65531d26144` in `~/rust-forks/codex-orig`.
+- Selected predecessor: `~/agentic-skills/upgrade-codex-patch/assets/patches/codex-v0.160.0.patch`, SHA-256 `46f0d483ee4371ca91b3f3341daeb200a97501602bcd514b6404c02ac340c358`; `119515` bytes, `2921` lines, `49` paths, `182` hunks. Its digest matches the exact packaged patch selected by the user in session `01a1006c-be1f-72f1-833b-1c31b63934d4`. The older local `0.160.0` copy is preserved and was not substituted.
+- Rebase: classify six failed owner files, apply once with rejects, and port every unapplied intent. Upstream already supplies the `chatgpt` recursion limit and the unused registry import removal. Preserve the new TUI `Features` argument, bootstrap preference loading, and `Box::pin` handling. Remove only the generated rejects after accounting for them.
+- Successor: `~/rust-forks/codex-v0.161.0.patch`, retained byte-identically at `~/agentic-skills/upgrade-codex-patch/assets/patches/codex-v0.161.0.patch`. SHA-256 `48566d8c7e8724f63f4d4f7569512cd2fe793ce3c0cc3665935944aa49a40d94`; `118154` bytes, `2896` lines, `47` paths, `179` hunks.
+- Curated selection and comparison: `45` file edit streams and `177` hunk edit streams identical to the predecessor. Exclude the predecessor's ordinary `bitflags` bump, all automatic Cargo version refreshes, and `Cargo.lock`. Keep the private field/hunk selection separate from the live build inputs. The lifecycle test adaptation and two fixes already present upstream account for the remaining carried differences.
+- Preparation and Cargo: `just i --prepare-v8` exits `0` in `0.387` seconds; `cargo upgrade --recursive --verbose` exits `0` in `40.390` seconds; `cargo update --recursive` exits `0` in `5.064` seconds; `cargo install --path cli` exits `0` in `1142.940` seconds and installs `codex` plus `logs_client`; `cargo install --path code-mode-host` exits `0` in `118.699` seconds. No build remediation or new pins were needed. Retain workspace pins `blake3 = "=1.8.2"`, `time = "=0.3.47"`, `zune-core = "=0.5.1"`, and the `cc = "=1.2.55"` build dependency in `utils/rustls-provider/Cargo.toml`.
+- Complete installation: `just i` reuses all three prebuilt binaries, validates the official Linux package with source-built `bwrap`, publishes CLI aliases, and selects the native source daemon. Two daemon restarts interrupted installer processes owned by the old command session. A third invocation in an independent process completed with exit `0` in `74.110` seconds and wrote the final receipt; the Rust installations were not repeated.
+- Runtime provenance: complete CLI package `~/.codex/packages/standalone/releases/local-0.161.0-x86_64-unknown-linux-gnu-34f4a207-b3bd-4353-952a-45eff0350963`; selected daemon package `~/.codex/packages/app-server-daemon/releases/local-421231a21cd28fd56163bcf9b38327f1a2f9d538db0162aed3c79d1953affe0b-x86_64-unknown-linux-gnu`. CLI, managed daemon, and running app-server versions are all `0.161.0`. The running app-server and Code Mode host executable hashes match the installed CLI package's respective binaries. The daemon's production-update marker is absent, preserving the native local pin. This is runtime/package evidence, not acceptance of native peer tools or the complete client matrix.
+- Tool visibility after recovery: the recovered turn's available-tool inventory contains no `codex_tui` list/read/send/wait tools, and `collaboration.list_agents` exposes only the current root. Earlier TUI MCP peer-tool availability must not be carried forward as a verified current client handoff. The cause and the native runtime peer boundary remain unfinished project work; no listener or client-configuration workaround was applied.
+- Audit and worktree: cached applicability and applicability against a private filesystem view of the target base both pass. The original-baseline audit fails only the physical index check; the final audit passes against the separately recorded user-accepted exception. Predecessor bytes, `HEAD`, staged entries, and exact reviewed-export bytes are preserved. The `64` modified Codex paths remain unstaged and uncommitted; automatic version fields and `Cargo.lock` are excluded from the `47`-path artifact. The audit records the `16` additional manifest paths touched by Cargo as mutation bounds, not selected export content.
+- Index exception: `HEAD` and staged entries remain identical to the original baseline, but the physical index digest changed between the baseline and post-application snapshots. The user explicitly accepted: `Accept the metadata exception; preserve the unchanged staged entries`. Preserve the original baseline and record this run's exception separately; no index restoration or rewrite is authorized.
+- Diagnostics and evidence boundaries: the CLI retains a future compatibility warning from `proc-macro-error2 v2.0.1` re-exporting private `proc_macro`; the host-only graph reports the unused workspace `crossterm` patch, which the CLI uses. Both installers report the configured stable-toolchain notice. Source inspection, artifact checks, compilation, installation, and runtime provenance are verified separately; Rust tests, linting, formatting, generators, and end-to-end peer/client checks were not run under this upgrade contract.
+- Intrinsic evidence: `~/agentic-skills/.scratchpad/upgrade-codex-patch/20261007T115114Z-v0.161.0-peer/`.
+
+The retained patch and this checkpoint follow the invoked upgrade's complete canonical repository commit and publication workflow. The next unfinished project actions remain native local peer implementation and Mac attachment investigation; preserve the selected runtime ownership and acceptance matrix below.
+
+## Previous release upgrade checkpoint
 
 The user invoked `$upgrade-codex-patch $codex-peer-collaboration` on `2026-10-03`. This phase carries the existing peer-approval lineage onto the selected release and preserves the native-peer implementation and client acceptance work below.
 

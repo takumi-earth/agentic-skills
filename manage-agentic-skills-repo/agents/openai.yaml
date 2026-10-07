@@ -1,6 +1,6 @@
 interface:
   display_name: "Manage Agentic Skills Repository"
-  short_description: "Pull first and commit every repository change"
-  default_prompt: "Use `$manage-agentic-skills-repo` first for work in `~/agentic-skills`: pull before the task and, after changes, run `git add .` from its root and commit all staged diffs with a complete message."
+  short_description: "Pull first, then commit and push all changes"
+  default_prompt: "Use `$manage-agentic-skills-repo` first for canonical repository work: pull before the task, then run `git add .`, review every staged diff, commit with a complete message, and push to the configured upstream. These Git effects are already authorized; do not ask again."
 policy:
   allow_implicit_invocation: true

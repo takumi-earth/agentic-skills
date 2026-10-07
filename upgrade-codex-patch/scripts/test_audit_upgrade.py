@@ -3,9 +3,12 @@
 
 import hashlib
 import json
+import os
+from difflib import unified_diff
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -51,10 +54,15 @@ class AuditUpgradeTests(unittest.TestCase):
         self.write("codex-rs/image/src/lib.rs", "before\n")
         self.baseline = self.directory / "baseline.json"
         self.successor = self.directory / "successor.patch"
+        self.selection = self.directory / "reviewed-selection.patch"
+        self.selection.write_bytes(self.previous.read_bytes())
 
     def git(self, *args):
         return subprocess.run(
-            ["git", "-C", str(self.repo), *args], capture_output=True, check=True
+            ["git", "-C", str(self.repo), *args],
+            capture_output=True,
+            check=True,
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
         )
 
     def commit(self, message):
@@ -125,6 +133,10 @@ class AuditUpgradeTests(unittest.TestCase):
             self.baseline,
             "--successor-patch",
             self.successor,
+            "--selected-export",
+            self.selection,
+            "--scratch-root",
+            self.directory,
             *extra,
             expected_exit=expected_exit,
         )
@@ -196,6 +208,53 @@ class AuditUpgradeTests(unittest.TestCase):
             report["repo"], "~/" + self.repo.relative_to(Path.home()).as_posix()
         )
 
+    def test_snapshot_preserves_index_bytes_and_distinguishes_stat_from_content_changes(self):
+        path = self.repo / "unrelated.txt"
+        original = path.read_bytes()
+        stat = path.stat()
+        os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 5_000_000_000))
+        index = self.repo / ".git/index"
+        before = index.read_bytes()
+
+        unchanged = self.capture()
+
+        self.assertEqual(index.read_bytes(), before)
+        self.assertEqual(unchanged["index_bytes_sha256"], hashlib.sha256(before).hexdigest())
+        self.assertEqual(unchanged["changed_paths"], [])
+        self.assertNotIn("unrelated.txt", unchanged["files"])
+        self.assertEqual(path.read_bytes(), original)
+
+        self.write("unrelated.txt", "actual content change\n")
+        changed = self.capture()
+
+        self.assertEqual(index.read_bytes(), before)
+        self.assertEqual(changed["changed_paths"], ["unrelated.txt"])
+        self.assertEqual(
+            changed["files"]["unrelated.txt"]["sha256"],
+            hashlib.sha256(path.read_bytes()).hexdigest(),
+        )
+
+    def test_snapshot_keeps_rename_binary_and_unusual_path_evidence_without_index_writes(self):
+        renamed = "renamed\tfile\nname.txt"
+        (self.repo / "unrelated.txt").rename(self.repo / renamed)
+        (self.repo / "large-untouched.txt").write_bytes(b"\0binary change\xff")
+        self.git("add", ".")
+        index = self.repo / ".git/index"
+        before = index.read_bytes()
+
+        report = self.capture()
+
+        self.assertEqual(index.read_bytes(), before)
+        self.assertEqual(
+            report["changed_paths"], ["large-untouched.txt", renamed, "unrelated.txt"]
+        )
+        self.assertIsNone(report["files"]["unrelated.txt"])
+        for name in ("large-untouched.txt", renamed):
+            self.assertEqual(
+                report["files"][name]["sha256"],
+                hashlib.sha256((self.repo / name).read_bytes()).hexdigest(),
+            )
+
     def test_changes_separate_dependency_and_source_fallout(self):
         before = self.capture(self.baseline)
         self.apply_and_export()
@@ -227,6 +286,7 @@ class AuditUpgradeTests(unittest.TestCase):
                         ("HEAD is unchanged", "head"),
                         ("index entries are unchanged", "index_sha256"),
                         ("previous patch is unchanged", "previous_patch"),
+                        ("index bytes are unchanged", "index_bytes_sha256"),
                     )
                 ],
             },
@@ -259,7 +319,7 @@ class AuditUpgradeTests(unittest.TestCase):
         )
         self.assertEqual(
             {name: value["status"] for name, value in report["applicability"].items()},
-            {"cached": "passed", "reverse": "passed"},
+            {"cached": "passed", "target_base": "passed"},
         )
         self.assertEqual(report["excluded_paths"], ["codex-rs/Cargo.lock"])
         self.assertEqual(
@@ -279,7 +339,7 @@ class AuditUpgradeTests(unittest.TestCase):
         report = self.audit()
         self.assertEqual(report["status"], "passed")
         self.assertEqual(report["applicability"]["cached"]["status"], "not-run")
-        self.assertEqual(report["applicability"]["reverse"]["status"], "passed")
+        self.assertEqual(report["applicability"]["target_base"]["status"], "passed")
         self.assertEqual(index, self.git("ls-files", "--stage", "-z").stdout)
 
     def test_already_applied_predecessor_can_carry_an_authorized_addition(self):
@@ -300,12 +360,13 @@ class AuditUpgradeTests(unittest.TestCase):
                 "codex-rs/image/src/lib.rs",
             ).stdout
         )
+        self.selection.write_bytes(self.successor.read_bytes())
         index = self.git("ls-files", "--stage", "-z").stdout
         report = self.audit()
         self.assertEqual(report["status"], "passed")
         self.assertEqual(
             {name: value["status"] for name, value in report["applicability"].items()},
-            {"cached": "passed", "reverse": "passed"},
+            {"cached": "passed", "target_base": "passed"},
         )
         self.assertEqual(index, self.git("ls-files", "--stage", "-z").stdout)
 
@@ -326,7 +387,10 @@ class AuditUpgradeTests(unittest.TestCase):
         report = self.audit(expected_exit=1)
         self.assertEqual(
             self.failed_conditions(report),
-            {"pre-existing export edits have recorded predecessor provenance"},
+            {
+                "pre-existing export edits have recorded predecessor provenance",
+                "successor bytes equal the reviewed hunk selection",
+            },
         )
 
     def test_older_snapshot_without_predecessor_export_digest_remains_supported(self):
@@ -348,7 +412,7 @@ class AuditUpgradeTests(unittest.TestCase):
             self.failed_conditions(report),
             {
                 "patch paths belong to the intended set",
-                "successor bytes equal the intended Git export",
+                "successor bytes equal the reviewed hunk selection",
             },
         )
 
@@ -422,8 +486,7 @@ class AuditUpgradeTests(unittest.TestCase):
         self.assertEqual(
             self.failed_conditions(report),
             {
-                "intended paths are tracked before export",
-                "new untracked paths are accounted for",
+                "authorized untracked additions are included in the selected export",
             },
         )
         self.assertEqual(
@@ -448,7 +511,10 @@ class AuditUpgradeTests(unittest.TestCase):
         report = self.audit(expected_exit=1)
         self.assertEqual(
             self.failed_conditions(report),
-            {"pre-existing export edits have recorded predecessor provenance"},
+            {
+                "pre-existing export edits have recorded predecessor provenance",
+                "successor bytes equal the reviewed hunk selection",
+            },
         )
 
     def test_index_change_fails_without_unstaging_it(self):
@@ -458,7 +524,8 @@ class AuditUpgradeTests(unittest.TestCase):
         index = self.git("ls-files", "--stage", "-z").stdout
         report = self.audit(expected_exit=1)
         self.assertEqual(
-            self.failed_conditions(report), {"index entries are unchanged"}
+            self.failed_conditions(report),
+            {"index entries are unchanged", "index bytes are unchanged"},
         )
         self.assertEqual(index, self.git("ls-files", "--stage", "-z").stdout)
 
@@ -523,6 +590,10 @@ class AuditUpgradeTests(unittest.TestCase):
             self.baseline,
             "--successor-patch",
             self.successor,
+            "--selected-export",
+            self.selection,
+            "--scratch-root",
+            self.directory,
             expected_exit=2,
         )
         self.assertEqual(
@@ -544,6 +615,137 @@ class AuditUpgradeTests(unittest.TestCase):
                 "received": {"included_paths": ["codex-rs/image/src/new.rs"]},
             },
         )
+
+    def test_reviewed_staged_fields_exclude_automatic_versions_in_the_same_manifest(
+        self,
+    ):
+        base = (
+            '[workspace]\nmembers = ["image"]\nresolver = "2"\n'
+            '[workspace.dependencies]\nzune-core = "0.5.1"\n'
+            'ordinary = "1.0"\n'
+            'configured = { version = "2.0", features = ["old"] }\n'
+        )
+        selected = (
+            base.replace('resolver = "2"', 'resolver = "3"')
+            .replace('zune-core = "0.5.1"', 'zune-core = "=0.5.1"')
+            .replace('features = ["old"]', 'features = ["new"]')
+        )
+        self.write("codex-rs/Cargo.toml", base)
+        self.git("add", "codex-rs/Cargo.toml")
+        self.commit("manifest base")
+        self.write("codex-rs/Cargo.toml", selected)
+        self.write("codex-rs/image/src/lib.rs", "after\n")
+        self.git("add", "codex-rs/Cargo.toml", "codex-rs/image/src/lib.rs")
+        self.previous.write_bytes(
+            self.git("diff", "--cached", "--binary", "HEAD").stdout
+        )
+        self.selection.write_bytes(self.previous.read_bytes())
+        upgraded = selected.replace('ordinary = "1.0"', 'ordinary = "1.9"').replace(
+            'version = "2.0"', 'version = "2.8"'
+        )
+        self.write("codex-rs/Cargo.toml", upgraded)
+        baseline = self.capture(self.baseline)
+        self.assertEqual(
+            baseline["predecessor_index_export_sha256"],
+            baseline["previous_patch"]["sha256"],
+        )
+        state = (
+            (self.repo / ".git/index").read_bytes(),
+            self.git("diff", "--cached", "--binary").stdout,
+            self.git("diff", "--binary").stdout,
+            tomllib.loads((self.repo / "codex-rs/Cargo.toml").read_text()),
+        )
+        self.successor.write_bytes(self.selection.read_bytes())
+        report = self.audit()
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(report["applicability"]["target_base"]["status"], "passed")
+        self.assertEqual(
+            state,
+            (
+                (self.repo / ".git/index").read_bytes(),
+                self.git("diff", "--cached", "--binary").stdout,
+                self.git("diff", "--binary").stdout,
+                tomllib.loads((self.repo / "codex-rs/Cargo.toml").read_text()),
+            ),
+        )
+        self.successor.write_bytes(self.git("diff", "--binary", "HEAD").stdout)
+        rejected = self.audit(expected_exit=1)
+        self.assertEqual(
+            self.failed_conditions(rejected),
+            {"successor bytes equal the reviewed hunk selection"},
+        )
+
+    def test_selected_export_can_include_an_authorized_untracked_source_without_staging(
+        self,
+    ):
+        new_source = "codex-rs/image/src/new.rs"
+        self.capture(self.baseline, extra=("--include", new_source))
+        self.apply_and_export()
+        self.write(new_source, "pub fn answer() -> u8 { 42 }\n")
+        addition = (
+            f"diff --git a/{new_source} b/{new_source}\nnew file mode 100644\n"
+            + "".join(
+                unified_diff(
+                    [],
+                    (self.repo / new_source).read_text().splitlines(keepends=True),
+                    fromfile="/dev/null",
+                    tofile=f"b/{new_source}",
+                )
+            )
+        ).encode()
+        self.selection.write_bytes(self.selection.read_bytes() + addition)
+        self.successor.write_bytes(self.selection.read_bytes())
+        index = (self.repo / ".git/index").read_bytes()
+        report = self.audit("--include", new_source)
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(report["applicability"]["target_base"]["status"], "passed")
+        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+        self.assertEqual(
+            self.git("ls-files", "--others", "--exclude-standard").stdout,
+            new_source.encode() + b"\n",
+        )
+
+    def test_audit_has_no_implicit_whole_worktree_export_fallback(self):
+        self.capture(self.baseline)
+        self.apply_and_export()
+        index = (self.repo / ".git/index").read_bytes()
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "audit",
+                "--baseline",
+                str(self.baseline),
+                "--successor-patch",
+                str(self.successor),
+                "--scratch-root",
+                str(self.directory),
+            ],
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual((result.returncode, result.stdout), (2, b""))
+        self.assertIn(b"--selected-export", result.stderr)
+        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+
+    def test_malformed_new_digest_fields_are_structured_input_failures(self):
+        baseline = self.capture()
+        for field in ("predecessor_index_export_sha256", "index_bytes_sha256"):
+            with self.subTest(field=field):
+                invalid = {**baseline, field: []}
+                self.baseline.write_text(json.dumps(invalid), encoding="utf-8")
+                report = self.audit(expected_exit=2)
+                self.assertEqual(
+                    report["error"],
+                    {
+                        "condition": "snapshot export/index digest is valid",
+                        "expected": {
+                            "field": field,
+                            "value": "SHA-256 or an older snapshot without this field",
+                        },
+                        "received": [],
+                    },
+                )
 
 
 if __name__ == "__main__":

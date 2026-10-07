@@ -49,7 +49,9 @@ Before a command expected to exceed `10m`, state:
 - what output or condition ends it;
 - the user-visible checkpoint.
 
-Stop and ask before an interactive verification command exceeds `15m` or twice its known baseline. Do not exceed `30m` cumulative long-running verification without an explicit user checkpoint.
+Stop and ask before an interactive verification command exceeds `15m` or twice its known baseline.
+
+Do not exceed `30m` cumulative verification time within a single command invocation without an explicit user checkpoint. For a command such as `just hack`, count the total duration of its constituent steps within that invocation. Each separate command invocation, including a rerun, starts its own accounting period; do not carry time across commands, invocations, turns, or the session as a whole.
 
 Do not turn a timeout into a larger timeout by default. First compare primary-runtime isolated and aggregate behavior, inspect lifecycle/resource ownership and contention, and treat runtime above twice a known healthy baseline as a performance failure even when assertions eventually pass.
 
