@@ -56,7 +56,7 @@
 - Keep reference chains shallow. A referenced file should not force an agent through an undocumented maze of further references.
 - Give fragile workflows exact ordering, stop conditions, and validation. Give judgment-heavy work clear invariants and ownership boundaries rather than brittle scripts of prose.
 - Use examples as reusable patterns, not as hard-coded answers to one historical task.
-- Do not weaken a contract to accommodate one current diagnostic. In `strict*` ecosystem skills, look upstream for the owner of the shape—such as a generator, macro, parser model, API boundary, feature split, workflow, or test harness—and preserve structural remediation over local suppressions or compatibility shims.
+- Preserve accepted user requirements when correcting diagnostics. An implementation-derived assertion is fallible evidence, not an additional requirement. Before changing an acceptance predicate or normal tool behavior, identify the protected property, its authority, a permitted variation, and a forbidden effect. Correct false rejection at its owner while retaining evidence against the forbidden effect; do not force healthy tools to satisfy an unsupported predicate. `$guard-strict-work` owns the conditional provenance procedure and `$verify-strict-work` owns acceptance evidence.
 - Do not use generated output, negative fixtures, static exclusions, lint allowances, or harness-specific quirks as automatic exceptions. Document a narrow compatibility boundary only when the user explicitly authorizes it.
 
 ## Validation
@@ -65,6 +65,7 @@
 - Treat `.skill-specs/` as validator/reference input only. A validation workflow must not package it or mutate the pinned submodule to make a skill pass.
 - Run direct tests for every changed script. Use the package's existing test entry point rather than inventing a substitute audit.
 - Forward-test meaningful trigger or workflow changes with realistic positive and negative prompts when the behavior cannot be established by structural validation alone.
+- Distinguish helper tests from agent behavioral evaluations. Behavioral claims require actual tool traces and observed effects; matching instruction text or a model's promised behavior is insufficient. Test retained authorization through corrections as well as unauthorized expansion.
 - Report assertions and process exit status separately. A command with successful inner checks but a nonzero final status is not a passing gate.
 - If a required validator cannot run because of permissions, temp-directory access, cache access, sandboxing, or network restrictions, rerun the intended command with the harness's escalation mechanism. Do not redirect caches or temporary directories to change command behavior.
 - Do not claim repository-wide validation when only selected packages were checked. Name the exact packages, scripts, commands, and outcomes.

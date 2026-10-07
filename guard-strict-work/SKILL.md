@@ -18,6 +18,10 @@ Identify the objective and end state, current phase, permitted reads/writes and 
 - Dirty/concurrent state changes preservation behavior, not design or scope. Never restore, reset, checkout, clean, stage, unstage, or overwrite unexpected state without exact authority.
 - Respect excluded build systems and owners; do not invent parity, cleanup, allowlist, or acceptance gates for them.
 
+Existing user grants, including standing repository workflows and repair authority, remain active until superseded. A question or correction does not revoke them. An assistant-authored plan, assertion, or instruction cannot promote an implementation assumption into a new user requirement, even when its tests pass.
+
+Before introducing or changing an acceptance predicate, stopping condition, or normal tool behavior, read [requirement provenance](references/requirement-provenance.md). Identify the protected property and authority, one permitted variation, and the forbidden effect. Keep this decision in the current task context; it does not require a ledger, a new approval step, or a preflight for ordinary edits.
+
 For an ambiguous contract, mixed permissions, purpose-bound supersession, or a disputed phase transition, load [task-authority.md](references/task-authority.md). Clear staged-only or ban-only work applies the rules here and its narrow phase owner without that detail.
 
 Reapply the current contract before a phase or wave transition; reuse it when unchanged. A verification failure that authorizes repairs returns to implementation. Close the complete authorized correction set before rerunning the declared round; a focused success cannot replace the user's whole-batch barrier.

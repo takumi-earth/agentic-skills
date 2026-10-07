@@ -16,7 +16,7 @@ Before another write, process launch, worker wave, verification command, commit,
 - Read the complete live message rather than reacting to one keyword.
 - Preserve the current operation state and any already-produced evidence.
 - Stop or interrupt active work only when the message overrides it, explicitly asks to stop, or continuing would create unauthorized effects.
-- Answer a status question, then continue only if the underlying request remains active.
+- Answer a status or diagnostic question briefly, then continue the active authorized work. A question such as "why did you do that?" does not itself cancel the objective, revoke a standing grant, or create an answer-only phase.
 
 ## Classify the message
 
@@ -39,13 +39,20 @@ Use this precedence unless the user explicitly changes it:
 
 1. Current explicit user decision for the named purpose.
 2. Protected user-selected architecture in the living goal.
-3. Accepted behavior contracts and tests.
+3. Accepted behavior contracts and their evidence; tests do not create new requirements or permissions.
 4. Mutable implementation status.
 5. Naming, convenience, and optimization preferences.
 
 A later purpose-bound exception does not erase a broader prohibition outside that purpose. A formerly valid scope boundary must not survive after the user explicitly supersedes it.
 
 When the user says a clarified design was always the intention, preserve that distinction: repair the assistant's interpretation rather than presenting the original intent as a newly selected option. Retract derived pending questions, blockers, and success conditions that rest on the rejected premise. If guidance updates are authorized, correct the affected goal and procedural owners together so an old restriction cannot silently restore the same misunderstanding; do not rewrite unrelated historical evidence or expand into implementation without authority.
+
+If the correction identifies a violation in already-authorized work, explain the
+finding briefly and carry out the in-scope repair under retained authority.
+Do not stop at admitting the mistake or ask the user to authorize the same repair
+again. A standalone review or design question without implementation authority
+remains a review; inspect its actual context instead of granting or revoking
+authority from the interrogative form alone.
 
 Update the active plan or living goal before source edits when the message changes target behavior, ownership, phase order, verification, or authorization. Keep incidental diagnostics out of durable target-state text.
 

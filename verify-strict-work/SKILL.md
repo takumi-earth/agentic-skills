@@ -31,6 +31,11 @@ Before preparing or running an authorized formatter, generator, diagnostic, or a
 
 When designing or adjudicating operation/lifecycle behavior, test execution, or canonical acceptance evidence, load [behavior-evidence.md](references/behavior-evidence.md). It preserves complete typed outcomes and attribution without making every task create a behavior matrix or durable ledger.
 
+When a check is introduced, changed, or appears to reject permitted behavior,
+read [check-oracles.md](references/check-oracles.md). Verify the predicate against
+the accepted semantic requirement; a failed assertion does not establish that
+the asserted requirement is valid or authorize changes to healthy tool behavior.
+
 ## Keep claims precise
 
 Keep planned, written, compiled, executed, assertion outcomes, process exit, canonical gate status, and user acceptance separate. A successful build does not prove a test body ran; exit `0` alone does not prove behavioral or canonical acceptance. Successful inner assertions with a nonzero process status are not a passing gate. A focused success cannot replace the required canonical gate.
