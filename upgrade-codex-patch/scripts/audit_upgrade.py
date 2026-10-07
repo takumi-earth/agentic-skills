@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect a carried patch upgrade without modifying the audited repository."""
+"""Inspect a carried patch upgrade while preserving source, staged work, and history."""
 
 import argparse
 import hashlib
@@ -40,20 +40,9 @@ def digest(data: bytes) -> str:
 
 def git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess:
     result = subprocess.run(
-        [
-            "git",
-            "--literal-pathspecs",
-            "-c",
-            "core.fsmonitor=false",
-            "-c",
-            "diff.autoRefreshIndex=false",
-            "-C",
-            str(repo),
-            *args,
-        ],
+        ["git", "--literal-pathspecs", "-C", str(repo), *args],
         capture_output=True,
         check=False,
-        env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
     )
     if check and result.returncode:
         raise AuditError(
@@ -72,8 +61,8 @@ def git_paths(data: bytes) -> list[str]:
 
 
 def git_changed_paths(repo: Path) -> list[str]:
-    # Numstat compares content; name-only can report stat-only changes when
-    # automatic index refresh is disabled. Disable renames for one path per row.
+    # Compare content and retain both sides of renames, with one NUL-separated
+    # path per row even for binary files and names containing tabs or newlines.
     data = git(
         repo,
         "diff",
@@ -282,11 +271,6 @@ def snapshot(
         if predecessor["paths"]
         else b""
     )
-    index_path = Path(
-        os.fsdecode(git(repo, "rev-parse", "--git-path", "index").stdout).strip()
-    )
-    if not index_path.is_absolute():
-        index_path = repo / index_path
     return {
         "schema_version": 1,
         "kind": "snapshot",
@@ -299,7 +283,6 @@ def snapshot(
         "excluded_paths": relative_paths(excluded),
         "included_paths": relative_paths(included),
         "index_sha256": digest(index),
-        "index_bytes_sha256": digest(index_path.read_bytes()),
         "index_pristine": not git(
             repo, "diff", "--cached", "--name-only", "-z", "HEAD"
         ).stdout,
@@ -354,7 +337,6 @@ def read_snapshot(path: Path) -> dict:
     for field in (
         "predecessor_worktree_export_sha256",
         "predecessor_index_export_sha256",
-        "index_bytes_sha256",
     ):
         export_digest = value.get(field)
         if export_digest is not None and (
@@ -400,17 +382,6 @@ def changes(before: dict, after: dict) -> dict:
             ("previous patch is unchanged", "previous_patch"),
         )
     ]
-    if "index_bytes_sha256" in before:
-        checks.append(
-            {
-                "condition": "index bytes are unchanged",
-                "expected": before["index_bytes_sha256"],
-                "received": after.get("index_bytes_sha256"),
-                "status": "passed"
-                if before["index_bytes_sha256"] == after.get("index_bytes_sha256")
-                else "failed",
-            }
-        )
     return {
         "schema_version": 1,
         "kind": "changes",
@@ -536,12 +507,6 @@ def audit(
     require(
         "index entries are unchanged", baseline["index_sha256"], current["index_sha256"]
     )
-    if "index_bytes_sha256" in baseline:
-        require(
-            "index bytes are unchanged",
-            baseline["index_bytes_sha256"],
-            current["index_bytes_sha256"],
-        )
     require(
         "previous patch is unchanged",
         baseline["previous_patch"],

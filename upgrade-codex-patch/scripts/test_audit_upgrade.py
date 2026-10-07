@@ -62,7 +62,6 @@ class AuditUpgradeTests(unittest.TestCase):
             ["git", "-C", str(self.repo), *args],
             capture_output=True,
             check=True,
-            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0"},
         )
 
     def commit(self, message):
@@ -208,18 +207,23 @@ class AuditUpgradeTests(unittest.TestCase):
             report["repo"], "~/" + self.repo.relative_to(Path.home()).as_posix()
         )
 
-    def test_snapshot_preserves_index_bytes_and_distinguishes_stat_from_content_changes(self):
+    def test_snapshot_allows_metadata_refresh_and_distinguishes_stat_from_content_changes(self):
         path = self.repo / "unrelated.txt"
         original = path.read_bytes()
+        self.git("config", "diff.autoRefreshIndex", "true")
+        self.git("update-index", "--refresh")
+        index = self.repo / ".git/index"
+        cache_before = index.read_bytes()
+        staged_before = self.git("ls-files", "--stage", "-z").stdout
         stat = path.stat()
         os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 5_000_000_000))
-        index = self.repo / ".git/index"
-        before = index.read_bytes()
 
         unchanged = self.capture()
 
-        self.assertEqual(index.read_bytes(), before)
-        self.assertEqual(unchanged["index_bytes_sha256"], hashlib.sha256(before).hexdigest())
+        self.assertNotEqual(index.read_bytes(), cache_before)
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, staged_before)
+        self.assertEqual(unchanged["index_sha256"], hashlib.sha256(staged_before).hexdigest())
+        self.assertNotIn("index_bytes_sha256", unchanged)
         self.assertEqual(unchanged["changed_paths"], [])
         self.assertNotIn("unrelated.txt", unchanged["files"])
         self.assertEqual(path.read_bytes(), original)
@@ -227,24 +231,23 @@ class AuditUpgradeTests(unittest.TestCase):
         self.write("unrelated.txt", "actual content change\n")
         changed = self.capture()
 
-        self.assertEqual(index.read_bytes(), before)
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, staged_before)
         self.assertEqual(changed["changed_paths"], ["unrelated.txt"])
         self.assertEqual(
             changed["files"]["unrelated.txt"]["sha256"],
             hashlib.sha256(path.read_bytes()).hexdigest(),
         )
 
-    def test_snapshot_keeps_rename_binary_and_unusual_path_evidence_without_index_writes(self):
+    def test_snapshot_keeps_rename_binary_and_unusual_path_evidence_without_staging_changes(self):
         renamed = "renamed\tfile\nname.txt"
         (self.repo / "unrelated.txt").rename(self.repo / renamed)
         (self.repo / "large-untouched.txt").write_bytes(b"\0binary change\xff")
         self.git("add", ".")
-        index = self.repo / ".git/index"
-        before = index.read_bytes()
+        before = self.git("ls-files", "--stage", "-z").stdout
 
         report = self.capture()
 
-        self.assertEqual(index.read_bytes(), before)
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, before)
         self.assertEqual(
             report["changed_paths"], ["large-untouched.txt", renamed, "unrelated.txt"]
         )
@@ -286,7 +289,6 @@ class AuditUpgradeTests(unittest.TestCase):
                         ("HEAD is unchanged", "head"),
                         ("index entries are unchanged", "index_sha256"),
                         ("previous patch is unchanged", "previous_patch"),
-                        ("index bytes are unchanged", "index_bytes_sha256"),
                     )
                 ],
             },
@@ -329,6 +331,36 @@ class AuditUpgradeTests(unittest.TestCase):
                 self.git("diff", "HEAD").stdout,
             ),
         )
+
+    def test_index_cache_refresh_is_accepted_by_comparison_and_final_audit(self):
+        baseline = self.capture(self.baseline)
+        index = self.repo / ".git/index"
+        cache_before = index.read_bytes()
+        staged_before = self.git("ls-files", "--stage", "-z").stdout
+        # Historical evidence can contain a cache digest; it is not a staging gate.
+        baseline["index_bytes_sha256"] = hashlib.sha256(cache_before).hexdigest()
+        self.baseline.write_text(json.dumps(baseline), encoding="utf-8")
+        path = self.repo / "unrelated.txt"
+        stat = path.stat()
+        os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 5_000_000_000))
+        self.git("update-index", "--refresh")
+        self.assertNotEqual(index.read_bytes(), cache_before)
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, staged_before)
+        self.apply_and_export()
+        after = self.directory / "after.json"
+        self.capture(after)
+
+        comparison = self.run_helper(
+            "changes", "--before", self.baseline, "--after", after
+        )
+        report = self.audit()
+
+        self.assertEqual(comparison["status"], "passed")
+        self.assertTrue(comparison["index_unchanged"])
+        self.assertEqual(self.failed_conditions(comparison), set())
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(self.failed_conditions(report), set())
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, staged_before)
 
     def test_non_pristine_index_is_preserved_and_cached_check_is_not_run(self):
         self.write("unrelated.txt", "staged user edit\n")
@@ -525,9 +557,32 @@ class AuditUpgradeTests(unittest.TestCase):
         report = self.audit(expected_exit=1)
         self.assertEqual(
             self.failed_conditions(report),
-            {"index entries are unchanged", "index bytes are unchanged"},
+            {"index entries are unchanged"},
         )
         self.assertEqual(index, self.git("ls-files", "--stage", "-z").stdout)
+
+    def test_staged_mode_change_fails_comparison_and_audit_without_repairing_staging(self):
+        scope = ("--include", "unrelated.txt")
+        self.capture(self.baseline, extra=scope)
+        original = (self.repo / "unrelated.txt").read_bytes()
+        self.apply_and_export()
+        self.git("update-index", "--chmod=+x", "unrelated.txt")
+        staged = self.git("ls-files", "--stage", "-z").stdout
+        selected = self.git("diff", "--cached", "--binary").stdout
+        after = self.directory / "after.json"
+        self.capture(after, extra=scope)
+
+        comparison = self.run_helper(
+            "changes", "--before", self.baseline, "--after", after, expected_exit=1
+        )
+        report = self.audit(expected_exit=1)
+
+        self.assertFalse(comparison["index_unchanged"])
+        self.assertEqual(self.failed_conditions(comparison), {"index entries are unchanged"})
+        self.assertEqual(self.failed_conditions(report), {"index entries are unchanged"})
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, staged)
+        self.assertEqual(self.git("diff", "--cached", "--binary").stdout, selected)
+        self.assertEqual((self.repo / "unrelated.txt").read_bytes(), original)
 
     def test_report_publication_preserves_existing_outputs_and_refuses_repo_outputs(
         self,
@@ -650,7 +705,7 @@ class AuditUpgradeTests(unittest.TestCase):
             baseline["previous_patch"]["sha256"],
         )
         state = (
-            (self.repo / ".git/index").read_bytes(),
+            self.git("ls-files", "--stage", "-z").stdout,
             self.git("diff", "--cached", "--binary").stdout,
             self.git("diff", "--binary").stdout,
             tomllib.loads((self.repo / "codex-rs/Cargo.toml").read_text()),
@@ -662,7 +717,7 @@ class AuditUpgradeTests(unittest.TestCase):
         self.assertEqual(
             state,
             (
-                (self.repo / ".git/index").read_bytes(),
+                self.git("ls-files", "--stage", "-z").stdout,
                 self.git("diff", "--cached", "--binary").stdout,
                 self.git("diff", "--binary").stdout,
                 tomllib.loads((self.repo / "codex-rs/Cargo.toml").read_text()),
@@ -695,11 +750,11 @@ class AuditUpgradeTests(unittest.TestCase):
         ).encode()
         self.selection.write_bytes(self.selection.read_bytes() + addition)
         self.successor.write_bytes(self.selection.read_bytes())
-        index = (self.repo / ".git/index").read_bytes()
+        index = self.git("ls-files", "--stage", "-z").stdout
         report = self.audit("--include", new_source)
         self.assertEqual(report["status"], "passed")
         self.assertEqual(report["applicability"]["target_base"]["status"], "passed")
-        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, index)
         self.assertEqual(
             self.git("ls-files", "--others", "--exclude-standard").stdout,
             new_source.encode() + b"\n",
@@ -708,7 +763,7 @@ class AuditUpgradeTests(unittest.TestCase):
     def test_audit_has_no_implicit_whole_worktree_export_fallback(self):
         self.capture(self.baseline)
         self.apply_and_export()
-        index = (self.repo / ".git/index").read_bytes()
+        index = self.git("ls-files", "--stage", "-z").stdout
         result = subprocess.run(
             [
                 sys.executable,
@@ -726,11 +781,14 @@ class AuditUpgradeTests(unittest.TestCase):
         )
         self.assertEqual((result.returncode, result.stdout), (2, b""))
         self.assertIn(b"--selected-export", result.stderr)
-        self.assertEqual((self.repo / ".git/index").read_bytes(), index)
+        self.assertEqual(self.git("ls-files", "--stage", "-z").stdout, index)
 
     def test_malformed_new_digest_fields_are_structured_input_failures(self):
         baseline = self.capture()
-        for field in ("predecessor_index_export_sha256", "index_bytes_sha256"):
+        for field in (
+            "predecessor_worktree_export_sha256",
+            "predecessor_index_export_sha256",
+        ):
             with self.subTest(field=field):
                 invalid = {**baseline, field: []}
                 self.baseline.write_text(json.dumps(invalid), encoding="utf-8")
