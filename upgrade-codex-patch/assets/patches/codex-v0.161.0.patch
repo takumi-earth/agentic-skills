@@ -1,0 +1,2896 @@
+diff --git a/codex-rs/.cargo/config.toml b/codex-rs/.cargo/config.toml
+index 8a6f2c1..f1301ff 100644
+--- a/codex-rs/.cargo/config.toml
++++ b/codex-rs/.cargo/config.toml
+@@ -1,3 +1,8 @@
++[build]
++rustc-wrapper = "../../codex-v8/bin/rustc-wrapper"
++# Keep wrapped build scripts separate from Cargo's existing intermediate cache.
++build-dir = "target/codex-v8"
++
+ [target.'cfg(all(windows, target_env = "msvc"))']
+ rustflags = ["-C", "link-arg=/STACK:8388608", "-C", "target-feature=+crt-static"]
+ 
+diff --git a/codex-rs/Cargo.toml b/codex-rs/Cargo.toml
+index b0d2d5c..5bb3d9d 100644
+--- a/codex-rs/Cargo.toml
++++ b/codex-rs/Cargo.toml
+@@ -156,7 +156,7 @@ members = [
+     "plugin",
+     "model-provider",
+ ]
+-resolver = "2"
++resolver = "3"
+ 
+ [workspace.package]
+ version = "0.161.0"
+@@ -343,7 +343,7 @@ aws-types = "1"
+ axum = { version = "0.8", default-features = false }
+ base64 = "0.22.1"
+ bitflags = "2.13.1"
+-blake3 = "1.8.2"
++blake3 = "=1.8.2"
+ bm25 = "2.3.2"
+ bytes = "1.10.1"
+ caseless = "0.2.2"
+@@ -510,7 +510,7 @@ test-log = "0.2.19"
+ textwrap = "0.16.2"
+ thiserror = "2.0.17"
+ tikv-jemallocator = "=0.7.0"
+-time = "0.3.47"
++time = "=0.3.47"
+ tiny_http = "0.12"
+ tokio = "1"
+ tokio-rustls = "0.26.4"
+@@ -551,6 +551,7 @@ wildmatch = "2.6.1"
+ winapi-util = "0.1.11"
+ zip = "2.4.2"
+ zstd = "0.13"
++zune-core = "=0.5.1"
+ 
+ wiremock = "0.6"
+ zeroize = "1.8.2"
+diff --git a/codex-rs/app-server/src/lib.rs b/codex-rs/app-server/src/lib.rs
+index bf1bb93..eaf2a96 100644
+--- a/codex-rs/app-server/src/lib.rs
++++ b/codex-rs/app-server/src/lib.rs
+@@ -1500,9 +1500,12 @@ fn test_user_config_file_from_env() -> Option<std::path::PathBuf> {
+ }
+ 
+ fn loader_overrides_with_test_user_config_file(
+-    mut loader_overrides: LoaderOverrides,
++    loader_overrides: LoaderOverrides,
+     test_user_config_file: Option<std::path::PathBuf>,
+ ) -> IoResult<LoaderOverrides> {
++    #[cfg(debug_assertions)]
++    let mut loader_overrides = loader_overrides;
++
+     #[cfg(debug_assertions)]
+     if let Some(path) = test_user_config_file {
+         let path = AbsolutePathBuf::from_absolute_path(path).map_err(|err| {
+diff --git a/codex-rs/cli/src/main.rs b/codex-rs/cli/src/main.rs
+index ac06a66..6279144 100644
+--- a/codex-rs/cli/src/main.rs
++++ b/codex-rs/cli/src/main.rs
+@@ -1,3 +1,5 @@
++#![recursion_limit = "256"]
++
+ use clap::Args;
+ use clap::CommandFactory;
+ use clap::Parser;
+diff --git a/codex-rs/cloud-tasks/src/lib.rs b/codex-rs/cloud-tasks/src/lib.rs
+index 6643684..1c3dea7 100644
+--- a/codex-rs/cloud-tasks/src/lib.rs
++++ b/codex-rs/cloud-tasks/src/lib.rs
+@@ -13,7 +13,9 @@ use codex_cloud_tasks_client::TaskStatus;
+ use codex_git_utils::current_branch_name;
+ use codex_git_utils::default_branch_name;
+ use codex_http_client::ClientRouteClass;
++#[cfg(debug_assertions)]
+ use codex_http_client::HttpClientFactory;
++#[cfg(debug_assertions)]
+ use codex_http_client::OutboundProxyPolicy;
+ use codex_http_client::RouteAwareClientPool;
+ use codex_login::default_client::get_codex_user_agent;
+diff --git a/codex-rs/code-mode-runtime/src/session_runtime/mod.rs b/codex-rs/code-mode-runtime/src/session_runtime/mod.rs
+index 0d2f453..9b27e72 100644
+--- a/codex-rs/code-mode-runtime/src/session_runtime/mod.rs
++++ b/codex-rs/code-mode-runtime/src/session_runtime/mod.rs
+@@ -153,7 +153,7 @@ impl SessionRuntime {
+     fn allocate_cell_id(&self) -> Result<CellId, Error> {
+         self.inner
+             .next_cell_id
+-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |next_cell_id| {
++            .try_update(Ordering::Relaxed, Ordering::Relaxed, |next_cell_id| {
+                 next_cell_id.checked_add(1)
+             })
+             .map(|cell_id| CellId::new(cell_id.to_string()))
+diff --git a/codex-rs/config/src/types.rs b/codex-rs/config/src/types.rs
+index e16333c..67828fb 100644
+--- a/codex-rs/config/src/types.rs
++++ b/codex-rs/config/src/types.rs
+@@ -805,6 +805,12 @@ pub struct Tui {
+     #[serde(default, flatten)]
+     pub notification_settings: TuiNotificationSettings,
+ 
++    /// Approval mode for messages sent to existing peer sessions.
++    ///
++    /// Defaults to `prompt`; task creation and forks keep their own approval modes.
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub peer_message_approval_mode: Option<AppToolApproval>,
++
+     /// Enable animations (welcome screen, shimmer effects, spinners).
+     /// Defaults to `true`.
+     #[serde(default = "default_true")]
+diff --git a/codex-rs/core/config.schema.json b/codex-rs/core/config.schema.json
+index fb42dd5..2501e14 100644
+--- a/codex-rs/core/config.schema.json
++++ b/codex-rs/core/config.schema.json
+@@ -4710,6 +4710,14 @@
+           "default": true,
+           "description": "Enable desktop notifications from the TUI. Defaults to `true`."
+         },
++        "peer_message_approval_mode": {
++          "allOf": [
++            {
++              "$ref": "#/definitions/AppToolApproval"
++            }
++          ],
++          "description": "Approval mode for messages sent to existing peer sessions.\n\nDefaults to `prompt`; task creation and forks keep their own approval modes."
++        },
+         "pet": {
+           "default": null,
+           "description": "Pet id to preselect in the terminal pet picker.\n\nCustom pet ids resolve against CODEX_HOME/pets/<pet-id>/pet.json.",
+@@ -7815,4 +7823,4 @@
+   },
+   "title": "ConfigToml",
+   "type": "object"
+-}
+\ No newline at end of file
++}
+diff --git a/codex-rs/core/src/config/config_tests.rs b/codex-rs/core/src/config/config_tests.rs
+index 79ab58e..d29f0ae 100644
+--- a/codex-rs/core/src/config/config_tests.rs
++++ b/codex-rs/core/src/config/config_tests.rs
+@@ -1257,6 +1257,7 @@ fn config_toml_deserializes_model_availability_nux() {
+         cfg.tui.expect("tui config should deserialize"),
+         Tui {
+             notification_settings: TuiNotificationSettings::default(),
++            peer_message_approval_mode: None,
+             animations: true,
+             screen_reader_detection_done: None,
+             effects: Default::default(),
+@@ -4398,6 +4399,7 @@ fn tui_config_missing_notifications_field_defaults_to_enabled() {
+         tui,
+         Tui {
+             notification_settings: TuiNotificationSettings::default(),
++            peer_message_approval_mode: None,
+             animations: true,
+             screen_reader_detection_done: None,
+             effects: Default::default(),
+diff --git a/codex-rs/core/src/config/mod.rs b/codex-rs/core/src/config/mod.rs
+index fe06279..634d6bf 100644
+--- a/codex-rs/core/src/config/mod.rs
++++ b/codex-rs/core/src/config/mod.rs
+@@ -38,6 +38,7 @@ use codex_config::loader::project_trust_key;
+ use codex_config::permissions_toml::PermissionProfileToml;
+ use codex_config::permissions_toml::PermissionsToml;
+ use codex_config::sandbox_mode_requirement_for_permission_profile;
++use codex_config::types::AppToolApproval;
+ use codex_config::types::ApprovalsReviewer;
+ use codex_config::types::AuthCredentialsStoreMode;
+ use codex_config::types::AuthKeyringBackendKind;
+@@ -772,6 +773,9 @@ pub struct Config {
+     /// TUI notification settings, including enabled events, delivery method, and focus condition.
+     pub tui_notifications: TuiNotificationSettings,
+ 
++    /// Approval override for peer messages sent by the TUI task-tools server.
++    pub tui_peer_message_approval_mode: Option<AppToolApproval>,
++
+     /// Enable ASCII animations and shimmer effects in the TUI.
+     pub animations: bool,
+ 
+@@ -4503,6 +4507,10 @@ impl Config {
+                 .as_ref()
+                 .map(|t| t.notification_settings.clone())
+                 .unwrap_or_default(),
++            tui_peer_message_approval_mode: cfg
++                .tui
++                .as_ref()
++                .and_then(|t| t.peer_message_approval_mode),
+             animations: cfg.tui.as_ref().map(|t| t.animations).unwrap_or(true),
+             tui_effects: cfg.tui.as_ref().map(|t| t.effects).unwrap_or_default(),
+             tui_rendering: cfg.tui.as_ref().map(|t| t.rendering).unwrap_or_default(),
+diff --git a/codex-rs/core/src/tools/executed_tool_calls.rs b/codex-rs/core/src/tools/executed_tool_calls.rs
+index 636d3cb..08bd15c 100644
+--- a/codex-rs/core/src/tools/executed_tool_calls.rs
++++ b/codex-rs/core/src/tools/executed_tool_calls.rs
+@@ -382,7 +382,7 @@ impl ExecutedToolCalls {
+     fn reserve_direct_call(&self) -> Option<DirectCallPermit> {
+         let recording = Arc::downgrade(&self.lock_state().as_ref()?.recording);
+         self.pending_direct_calls
+-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |pending| {
++            .try_update(Ordering::Relaxed, Ordering::Relaxed, |pending| {
+                 (pending < MAX_PENDING_EXECUTED_TOOL_CALLS).then_some(pending + 1)
+             })
+             .ok()?;
+diff --git a/codex-rs/diagnostics/src/lib.rs b/codex-rs/diagnostics/src/lib.rs
+index a966e4a..91b878b 100644
+--- a/codex-rs/diagnostics/src/lib.rs
++++ b/codex-rs/diagnostics/src/lib.rs
+@@ -32,7 +32,7 @@ impl Gauge {
+     pub fn decrement(&self) {
+         let _ = self
+             .value
+-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
++            .try_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
+                 Some(value.saturating_sub(1))
+             });
+     }
+diff --git a/codex-rs/linux-sandbox/src/landlock.rs b/codex-rs/linux-sandbox/src/landlock.rs
+index 140daaf..bbfe3bf 100644
+--- a/codex-rs/linux-sandbox/src/landlock.rs
++++ b/codex-rs/linux-sandbox/src/landlock.rs
+@@ -157,7 +157,7 @@ fn install_filesystem_landlock_rules_on_current_thread(
+         .create()?
+         .add_rules(landlock::path_beneath_rules(&["/"], access_ro))?
+         .add_rules(landlock::path_beneath_rules(&["/dev/null"], access_rw))?
+-        .set_no_new_privs(true);
++        .no_new_privs(/*yes*/ true);
+ 
+     if !writable_roots.is_empty() {
+         ruleset = ruleset.add_rules(landlock::path_beneath_rules(&writable_roots, access_rw))?;
+diff --git a/codex-rs/network-proxy/Cargo.toml b/codex-rs/network-proxy/Cargo.toml
+index bda4261..ffb1376 100644
+--- a/codex-rs/network-proxy/Cargo.toml
++++ b/codex-rs/network-proxy/Cargo.toml
+@@ -26,6 +26,7 @@ codex-utils-home-dir = { workspace = true }
+ codex-utils-path-uri = { workspace = true }
+ codex-utils-rustls-provider = { workspace = true }
+ globset = { workspace = true }
++http = { workspace = true }
+ opentelemetry = { workspace = true }
+ rand = { workspace = true }
+ rand_regex = { workspace = true }
+@@ -42,14 +43,18 @@ tokio = { workspace = true, features = ["full"] }
+ tracing = { workspace = true }
+ tracing-subscriber = { workspace = true, features = ["env-filter"] }
+ url = { workspace = true }
+-rama-core = { version = "=0.3.0-alpha.4" }
+-rama-http = { version = "=0.3.0-alpha.4" }
+-rama-http-backend = { version = "=0.3.0-alpha.4", features = ["tls"] }
+-rama-net = { version = "=0.3.0-alpha.4", features = ["http", "tls"] }
+-rama-socks5 = { version = "=0.3.0-alpha.4" }
+-rama-tcp = { version = "=0.3.0-alpha.4", features = ["http"] }
+-rama-tls-rustls = { version = "=0.3.0-alpha.4", features = ["http"] }
++rama-core = { version = "0.3.0" }
++rama-dns = { version = "0.3.0" }
++rama-http = { version = "0.3.0" }
++rama-http-backend = { version = "0.3.0", features = ["tls"] }
++rama-net = { version = "0.3.0", features = ["http"] }
++rama-socks5 = { version = "0.3.0" }
++rama-tcp = { version = "0.3.0" }
++rama-tls = { version = "0.3.0" }
++rama-tls-rustls = { version = "0.3.0", features = ["http"] }
+ rustls-native-certs = { workspace = true }
++rustls-pki-types = { version = "1.15.1" }
++rcgen = { workspace = true, features = ["x509-parser"] }
+ sha2 = { workspace = true }
+ 
+ [dev-dependencies]
+@@ -58,10 +63,9 @@ tempfile = { workspace = true }
+ 
+ [target.'cfg(target_family = "unix")'.dependencies]
+ libc = { workspace = true }
+-rama-unix = { version = "=0.3.0-alpha.4" }
++rama-unix = { version = "0.3.0" }
+ 
+ [target.'cfg(target_os = "macos")'.dependencies]
+-rama-dns = { version = "=0.3.0-alpha.4" }
+ security-framework = "3"
+ 
+ [target.'cfg(windows)'.dependencies]
+diff --git a/codex-rs/network-proxy/src/attribution.rs b/codex-rs/network-proxy/src/attribution.rs
+index 85affff..0478e09 100644
+--- a/codex-rs/network-proxy/src/attribution.rs
++++ b/codex-rs/network-proxy/src/attribution.rs
+@@ -1,7 +1,7 @@
+ use crate::state::NetworkProxyState;
+ use rama_core::Service;
+ use rama_core::error::BoxError;
+-use rama_core::extensions::ExtensionsMut;
++use rama_core::extensions::ExtensionsRef;
+ use rama_tcp::TcpStream;
+ use std::io;
+ use std::io::Write;
+@@ -17,6 +17,7 @@ const ATTRIBUTION_FRAME_MAGIC: &[u8; 8] = b"\0CDXPXY1";
+ const MAX_ATTRIBUTION_TOKEN_LEN: usize = 128;
+ const ATTRIBUTION_FRAME_TIMEOUT: Duration = Duration::from_secs(3);
+ 
++#[derive(Clone)]
+ pub(crate) struct BindConnectionAttribution<S> {
+     inner: S,
+     state: Arc<NetworkProxyState>,
+@@ -68,7 +69,7 @@ where
+             )
+             .into());
+         }
+-        stream.extensions_mut().insert(Arc::new(state));
++        stream.extensions().insert_arc(Arc::new(state));
+         self.inner.serve(stream).await.map_err(Into::into)
+     }
+ }
+diff --git a/codex-rs/network-proxy/src/attribution_tests.rs b/codex-rs/network-proxy/src/attribution_tests.rs
+index fcb3c37..8d83c2a 100644
+--- a/codex-rs/network-proxy/src/attribution_tests.rs
++++ b/codex-rs/network-proxy/src/attribution_tests.rs
+@@ -43,7 +43,7 @@ async fn framed_connection_receives_registered_execution_state() -> Result<(), B
+     let (stream, _) = listener.accept().await?;
+     let service = BindConnectionAttribution::new(
+         service_fn(|stream: RamaTcpStream| async move {
+-            let state = stream.extensions().get::<Arc<NetworkProxyState>>().cloned();
++            let state = stream.extensions().get_arc::<NetworkProxyState>();
+             Ok::<_, io::Error>(state)
+         }),
+         state,
+diff --git a/codex-rs/network-proxy/src/brokered_tunnel.rs b/codex-rs/network-proxy/src/brokered_tunnel.rs
+index 1ef4566..1b8e36f 100644
+--- a/codex-rs/network-proxy/src/brokered_tunnel.rs
++++ b/codex-rs/network-proxy/src/brokered_tunnel.rs
+@@ -4,20 +4,19 @@
+ use anyhow::Context;
+ use anyhow::Result;
+ use rama_core::Service;
+-use rama_core::extensions::ExtensionsMut;
+ use rama_core::extensions::ExtensionsRef;
+-use rama_core::stream::PeekStream;
+-use rama_core::stream::Stream;
++use rama_core::io::Io;
++use rama_core::io::PrefixedIo;
+ use rama_http::HeaderValue;
+ use rama_http::Method;
+ use rama_http::Request;
+ use rama_http::Response;
+ use rama_http::StatusCode;
+-use rama_http::Uri;
+ use rama_http::header::CONNECTION;
+ use rama_http::header::PROXY_AUTHENTICATE;
+ use rama_http::header::UPGRADE;
+ use rama_http::io::upgrade::OnUpgrade;
++use rama_net::uri::Uri;
+ use std::io::Cursor;
+ use std::time::Duration;
+ use tokio::io::AsyncReadExt;
+@@ -43,9 +42,9 @@ const MAX_REQUEST_LINE: usize = 8192;
+ pub(crate) async fn peek_protocol<S>(
+     mut stream: S,
+     protocols: BrokeredProtocols,
+-) -> Result<(TunnelProtocol, PeekStream<Cursor<Vec<u8>>, S>)>
++) -> Result<(TunnelProtocol, PrefixedIo<Cursor<Vec<u8>>, S>)>
+ where
+-    S: Stream + Unpin + ExtensionsMut,
++    S: Io + Unpin + ExtensionsRef,
+ {
+     let mut prefix = Vec::new();
+     let mut buf = [0_u8; 5];
+@@ -112,7 +111,7 @@ where
+     } else {
+         TunnelProtocol::Opaque
+     };
+-    Ok((protocol, PeekStream::new(Cursor::new(prefix), stream)))
++    Ok((protocol, PrefixedIo::new(Cursor::new(prefix), stream)))
+ }
+ 
+ /// Preserve HTTP/1 upgrades on an already-authorized tunnel without interpreting upgraded bytes.
+@@ -129,7 +128,7 @@ pub(crate) async fn forward_http_request(
+             })
+         })
+     });
+-    let downstream_upgrade = req.extensions().get::<OnUpgrade>().cloned();
++    let downstream_upgrade = req.extensions().get_ref::<OnUpgrade>().cloned();
+     let h2c_settings = if upgrade.as_ref().is_some_and(|value| {
+         value.to_str().is_ok_and(|value| {
+             value
+@@ -183,12 +182,13 @@ pub(crate) async fn forward_http_request(
+         let downstream = downstream_upgrade.context("missing downstream HTTP upgrade")?;
+         let upstream = response
+             .extensions()
+-            .get::<OnUpgrade>()
++            .get_ref::<OnUpgrade>()
+             .cloned()
+             .context("missing upstream HTTP upgrade")?;
+         tokio::spawn(async move {
+             let result = async {
+-                let (mut downstream, mut upstream) = tokio::try_join!(downstream, upstream)?;
++                let (mut downstream, mut upstream) = tokio::try_join!(downstream, upstream)
++                    .map_err(anyhow::Error::from_boxed)?;
+                 tokio::io::copy_bidirectional(&mut downstream, &mut upstream).await?;
+                 anyhow::Ok(())
+             }
+diff --git a/codex-rs/network-proxy/src/brokered_tunnel_tests.rs b/codex-rs/network-proxy/src/brokered_tunnel_tests.rs
+index 7ffd36c..0940ce4 100644
+--- a/codex-rs/network-proxy/src/brokered_tunnel_tests.rs
++++ b/codex-rs/network-proxy/src/brokered_tunnel_tests.rs
+@@ -12,7 +12,6 @@ use crate::runtime::ConfigReloaderFuture;
+ use crate::runtime::ConfigState;
+ use pretty_assertions::assert_eq;
+ use rama_core::extensions::Extensions;
+-use rama_core::extensions::ExtensionsMut;
+ use rama_core::extensions::ExtensionsRef;
+ use std::collections::BTreeMap;
+ use std::collections::HashMap;
+@@ -82,12 +81,6 @@ impl ExtensionsRef for TestStream {
+     }
+ }
+ 
+-impl ExtensionsMut for TestStream {
+-    fn extensions_mut(&mut self) -> &mut Extensions {
+-        &mut self.extensions
+-    }
+-}
+-
+ #[tokio::test]
+ async fn tls_prefix_detection_accumulates_fragmented_reads() {
+     let tls_prefix = [0x16, 0x03, 0x03, 0x00, 0x80];
+@@ -334,15 +327,18 @@ async fn plaintext_tunnels_accept_http2_clients() {
+                 .await
+                 .unwrap();
+         });
+-        let connector = HttpConnector::<_, Body>::new(service_fn(move |req: Request| {
+-            let stream = stream.clone();
+-            async move {
+-                Ok::<_, BoxError>(EstablishedClientConnection {
+-                    input: req,
+-                    conn: stream.lock().await.take().unwrap(),
+-                })
+-            }
+-        }));
++        let connector = HttpConnector::<_, Body>::new(
++            service_fn(move |req: Request| {
++                let stream = stream.clone();
++                async move {
++                    Ok::<_, BoxError>(EstablishedClientConnection {
++                        input: req,
++                        conn: stream.lock().await.take().unwrap(),
++                    })
++                }
++            }),
++            rama_core::rt::Executor::default(),
++        );
+         let request = Request::builder()
+             .version(Version::HTTP_2)
+             .uri(format!("http://{addr}/v1/models"))
+diff --git a/codex-rs/network-proxy/src/certs.rs b/codex-rs/network-proxy/src/certs.rs
+index fb3a7f5..6e4e00c 100644
+--- a/codex-rs/network-proxy/src/certs.rs
++++ b/codex-rs/network-proxy/src/certs.rs
+@@ -4,23 +4,23 @@ use anyhow::Result;
+ use anyhow::anyhow;
+ use base64::Engine as _;
+ use codex_utils_home_dir::find_codex_home;
+-use rama_net::tls::ApplicationProtocol;
+-use rama_tls_rustls::dep::pki_types::CertificateDer;
+-use rama_tls_rustls::dep::pki_types::PrivateKeyDer;
+-use rama_tls_rustls::dep::pki_types::pem::PemObject;
+-use rama_tls_rustls::dep::rcgen::BasicConstraints;
+-use rama_tls_rustls::dep::rcgen::CertificateParams;
+-use rama_tls_rustls::dep::rcgen::DistinguishedName;
+-use rama_tls_rustls::dep::rcgen::DnType;
+-use rama_tls_rustls::dep::rcgen::ExtendedKeyUsagePurpose;
+-use rama_tls_rustls::dep::rcgen::IsCa;
+-use rama_tls_rustls::dep::rcgen::Issuer;
+-use rama_tls_rustls::dep::rcgen::KeyPair;
+-use rama_tls_rustls::dep::rcgen::KeyUsagePurpose;
+-use rama_tls_rustls::dep::rcgen::PKCS_ECDSA_P256_SHA256;
+-use rama_tls_rustls::dep::rcgen::SanType;
+ use rama_tls_rustls::dep::rustls;
+ use rama_tls_rustls::server::TlsAcceptorData;
++use rama_tls_rustls::types::ApplicationProtocol;
++use rcgen::BasicConstraints;
++use rcgen::CertificateParams;
++use rcgen::DistinguishedName;
++use rcgen::DnType;
++use rcgen::ExtendedKeyUsagePurpose;
++use rcgen::IsCa;
++use rcgen::Issuer;
++use rcgen::KeyPair;
++use rcgen::KeyUsagePurpose;
++use rcgen::PKCS_ECDSA_P256_SHA256;
++use rcgen::SanType;
++use rustls_pki_types::CertificateDer;
++use rustls_pki_types::PrivateKeyDer;
++use rustls_pki_types::pem::PemObject;
+ use sha2::Digest as _;
+ use sha2::Sha256;
+ use std::collections::HashMap;
+@@ -70,7 +70,7 @@ impl ManagedMitmCa {
+         fs::create_dir_all(proxy_dir)
+             .with_context(|| format!("failed to create {}", proxy_dir.display()))?;
+ 
+-        let (certificate_pem, private_key) = generate_ca()?;
++        let ca = generate_ca()?;
+         let artifact_lock = match lock_managed_ca_artifacts(proxy_dir) {
+             Ok(lock) => Some(lock),
+             Err(err) => {
+@@ -78,9 +78,8 @@ impl ManagedMitmCa {
+                 None
+             }
+         };
+-        let certificate_path = persist_managed_ca_certificate(proxy_dir, &certificate_pem)?;
+-        let issuer = Issuer::from_ca_cert_pem(&certificate_pem, private_key)
+-            .context("failed to parse managed MITM CA certificate")?;
++        let certificate_path = persist_managed_ca_certificate(proxy_dir, &ca.certificate_pem)?;
++        let issuer = ca.issuer;
+         let artifact_lease = lock_managed_ca_certificate(&certificate_path)?;
+         if artifact_lock.is_some() {
+             prune_managed_ca_artifacts(proxy_dir);
+@@ -781,7 +780,14 @@ fn remove_inactive_managed_ca_certificate(certificate_path: &Path) {
+     }
+ }
+ 
+-fn generate_ca() -> Result<(String, KeyPair)> {
++struct GeneratedCa {
++    certificate_pem: String,
++    issuer: Issuer<'static, KeyPair>,
++    #[cfg(test)]
++    private_key_pem: String,
++}
++
++fn generate_ca() -> Result<GeneratedCa> {
+     let mut params = CertificateParams::default();
+     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
+     params.key_usages = vec![
+@@ -795,10 +801,17 @@ fn generate_ca() -> Result<(String, KeyPair)> {
+ 
+     let key_pair = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256)
+         .map_err(|err| anyhow!("failed to generate CA key pair: {err}"))?;
++    #[cfg(test)]
++    let private_key_pem = key_pair.serialize_pem();
+     let cert = params
+         .self_signed(&key_pair)
+         .map_err(|err| anyhow!("failed to generate CA cert: {err}"))?;
+-    Ok((cert.pem(), key_pair))
++    Ok(GeneratedCa {
++        certificate_pem: cert.pem(),
++        issuer: Issuer::new(params, key_pair),
++        #[cfg(test)]
++        private_key_pem,
++    })
+ }
+ 
+ fn write_atomic_create_new(path: &Path, contents: &[u8], mode: u32) -> Result<()> {
+@@ -1180,10 +1193,11 @@ mod tests {
+         let managed_ca_cert_path = dir.path().join("ca.pem");
+         let startup_ca_bundle_path = dir.path().join("startup-ca.pem");
+         let startup_ca_dir = dir.path().join("startup-certs");
+-        let (managed_ca_cert, _) = generate_ca().unwrap();
+-        let (startup_ca_cert, startup_ca_key) = generate_ca().unwrap();
+-        let startup_ca_key = startup_ca_key.serialize_pem();
+-        let (directory_ca_cert, _) = generate_ca().unwrap();
++        let managed_ca_cert = generate_ca().unwrap().certificate_pem;
++        let startup_ca = generate_ca().unwrap();
++        let startup_ca_cert = startup_ca.certificate_pem;
++        let startup_ca_key = startup_ca.private_key_pem;
++        let directory_ca_cert = generate_ca().unwrap().certificate_pem;
+         let mut trusted_ca_der = CertificateDer::from_pem_slice(startup_ca_cert.as_bytes())
+             .unwrap()
+             .as_ref()
+@@ -1233,7 +1247,7 @@ mod tests {
+         let dir = tempdir().unwrap();
+         let managed_ca_cert_path = dir.path().join("ca.pem");
+         let inherited_bundle_path = dir.path().join("ca-bundle-parent.pem");
+-        let (managed_ca_cert, _) = generate_ca().unwrap();
++        let managed_ca_cert = generate_ca().unwrap().certificate_pem;
+         fs::write(&managed_ca_cert_path, &managed_ca_cert).unwrap();
+         fs::write(
+             &inherited_bundle_path,
+diff --git a/codex-rs/network-proxy/src/config.rs b/codex-rs/network-proxy/src/config.rs
+index 55841b7..c7331da 100644
+--- a/codex-rs/network-proxy/src/config.rs
++++ b/codex-rs/network-proxy/src/config.rs
+@@ -403,6 +403,8 @@ impl NetworkMode {
+     }
+ }
+ 
++impl rama_core::extensions::Extension for NetworkMode {}
++
+ fn default_proxy_url() -> String {
+     "http://127.0.0.1:3128".to_string()
+ }
+diff --git a/codex-rs/network-proxy/src/connect_policy.rs b/codex-rs/network-proxy/src/connect_policy.rs
+index eab3df9..d09b992 100644
+--- a/codex-rs/network-proxy/src/connect_policy.rs
++++ b/codex-rs/network-proxy/src/connect_policy.rs
+@@ -3,16 +3,19 @@ use crate::runtime::HostBlockDecision;
+ use crate::state::NetworkProxyState;
+ #[cfg(target_os = "macos")]
+ use crate::system_dns::SystemDnsResolver;
++use rama_core::Layer;
+ use rama_core::Service;
+ use rama_core::error::BoxError;
++use rama_core::error::ErrorContext as _;
+ use rama_core::error::ErrorExt as _;
+-use rama_core::error::OpaqueError;
+-use rama_core::extensions::ExtensionsMut;
++use rama_core::error::extra::OpaqueError;
++use rama_dns::client::DnsConnectorLayer;
++use rama_net::ConnectorTargetInputExt;
++use rama_net::TransportProtocolInputExt;
+ use rama_net::address::Host;
+ use rama_net::address::HostWithPort;
+ use rama_net::address::ProxyAddress;
+ use rama_net::client::EstablishedClientConnection;
+-use rama_net::transport::TryRefIntoTransportContext;
+ use rama_tcp::TcpStream;
+ use rama_tcp::client::TcpStreamConnector;
+ use rama_tcp::client::service::TcpConnector;
+@@ -33,34 +36,34 @@ impl TargetCheckedTcpConnector {
+ 
+ impl<Input> Service<Input> for TargetCheckedTcpConnector
+ where
+-    Input: TryRefIntoTransportContext + Send + ExtensionsMut + 'static,
+-    Input::Error: Into<BoxError> + Send + Sync + 'static,
++    Input: ConnectorTargetInputExt + TransportProtocolInputExt + Send + 'static,
+ {
+     type Output = EstablishedClientConnection<TcpStream, Input>;
+     type Error = BoxError;
+ 
+     async fn serve(&self, input: Input) -> Result<Self::Output, Self::Error> {
+-        let connector = TcpConnector::new();
++        #[cfg(not(target_os = "macos"))]
++        let dns = DnsConnectorLayer::new();
+         #[cfg(target_os = "macos")]
+-        let connector = connector.with_dns(SystemDnsResolver);
++        let dns = DnsConnectorLayer::with_resolver(SystemDnsResolver);
+ 
+-        if input.extensions().get::<ProxyAddress>().is_some() {
+-            return connector.serve(input).await;
++        if input.extensions().get_ref::<ProxyAddress>().is_some() {
++            return dns.into_layer(TcpConnector::new()).serve(input).await;
+         }
+ 
+         let target = input
+-            .try_ref_into_transport_ctx()
+-            .map_err(|err| OpaqueError::from_boxed(err.into()).context("read network target"))?
+-            .host_with_port()
+-            .ok_or_else(|| OpaqueError::from_display("network target is missing a port"))?;
++            .connector_target()
++            .ok_or_else(|| OpaqueError::from_static_str("network target is missing a port"))
++            .context("read network target")?;
+ 
+-        connector
+-            .with_connector(TargetCheckedStreamConnector {
++        dns.into_layer(
++            TcpConnector::new().with_connector(TargetCheckedStreamConnector {
+                 state: self.state.clone(),
+                 target,
+-            })
+-            .serve(input)
+-            .await
++            }),
++        )
++        .serve(input)
++        .await
+     }
+ }
+ 
+@@ -93,9 +96,7 @@ impl TargetCheckedStreamConnector {
+     async fn allows_non_public_target(&self, addr: SocketAddr) -> Result<bool, BoxError> {
+         if self.state.allow_local_binding().await.map_err(|err| {
+             let err: BoxError = err.into();
+-            OpaqueError::from_boxed(err)
+-                .context("read network proxy config")
+-                .into_boxed()
++            err.context("read network proxy config")
+         })? {
+             return Ok(true);
+         }
+@@ -110,9 +111,7 @@ impl TargetCheckedStreamConnector {
+             .map(|decision| decision == HostBlockDecision::Allowed)
+             .map_err(|err| {
+                 let err: BoxError = err.into();
+-                OpaqueError::from_boxed(err)
+-                    .context("evaluate network proxy target")
+-                    .into_boxed()
++                err.context("evaluate network proxy target")
+             })
+     }
+ }
+@@ -124,6 +123,7 @@ pub(crate) fn is_non_public_target(host: &Host) -> bool {
+             .as_str()
+             .trim_end_matches('.')
+             .eq_ignore_ascii_case("localhost"),
++        _ => false,
+     }
+ }
+ 
+@@ -136,6 +136,7 @@ fn target_matches_non_public_addr(host: &Host, addr: std::net::IpAddr) -> bool {
+                 .eq_ignore_ascii_case("localhost")
+                 && addr.is_loopback()
+         }
++        _ => false,
+     }
+ }
+ 
+@@ -158,8 +159,8 @@ mod tests {
+             NetworkProxyConfig::default(),
+         )));
+ 
+-        let request: rama_tcp::client::Request =
+-            rama_tcp::client::Request::new(HostWithPort::from(target));
++        let request: rama_net::client::Request =
++            rama_net::client::Request::new(HostWithPort::from(target));
+         let err = Service::serve(&connector, request)
+             .await
+             .expect_err("local target should be rejected");
+@@ -183,8 +184,8 @@ mod tests {
+             },
+         )));
+ 
+-        let request: rama_tcp::client::Request =
+-            rama_tcp::client::Request::new(HostWithPort::from(target));
++        let request: rama_net::client::Request =
++            rama_net::client::Request::new(HostWithPort::from(target));
+         let result = Service::serve(&connector, request).await;
+ 
+         assert!(result.is_ok(), "local target should be allowed: {result:?}");
+@@ -201,8 +202,8 @@ mod tests {
+         let connector =
+             TargetCheckedTcpConnector::new(Arc::new(network_proxy_state_for_policy(config)));
+ 
+-        let request: rama_tcp::client::Request =
+-            rama_tcp::client::Request::new(HostWithPort::from(target));
++        let request: rama_net::client::Request =
++            rama_net::client::Request::new(HostWithPort::from(target));
+         let result = Service::serve(&connector, request).await;
+ 
+         assert!(
+@@ -222,8 +223,8 @@ mod tests {
+         let connector =
+             TargetCheckedTcpConnector::new(Arc::new(network_proxy_state_for_policy(config)));
+ 
+-        let request: rama_tcp::client::Request =
+-            rama_tcp::client::Request::new(HostWithPort::new(Host::LOCALHOST_NAME, target.port()));
++        let request: rama_net::client::Request =
++            rama_net::client::Request::new(HostWithPort::new(Host::LOCALHOST_NAME, target.port()));
+         let result = Service::serve(&connector, request).await;
+ 
+         assert!(
+diff --git a/codex-rs/network-proxy/src/connection_lifecycle/mod.rs b/codex-rs/network-proxy/src/connection_lifecycle/mod.rs
+index b0219bb..12cfe10 100644
+--- a/codex-rs/network-proxy/src/connection_lifecycle/mod.rs
++++ b/codex-rs/network-proxy/src/connection_lifecycle/mod.rs
+@@ -6,6 +6,7 @@ pub(crate) use listeners::ProxyListeners;
+ #[cfg(test)]
+ pub(crate) use scope::ConnectionLifecycle;
+ pub(crate) use service::CancelOnShutdown;
++pub(crate) use service::ConnectionExecutor;
+ 
+ #[cfg(test)]
+ #[path = "lifecycle_tests.rs"]
+diff --git a/codex-rs/network-proxy/src/connection_lifecycle/service.rs b/codex-rs/network-proxy/src/connection_lifecycle/service.rs
+index 2444b9c..ebb10dc 100644
+--- a/codex-rs/network-proxy/src/connection_lifecycle/service.rs
++++ b/codex-rs/network-proxy/src/connection_lifecycle/service.rs
+@@ -4,6 +4,12 @@ use rama_core::Service;
+ use rama_core::extensions::ExtensionsRef;
+ use rama_core::rt::Executor;
+ 
++/// Carries the proxy scope through connection, request, and upgrade extensions.
++#[derive(Clone, Debug)]
++pub(crate) struct ConnectionExecutor(pub(crate) Executor);
++
++impl rama_core::extensions::Extension for ConnectionExecutor {}
++
+ #[derive(Clone)]
+ pub(crate) struct CancelOnShutdown<S> {
+     inner: S,
+@@ -26,8 +32,8 @@ where
+     async fn serve(&self, request: Request) -> Result<(), Self::Error> {
+         let guard = request
+             .extensions()
+-            .get::<Executor>()
+-            .and_then(Executor::guard)
++            .get_ref::<ConnectionExecutor>()
++            .and_then(|executor| executor.0.guard())
+             .cloned();
+         match guard {
+             Some(guard) => {
+diff --git a/codex-rs/network-proxy/src/credential_broker/providers/github.rs b/codex-rs/network-proxy/src/credential_broker/providers/github.rs
+index e79dc56..b729475 100644
+--- a/codex-rs/network-proxy/src/credential_broker/providers/github.rs
++++ b/codex-rs/network-proxy/src/credential_broker/providers/github.rs
+@@ -156,7 +156,7 @@ fn github_host_hint(env: &HashMap<String, String>) -> Option<String> {
+     } else {
+         value.to_string()
+     };
+-    let parsed = authority.parse::<rama_http::uri::Authority>().ok()?;
++    let parsed = authority.parse::<http::uri::Authority>().ok()?;
+     let suffix = authority.strip_prefix(parsed.host())?;
+     if !suffix.is_empty() {
+         suffix.strip_prefix(':')?.parse::<u16>().ok()?;
+diff --git a/codex-rs/network-proxy/src/credential_broker.rs b/codex-rs/network-proxy/src/credential_broker.rs
+index bc3e2ff..7f1c7f7 100644
+--- a/codex-rs/network-proxy/src/credential_broker.rs
++++ b/codex-rs/network-proxy/src/credential_broker.rs
+@@ -1313,7 +1313,7 @@ impl CredentialBroker {
+             )
+         }) && let Some(request) = request.as_ref()
+         {
+-            let Ok(raw_request) = destination.parse::<rama_http::Uri>() else {
++            let Ok(raw_request) = destination.parse::<http::Uri>() else {
+                 return;
+             };
+             let raw_path = raw_request.path();
+diff --git a/codex-rs/network-proxy/src/http_proxy.rs b/codex-rs/network-proxy/src/http_proxy.rs
+index b2953d3..1ff30ec 100644
+--- a/codex-rs/network-proxy/src/http_proxy.rs
++++ b/codex-rs/network-proxy/src/http_proxy.rs
+@@ -2,6 +2,7 @@ use crate::attribution::BindConnectionAttribution;
+ use crate::config::NetworkMode;
+ use crate::connect_policy::TargetCheckedTcpConnector;
+ use crate::connection_lifecycle::CancelOnShutdown;
++use crate::connection_lifecycle::ConnectionExecutor;
+ use crate::mitm;
+ use crate::network_policy::BlockDecisionAuditEventArgs;
+ use crate::network_policy::NetworkDecision;
+@@ -39,13 +40,15 @@ use codex_utils_rustls_provider::ensure_rustls_crypto_provider;
+ use rama_core::Layer;
+ use rama_core::Service;
+ use rama_core::error::ErrorExt as _;
+-use rama_core::error::OpaqueError;
+-use rama_core::extensions::ExtensionsMut;
++use rama_core::error::extra::OpaqueError;
+ use rama_core::extensions::ExtensionsRef;
+ use rama_core::graceful::ShutdownGuard;
++use rama_core::io::BridgeIo;
++use rama_core::io::Io;
++use rama_core::layer::AddInputExtensionLayer;
++use rama_core::rt::Executor;
+ use rama_core::service::BoxService;
+ use rama_core::service::service_fn;
+-use rama_core::stream::Stream;
+ use rama_http::Body;
+ use rama_http::HeaderMap;
+ use rama_http::HeaderName;
+@@ -57,26 +60,29 @@ use rama_http::header;
+ use rama_http::headers::HeaderMapExt;
+ use rama_http::headers::Host;
+ use rama_http::layer::remove_header::RemoveResponseHeaderLayer;
++use rama_http::layer::upgrade::UpgradeLayer;
++use rama_http::layer::upgrade::UpgradeResponse;
++use rama_http::layer::upgrade::Upgraded;
+ use rama_http::matcher::MethodMatcher;
+ use rama_http_backend::client::proxy::layer::HttpProxyConnector;
+ use rama_http_backend::server::HttpServer;
+-use rama_http_backend::server::layer::upgrade::UpgradeLayer;
+-use rama_http_backend::server::layer::upgrade::Upgraded;
++use rama_net::AuthorityInputExt;
+ use rama_net::Protocol;
++use rama_net::ProtocolInputExt;
++use rama_net::address::HostWithOptPort;
+ use rama_net::client::ConnectorService;
++use rama_net::client::ConnectorTarget;
+ use rama_net::client::EstablishedClientConnection;
+-use rama_net::http::RequestContext;
+-use rama_net::proxy::ProxyRequest;
+-use rama_net::proxy::ProxyTarget;
+-use rama_net::proxy::StreamForwardService;
++use rama_net::client::Request as TcpRequest;
++use rama_net::proxy::IoForwardService;
+ use rama_net::stream::SocketInfo;
+ use rama_tcp::TcpStream;
+-use rama_tcp::client::Request as TcpRequest;
+ use rama_tcp::server::TcpListener;
+-use rama_tls_rustls::client::TlsConnectorDataBuilder;
+ use rama_tls_rustls::client::TlsConnectorLayer;
++use rama_tls_rustls::types::client::TlsClientConfig;
+ use serde::Serialize;
+ use std::convert::Infallible;
++use std::io;
+ use std::net::SocketAddr;
+ use std::net::TcpListener as StdTcpListener;
+ use std::sync::Arc;
+@@ -92,6 +98,8 @@ enum ConnectMitmMode {
+     DetectProtocol(crate::brokered_tunnel::BrokeredProtocols),
+ }
+ 
++impl rama_core::extensions::Extension for ConnectMitmMode {}
++
+ pub async fn run_http_proxy(
+     state: Arc<NetworkProxyState>,
+     addr: SocketAddr,
+@@ -99,14 +107,14 @@ pub async fn run_http_proxy(
+     environment_id: Option<String>,
+     guard: ShutdownGuard,
+ ) -> Result<()> {
+-    let listener = TcpListener::build()
+-        .bind(addr)
++    let listener = TcpListener::build(Executor::graceful(guard.clone()))
++        .bind_address(addr)
+         .await
+         // Rama's `BoxError` is a `Box<dyn Error + Send + Sync>` without an explicit `'static`
+         // lifetime bound, which means it doesn't satisfy `anyhow::Context`'s `StdError` constraint.
+         // Wrap it in Rama's `OpaqueError` so we can preserve the original error as a source and
+         // still use `anyhow` for chaining.
+-        .map_err(rama_core::error::OpaqueError::from)
++        .map_err(rama_core::error::ErrorExt::into_opaque_error)
+         .map_err(anyhow::Error::from)
+         .with_context(|| format!("bind HTTP proxy: {addr}"))?;
+ 
+@@ -120,8 +128,8 @@ pub async fn run_http_proxy_with_std_listener(
+     environment_id: Option<String>,
+     guard: ShutdownGuard,
+ ) -> Result<()> {
+-    let listener =
+-        TcpListener::try_from(listener).context("convert std listener to HTTP proxy listener")?;
++    let listener = TcpListener::try_from_std_tcp_listener(listener, Executor::graceful(guard.clone()))
++        .context("convert std listener to HTTP proxy listener")?;
+     run_http_proxy_with_listener(state, listener, policy_decider, environment_id, guard).await
+ }
+ 
+@@ -139,9 +147,11 @@ async fn run_http_proxy_with_listener(
+     info!("HTTP proxy listening on {addr}");
+ 
+     listener
+-        .serve_graceful(
+-            guard,
+-            CancelOnShutdown::new(http_proxy_service(state, policy_decider, environment_id)),
++        .serve(
++            AddInputExtensionLayer::new(ConnectionExecutor(Executor::graceful(guard)))
++                .into_layer(CancelOnShutdown::new(http_proxy_service(
++                    state, policy_decider, environment_id,
++                ))),
+         )
+         .await;
+     Ok(())
+@@ -158,9 +168,11 @@ pub(crate) fn http_proxy_service(
+     // forces every accepted socket through the HTTP version sniffing pre-read path before proxy
+     // request parsing, which can stall some local clients on macOS before CONNECT/absolute-form
+     // handling runs at all.
+-    let http_service = HttpServer::http1().service(
++    let executor = Executor::default();
++    let http_service = HttpServer::new_http1(executor.clone()).service(
+         (
+             UpgradeLayer::new(
++                executor,
+                 MethodMatcher::CONNECT,
+                 service_fn({
+                     let policy_decider = policy_decider.clone();
+@@ -186,16 +198,15 @@ pub(crate) fn http_proxy_service(
+ async fn http_connect_accept(
+     policy_decider: Option<Arc<dyn NetworkPolicyDecider>>,
+     environment_id: Option<String>,
+-    mut req: Request,
+-) -> Result<(Response, Request), Response> {
++    req: Request,
++) -> Result<UpgradeResponse<Request, Response>, Response> {
+     let started_at = Instant::now();
+     let app_state = req
+         .extensions()
+-        .get::<Arc<NetworkProxyState>>()
+-        .cloned()
++        .get_arc::<NetworkProxyState>()
+         .ok_or_else(|| text_response(StatusCode::INTERNAL_SERVER_ERROR, "missing state"))?;
+ 
+-    let authority = match RequestContext::try_from(&req).map(|ctx| ctx.host_with_port()) {
++    let authority = match http_authority_context(&req).map(|ctx| ctx.host_with_port()) {
+         Ok(authority) => authority,
+         Err(err) => {
+             warn!("CONNECT missing authority: {err}");
+@@ -363,33 +374,35 @@ async fn http_connect_accept(
+         return Err(blocked_text_with_details(REASON_MITM_REQUIRED, &details));
+     }
+ 
+-    req.extensions_mut().insert(ProxyTarget(authority));
+-    req.extensions_mut().insert(connect_mitm_mode);
+-    req.extensions_mut().insert(mode);
++    let extensions = req.extensions().clone();
++    extensions.insert(ConnectorTarget(authority));
++    extensions.insert(connect_mitm_mode);
++    extensions.insert(mode);
+     if connect_mitm_mode != ConnectMitmMode::Disabled
+         && let Some(mitm_state) = mitm_state
+     {
+-        req.extensions_mut().insert(mitm_state);
++        extensions.insert_arc(mitm_state);
+     }
+-
+-    Ok((
+-        Response::builder()
+-            .status(StatusCode::OK)
+-            .body(Body::empty())
+-            .unwrap_or_else(|_| Response::new(Body::empty())),
+-        req,
+-    ))
++    let response = Response::builder()
++        .status(StatusCode::OK)
++        .body(Body::empty())
++        .unwrap_or_else(|_| Response::new(Body::empty()));
++    Ok(UpgradeResponse {
++        response,
++        request: req,
++        extensions,
++    })
+ }
+ 
+ async fn http_connect_proxy(upgraded: Upgraded) -> Result<(), Infallible> {
+     let mode = upgraded
+         .extensions()
+-        .get::<NetworkMode>()
++        .get_ref::<NetworkMode>()
+         .copied()
+         .unwrap_or(NetworkMode::Full);
+     let connect_mitm_mode = upgraded
+         .extensions()
+-        .get::<ConnectMitmMode>()
++        .get_ref::<ConnectMitmMode>()
+         .copied()
+         .unwrap_or(ConnectMitmMode::Disabled);
+     let result: Result<(), OpaqueError> = match connect_mitm_mode {
+@@ -401,22 +414,22 @@ async fn http_connect_proxy(upgraded: Upgraded) -> Result<(), Infallible> {
+                     mitm_connect_tunnel(stream).await
+                 }
+                 Ok((crate::brokered_tunnel::TunnelProtocol::Http, stream)) => {
+-                    mitm::mitm_stream(stream, rama_http::uri::Scheme::HTTP)
++                    mitm::mitm_stream(stream, Protocol::HTTP)
+                         .await
+                         .map_err(|err| {
+-                            OpaqueError::from_display(format!("HTTP tunnel error: {err}"))
++                            opaque_error(format!("HTTP tunnel error: {err}"))
+                         })
+                 }
+                 Ok((crate::brokered_tunnel::TunnelProtocol::Opaque, stream)) => {
+                     if mode == NetworkMode::Limited {
+-                        Err(OpaqueError::from_display(
++                        Err(opaque_error(
+                             "opaque tunnels are not allowed in limited mode",
+                         ))
+                     } else {
+                         forward_connect_tunnel(stream).await
+                     }
+                 }
+-                Err(err) => Err(OpaqueError::from_display(format!(
++                Err(err) => Err(opaque_error(format!(
+                     "detect tunnel protocol: {err:#}"
+                 ))),
+             }
+@@ -430,46 +443,45 @@ async fn http_connect_proxy(upgraded: Upgraded) -> Result<(), Infallible> {
+ 
+ async fn mitm_connect_tunnel<S>(stream: S) -> Result<(), OpaqueError>
+ where
+-    S: Stream + Unpin + ExtensionsMut,
++    S: Io + Unpin + ExtensionsRef,
+ {
+     let target = stream
+         .extensions()
+-        .get::<ProxyTarget>()
++        .get_ref::<ConnectorTarget>()
+         .map(|target| target.0.clone())
+-        .ok_or_else(|| OpaqueError::from_display("missing MITM authority"))?;
++        .ok_or_else(|| opaque_error("missing MITM authority"))?;
+     let host = normalize_host(&target.host.to_string());
+     let port = target.port;
+     let mode = stream
+         .extensions()
+-        .get::<NetworkMode>()
++        .get_ref::<NetworkMode>()
+         .copied()
+         .unwrap_or(NetworkMode::Full);
+-    if stream.extensions().get::<Arc<mitm::MitmState>>().is_none() {
+-        return Err(OpaqueError::from_display(format!(
++    if stream.extensions().get_arc::<mitm::MitmState>().is_none() {
++        return Err(opaque_error(format!(
+             "cannot enable MITM without state (host={host}, port={port})"
+         )));
+     }
+ 
+     info!("CONNECT MITM enabled (host={host}, port={port}, mode={mode:?})");
+-    mitm::mitm_stream(stream, rama_http::uri::Scheme::HTTPS)
++    mitm::mitm_stream(stream, Protocol::HTTPS)
+         .await
+-        .map_err(|err| OpaqueError::from_display(format!("MITM tunnel error: {err}")))
++        .map_err(|err| opaque_error(format!("MITM tunnel error: {err}")))
+ }
+ 
+ async fn forward_connect_tunnel<S>(upgraded: S) -> Result<(), OpaqueError>
+ where
+-    S: Stream + Unpin + ExtensionsMut,
++    S: Io + Unpin + ExtensionsRef,
+ {
+     let authority = upgraded
+         .extensions()
+-        .get::<ProxyTarget>()
++        .get_ref::<ConnectorTarget>()
+         .map(|target| target.0.clone())
+-        .ok_or_else(|| OpaqueError::from_display("missing forward authority"))?;
++        .ok_or_else(|| opaque_error("missing forward authority"))?;
+     let app_state = upgraded
+         .extensions()
+-        .get::<Arc<NetworkProxyState>>()
+-        .cloned()
+-        .ok_or_else(|| OpaqueError::from_display("missing app state"))?;
++        .get_arc::<NetworkProxyState>()
++        .ok_or_else(|| opaque_error("missing app state"))?;
+     let allow_upstream_proxy = match app_state.allow_upstream_proxy().await {
+         Ok(allowed) => allowed,
+         Err(err) => {
+@@ -493,19 +505,17 @@ where
+         ),
+     }
+ 
+-    let mut extensions = upgraded.extensions().clone();
++    let extensions = upgraded.extensions().clone();
+     if let Some(proxy) = proxy {
+         extensions.insert(proxy);
+     }
+ 
+     let req = TcpRequest::new_with_extensions(authority.clone(), extensions)
+-        .with_protocol(Protocol::HTTPS);
++        .with_application_protocol(Protocol::HTTPS);
+     let proxy_connector = HttpProxyConnector::optional(TargetCheckedTcpConnector::new(app_state));
+-    let tls_config = TlsConnectorDataBuilder::new()
+-        .with_alpn_protocols_http_auto()
+-        .build();
++    let tls_config = TlsClientConfig::new().with_alpn_http_auto();
+     let connector = TlsConnectorLayer::tunnel(None)
+-        .with_connector_data(tls_config)
++        .with_base_config(tls_config)
+         .into_layer(proxy_connector);
+     info!("CONNECT upstream dial started (target={authority})");
+     let connect_started_at = Instant::now();
+@@ -522,19 +532,16 @@ where
+                 "CONNECT upstream dial failed (target={authority}, elapsed_ms={})",
+                 connect_started_at.elapsed().as_millis()
+             );
+-            return Err(OpaqueError::from_boxed(err)
+-                .with_context(|| format!("establish CONNECT tunnel to {authority}")));
++            return Err(err
++                .with_context(|| format!("establish CONNECT tunnel to {authority}"))
++                .into_opaque_error());
+         }
+     };
+ 
+-    let proxy_req = ProxyRequest {
+-        source: upgraded,
+-        target,
+-    };
+     info!("CONNECT tunnel forwarding started (target={authority})");
+     let forward_started_at = Instant::now();
+-    StreamForwardService::default()
+-        .serve(proxy_req)
++    IoForwardService::default()
++        .serve(BridgeIo(upgraded, target))
+         .await
+         .map(|_| {
+             info!(
+@@ -547,8 +554,8 @@ where
+                 "CONNECT tunnel forwarding failed (target={authority}, elapsed_ms={})",
+                 forward_started_at.elapsed().as_millis()
+             );
+-            OpaqueError::from_boxed(err.into())
+-                .with_context(|| format!("forward CONNECT tunnel to {authority}"))
++            err.with_context(|| format!("forward CONNECT tunnel to {authority}"))
++                .into_opaque_error()
+         })
+ }
+ 
+@@ -558,7 +565,7 @@ async fn http_plain_proxy(
+     mut req: Request,
+ ) -> Result<Response, Infallible> {
+     let started_at = Instant::now();
+-    let app_state = match req.extensions().get::<Arc<NetworkProxyState>>().cloned() {
++    let app_state = match req.extensions().get_arc::<NetworkProxyState>() {
+         Some(state) => state,
+         None => {
+             error!("missing app state");
+@@ -711,7 +718,7 @@ async fn http_plain_proxy(
+         };
+     }
+ 
+-    let request_ctx = match RequestContext::try_from(&req) {
++    let request_ctx = match http_authority_context(&req) {
+         Ok(request_ctx) => request_ctx,
+         Err(err) => {
+             warn!("missing host: {err}");
+@@ -948,18 +955,17 @@ async fn http_plain_proxy(
+ 
+ async fn inject_forward_request_credentials(
+     app_state: &NetworkProxyState,
+-    context: &RequestContext,
++    context: &HttpAuthorityContext,
+     req: &mut Request,
+ ) -> Result<()> {
+     let authority = context.host_with_port();
+     let scheme = req.uri().scheme_str().unwrap_or("http");
+     // Server-wide OPTIONS may use root-scoped credentials without changing its wire target.
+-    let request_path = req
+-        .uri()
+-        .path_and_query()
+-        .map(rama_http::uri::PathAndQuery::as_str)
+-        .filter(|path| *path != "*")
+-        .unwrap_or("/");
++    let request_path = if req.uri().is_asterisk() {
++        "/".to_string()
++    } else {
++        path_and_query(req.uri())
++    };
+     let destination = format!("{scheme}://{authority}{request_path}");
+     let unrestricted_plaintext = app_state.plaintext_credential_injection_enabled().await?;
+     app_state.inject_request_credentials(&destination, req.headers_mut());
+@@ -978,11 +984,7 @@ async fn proxy_via_unix_socket(req: Request, socket_path: &str) -> Result<Respon
+         let client = UpstreamClient::unix_socket(socket_path);
+ 
+         let (mut parts, body) = req.into_parts();
+-        let path = parts
+-            .uri
+-            .path_and_query()
+-            .map(rama_http::uri::PathAndQuery::as_str)
+-            .unwrap_or("/");
++        let path = path_and_query(&parts.uri);
+         parts.uri = path
+             .parse()
+             .with_context(|| format!("invalid unix socket request path: {path}"))?;
+@@ -1003,13 +1005,13 @@ async fn proxy_via_unix_socket(req: Request, socket_path: &str) -> Result<Respon
+ fn client_addr<T: ExtensionsRef>(input: &T) -> Option<String> {
+     input
+         .extensions()
+-        .get::<SocketInfo>()
++        .get_ref::<SocketInfo>()
+         .map(|info| info.peer_addr().to_string())
+ }
+ 
+ fn validate_absolute_form_host_header(
+     req: &Request,
+-    request_ctx: &RequestContext,
++    request_ctx: &HttpAuthorityContext,
+ ) -> Result<(), &'static str> {
+     if req.uri().scheme_str().is_none() {
+         return Ok(());
+@@ -1027,8 +1029,8 @@ fn validate_absolute_form_host_header(
+         return Err("Host header does not match request target");
+     }
+ 
+-    if let Some(host_port) = host_header.0.port {
+-        if Some(host_port) != request_ctx.authority.port {
++    if let Some(host_port) = host_header.0.port_u16() {
++        if Some(host_port) != request_ctx.authority.port_u16() {
+             return Err("Host header does not match request target");
+         }
+         return Ok(());
+@@ -1040,6 +1042,53 @@ fn validate_absolute_form_host_header(
+ 
+     Ok(())
+ }
++
++#[derive(Debug, Clone)]
++struct HttpAuthorityContext {
++    protocol: Protocol,
++    authority: HostWithOptPort,
++}
++
++impl HttpAuthorityContext {
++    fn host_with_port(&self) -> rama_net::address::HostWithPort {
++        self.authority
++            .clone()
++            .into_host_with_port(self.protocol.default_port())
++            .unwrap_or_else(|| {
++                self.authority
++                    .clone()
++                    .into_host_with_port_or(Protocol::HTTP_DEFAULT_PORT)
++            })
++    }
++
++    fn authority_has_default_port(&self) -> bool {
++        self.authority.has_default_port_for(Some(&self.protocol))
++    }
++}
++
++fn http_authority_context(req: &Request) -> Result<HttpAuthorityContext, OpaqueError> {
++    let protocol = req.protocol().cloned().unwrap_or(Protocol::HTTP);
++    let authority = req
++        .authority()
++        .ok_or_else(|| opaque_error("RequestContext: no authority found in http::Request"))?;
++    Ok(HttpAuthorityContext {
++        protocol,
++        authority,
++    })
++}
++
++fn opaque_error(message: impl Into<String>) -> OpaqueError {
++    io::Error::other(message.into()).into_opaque_error()
++}
++
++fn path_and_query(uri: &rama_net::uri::Uri) -> String {
++    let path = uri.path_ref_or_root().as_encoded_str();
++    match uri.query() {
++        Some(query) => format!("{path}?{}", query.as_encoded_str()),
++        None => path.into_owned(),
++    }
++}
++
+ pub(crate) fn remove_hop_by_hop_request_headers(headers: &mut HeaderMap) {
+     while let Some(raw_connection) = headers.get(header::CONNECTION).cloned() {
+         headers.remove(header::CONNECTION);
+@@ -1240,13 +1289,13 @@ mod tests {
+         let state = Arc::new(network_proxy_state_for_policy(policy));
+         state.set_network_mode(NetworkMode::Limited).await.unwrap();
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::CONNECT)
+             .uri("https://example.com:443")
+             .header("host", "example.com:443")
+             .body(Body::empty())
+             .unwrap();
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+         let response = http_connect_accept(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+@@ -1272,15 +1321,19 @@ mod tests {
+         };
+         let state = Arc::new(network_proxy_state_for_policy(policy));
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::CONNECT)
+             .uri("https://example.com:443")
+             .header("host", "example.com:443")
+             .body(Body::empty())
+             .unwrap();
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+-        let (response, _request) = http_connect_accept(
++        let UpgradeResponse {
++            response,
++            request: _request,
++            ..
++        } = http_connect_accept(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+         )
+         .await
+@@ -1302,18 +1355,21 @@ mod tests {
+             }
+         });
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::CONNECT)
+             .uri("https://example.com:443")
+             .header("host", "example.com:443")
+             .body(Body::empty())
+             .unwrap();
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+-        let (response, _request) =
+-            http_connect_accept(Some(decider), Some("remote".to_string()), req)
+-                .await
+-                .unwrap();
++        let UpgradeResponse {
++            response,
++            request: _request,
++            ..
++        } = http_connect_accept(Some(decider), Some("remote".to_string()), req)
++            .await
++            .unwrap();
+ 
+         assert_eq!(response.status(), StatusCode::OK);
+         assert_eq!(
+@@ -1337,22 +1393,24 @@ mod tests {
+         let mut env = HashMap::from([("GH_TOKEN".to_string(), "ghp-real".to_string())]);
+         state.virtualize_child_credentials(&mut env);
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::CONNECT)
+             .uri("https://github.com:22")
+             .header("host", "github.com:22")
+             .body(Body::empty())
+             .unwrap();
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+-        let (response, request) = http_connect_accept(
++        let UpgradeResponse {
++            response, request, ..
++        } = http_connect_accept(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+         )
+         .await
+         .expect("brokered credentials should defer MITM until protocol detection");
+         assert_eq!(response.status(), StatusCode::OK);
+         assert_eq!(
+-            request.extensions().get::<ConnectMitmMode>().copied(),
++            request.extensions().get_ref::<ConnectMitmMode>().copied(),
+             Some(ConnectMitmMode::DetectProtocol(
+                 crate::brokered_tunnel::BrokeredProtocols {
+                     tls: true,
+@@ -1380,7 +1438,7 @@ mod tests {
+                 .header(header::AUTHORIZATION, format!("Bearer {dummy}"))
+                 .body(Body::empty())
+                 .unwrap();
+-            let context = RequestContext::try_from(&req).unwrap();
++            let context = http_authority_context(&req).unwrap();
+ 
+             inject_forward_request_credentials(&state, &context, &mut req)
+                 .await
+@@ -1464,10 +1522,10 @@ mod tests {
+                 ),
+                 ("*".to_string(), prefix.is_empty() && scope == "/"),
+             ] {
+-                let request_uri: rama_http::Uri = uri.parse().unwrap();
++                let request_uri: rama_net::uri::Uri = uri.parse().unwrap();
+                 let host_header = request_uri
+                     .authority()
+-                    .map(|authority| authority.as_str().to_string())
++                    .map(|authority| authority.to_string())
+                     .unwrap_or_else(|| format!("{host}:{port}"));
+                 let mut req = Request::builder()
+                     .method(if uri == "*" {
+@@ -1480,7 +1538,7 @@ mod tests {
+                     .header(header::AUTHORIZATION, format!("Bearer {dummy}"))
+                     .body(Body::empty())
+                     .unwrap();
+-                let context = RequestContext::try_from(&req).unwrap();
++                let context = http_authority_context(&req).unwrap();
+ 
+                 inject_forward_request_credentials(&state, &context, &mut req)
+                     .await
+@@ -1515,13 +1573,13 @@ mod tests {
+         policy.set_allowed_domains(vec!["api.github.com".to_string()]);
+         let state = Arc::new(network_proxy_state_for_policy(policy));
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::CONNECT)
+             .uri("https://api.github.com:8443")
+             .header("host", "api.github.com:8443")
+             .body(Body::empty())
+             .unwrap();
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+         let response = http_connect_accept(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+@@ -1714,13 +1772,13 @@ mod tests {
+             .await
+             .expect("network mode should update");
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::POST)
+             .uri("http://example.com")
+             .header("x-unix-socket", "/tmp/test.sock")
+             .body(Body::empty())
+             .expect("request should build");
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+         let response = http_plain_proxy(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+@@ -1739,13 +1797,13 @@ mod tests {
+     async fn http_plain_proxy_rejects_unix_socket_when_not_allowlisted() {
+         let state = Arc::new(network_proxy_state_for_policy(NetworkProxyConfig::default()));
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::GET)
+             .uri("http://example.com")
+             .header("x-unix-socket", "/tmp/test.sock")
+             .body(Body::empty())
+             .expect("request should build");
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+         let response = http_plain_proxy(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+@@ -1773,13 +1831,13 @@ mod tests {
+             network
+         }));
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::GET)
+             .uri("http://example.com")
+             .header("x-unix-socket", "/tmp/test.sock")
+             .body(Body::empty())
+             .expect("request should build");
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+         let response = http_plain_proxy(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+@@ -1799,13 +1857,13 @@ mod tests {
+         };
+         let state = Arc::new(network_proxy_state_for_policy(policy));
+ 
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::CONNECT)
+             .uri("https://api.openai.com:443")
+             .header("host", "api.openai.com:443")
+             .body(Body::empty())
+             .unwrap();
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+         let response = http_connect_accept(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+@@ -1871,13 +1929,13 @@ mod tests {
+     #[tokio::test]
+     async fn http_plain_proxy_rejects_absolute_uri_host_header_mismatch() {
+         let state = Arc::new(network_proxy_state_for_policy(NetworkProxyConfig::default()));
+-        let mut req = Request::builder()
++        let req = Request::builder()
+             .method(Method::GET)
+             .uri("http://raw.githubusercontent.com/openai/codex/main/README.md")
+             .header(header::HOST, "api.github.com")
+             .body(Body::empty())
+             .unwrap();
+-        req.extensions_mut().insert(state);
++        req.extensions().insert_arc(state);
+ 
+         let response = http_plain_proxy(
+             /*policy_decider*/ None, /*environment_id*/ None, req,
+@@ -1896,7 +1954,7 @@ mod tests {
+             .unwrap();
+ 
+         assert_eq!(
+-            validate_absolute_form_host_header(&req, &RequestContext::try_from(&req).unwrap(),),
++            validate_absolute_form_host_header(&req, &http_authority_context(&req).unwrap(),),
+             Ok(())
+         );
+     }
+@@ -1911,7 +1969,7 @@ mod tests {
+             .unwrap();
+ 
+         assert_eq!(
+-            validate_absolute_form_host_header(&req, &RequestContext::try_from(&req).unwrap(),),
++            validate_absolute_form_host_header(&req, &http_authority_context(&req).unwrap(),),
+             Err("Host header does not match request target")
+         );
+     }
+@@ -1926,7 +1984,7 @@ mod tests {
+             .unwrap();
+ 
+         assert_eq!(
+-            validate_absolute_form_host_header(&req, &RequestContext::try_from(&req).unwrap(),),
++            validate_absolute_form_host_header(&req, &http_authority_context(&req).unwrap(),),
+             Err("Host header does not match request target")
+         );
+     }
+diff --git a/codex-rs/network-proxy/src/mitm.rs b/codex-rs/network-proxy/src/mitm.rs
+index e17e6d4..ce732d1 100644
+--- a/codex-rs/network-proxy/src/mitm.rs
++++ b/codex-rs/network-proxy/src/mitm.rs
+@@ -1,6 +1,7 @@
+ use crate::certs::ManagedMitmCa;
+ use crate::config::NetworkMitmCaConfig;
+ use crate::config::NetworkMode;
++use crate::connection_lifecycle::ConnectionExecutor;
+ use crate::mitm_hook::HookEvaluation;
+ use crate::mitm_hook::MitmHookActions;
+ use crate::policy::normalize_host;
+@@ -22,12 +23,10 @@ use rama_core::Layer;
+ use rama_core::Service;
+ use rama_core::bytes::Bytes;
+ use rama_core::error::BoxError;
+-use rama_core::extensions::ExtensionsMut;
+ use rama_core::extensions::ExtensionsRef;
+ use rama_core::futures::stream::Stream as FuturesStream;
+-use rama_core::rt::Executor;
++use rama_core::io::Io;
+ use rama_core::service::service_fn;
+-use rama_core::stream::Stream;
+ use rama_http::Body;
+ use rama_http::BodyDataStream;
+ use rama_http::HeaderMap;
+@@ -35,14 +34,17 @@ use rama_http::HeaderValue;
+ use rama_http::Request;
+ use rama_http::Response;
+ use rama_http::StatusCode;
+-use rama_http::Uri;
+ use rama_http::header::HOST;
+ use rama_http::layer::remove_header::RemoveRequestHeaderLayer;
+ use rama_http::layer::remove_header::RemoveResponseHeaderLayer;
+-use rama_http::uri::Scheme;
+ use rama_http_backend::server::HttpServer;
+-use rama_net::proxy::ProxyTarget;
++use rama_net::Protocol;
++use rama_net::address::Authority;
++use rama_net::address::AuthorityRef;
++use rama_net::client::ConnectorTarget;
+ use rama_net::stream::SocketInfo;
++use rama_net::uri::Uri;
++use rama_tls::server::TlsServerConfig;
+ use rama_tls_rustls::dep::rustls;
+ use rama_tls_rustls::server::TlsAcceptorData;
+ use rama_tls_rustls::server::TlsAcceptorLayer;
+@@ -71,7 +73,7 @@ pub(crate) struct MitmUpstreamConfig {
+ struct MitmPolicyContext {
+     target_host: String,
+     target_port: u16,
+-    scheme: Scheme,
++    scheme: Protocol,
+     mode: NetworkMode,
+     app_state: Arc<NetworkProxyState>,
+ }
+@@ -102,6 +104,8 @@ impl std::fmt::Debug for MitmState {
+     }
+ }
+ 
++impl rama_core::extensions::Extension for MitmState {}
++
+ impl MitmState {
+     pub(crate) fn new(config: MitmUpstreamConfig) -> Result<Self> {
+         ensure_rustls_crypto_provider();
+@@ -142,36 +146,34 @@ impl MitmState {
+ }
+ 
+ /// Proxy inner HTTP traffic, terminating TLS with a generated leaf certificate for HTTPS.
+-pub(crate) async fn mitm_stream<S>(stream: S, scheme: Scheme) -> Result<()>
++pub(crate) async fn mitm_stream<S>(stream: S, scheme: Protocol) -> Result<()>
+ where
+-    S: Stream + Unpin + ExtensionsMut,
++    S: Io + Unpin + ExtensionsRef,
+ {
+     let mitm = stream
+         .extensions()
+-        .get::<Arc<MitmState>>()
+-        .cloned()
++        .get_arc::<MitmState>()
+         .context("missing MITM state")?;
+     let app_state = stream
+         .extensions()
+-        .get::<Arc<NetworkProxyState>>()
+-        .cloned()
++        .get_arc::<NetworkProxyState>()
+         .context("missing app state")?;
+     let target = stream
+         .extensions()
+-        .get::<ProxyTarget>()
++        .get_ref::<ConnectorTarget>()
+         .context("missing proxy target")?
+         .0
+         .clone();
+     let target_host = normalize_host(&target.host.to_string());
+     let target_port = target.port;
+-    let acceptor_data = if scheme == Scheme::HTTPS {
++    let acceptor_data = if scheme == Protocol::HTTPS {
+         Some(mitm.tls_acceptor_data_for_host(&target_host)?)
+     } else {
+         None
+     };
+     let mode = stream
+         .extensions()
+-        .get::<NetworkMode>()
++        .get_ref::<NetworkMode>()
+         .copied()
+         .unwrap_or(NetworkMode::Full);
+     let upstream = if mitm.allow_upstream_proxy {
+@@ -199,15 +201,15 @@ where
+ 
+     let executor = stream
+         .extensions()
+-        .get::<Executor>()
+-        .cloned()
++        .get_ref::<ConnectionExecutor>()
++        .map(|executor| executor.0.clone())
+         .unwrap_or_default();
+ 
+     let http_service = HttpServer::auto(executor).service(
+         (
+-            (request_ctx.policy.scheme == Scheme::HTTPS)
++            (request_ctx.policy.scheme == Protocol::HTTPS)
+                 .then(RemoveResponseHeaderLayer::hop_by_hop),
+-            (request_ctx.policy.scheme == Scheme::HTTPS).then(RemoveRequestHeaderLayer::hop_by_hop),
++            (request_ctx.policy.scheme == Protocol::HTTPS).then(RemoveRequestHeaderLayer::hop_by_hop),
+         )
+             .into_layer(service_fn({
+                 let request_ctx = request_ctx.clone();
+@@ -220,7 +222,9 @@ where
+ 
+     match acceptor_data {
+         Some(acceptor_data) => {
+-            TlsAcceptorLayer::new(acceptor_data)
++            let tls_config = TlsServerConfig::new();
++            tls_config.insert(acceptor_data);
++            TlsAcceptorLayer::new(tls_config)
+                 .with_store_client_hello(true)
+                 .into_layer(http_service)
+                 .serve(stream)
+@@ -262,11 +266,15 @@ async fn forward_request(req: Request, request_ctx: &MitmRequestContext) -> Resu
+ 
+     let (mut parts, body) = req.into_parts();
+     let authority = authority_header_value(&target_host, target_port, &request_ctx.policy.scheme);
+-    parts.uri = Uri::builder()
+-        .scheme(request_ctx.policy.scheme.clone())
+-        .authority(authority.as_str())
+-        .path_and_query(path.as_str())
+-        .build()?;
++    parts.uri = path.parse()?;
++    parts.uri.set_scheme(request_ctx.policy.scheme.clone());
++    parts
++        .uri
++        .set_authority(authority.parse().map_err(anyhow::Error::from_boxed)?);
++    // Adding routing components clears Rama's asterisk form; retain the wire target.
++    if path == "*" {
++        parts.uri.set_path("*");
++    }
+     // Server-wide OPTIONS must not borrow authority from a narrower credential URL prefix.
+     let credential_path = if path == "*" { "/" } else { &path };
+     let credential_destination = format!(
+@@ -299,7 +307,7 @@ async fn forward_request(req: Request, request_ctx: &MitmRequestContext) -> Resu
+     };
+ 
+     let upstream_req = Request::from_parts(parts, body);
+-    let upstream_resp = if request_ctx.policy.scheme == Scheme::HTTP {
++    let upstream_resp = if request_ctx.policy.scheme == Protocol::HTTP {
+         crate::brokered_tunnel::forward_http_request(upstream_req, &request_ctx.upstream).await?
+     } else {
+         request_ctx.upstream.serve(upstream_req).await?
+@@ -329,16 +337,16 @@ async fn evaluate_mitm_policy(
+     req: &Request,
+     policy: &MitmPolicyContext,
+ ) -> Result<MitmPolicyDecision> {
+-    if policy.scheme == Scheme::HTTP {
+-        let matches_target = |authority: &rama_http::uri::Authority| {
+-            !authority.as_str().contains('@')
+-                && normalize_host(authority.host()) == policy.target_host
++    if policy.scheme == Protocol::HTTP {
++        let matches_target = |authority: AuthorityRef<'_>| {
++            authority.userinfo().is_none()
++                && normalize_host(&authority.host().to_string()) == policy.target_host
+                 && authority.port_u16().unwrap_or(80) == policy.target_port
+         };
+         let invalid_destination = req
+             .uri()
+             .scheme()
+-            .is_some_and(|scheme| scheme != &Scheme::HTTP)
++            .is_some_and(|scheme| scheme != &Protocol::HTTP)
+             || req
+                 .uri()
+                 .authority()
+@@ -347,8 +355,8 @@ async fn evaluate_mitm_policy(
+                 value
+                     .to_str()
+                     .ok()
+-                    .and_then(|value| value.parse::<rama_http::uri::Authority>().ok())
+-                    .is_none_or(|authority| !matches_target(&authority))
++                    .and_then(|value| value.parse::<Authority>().ok())
++                    .is_none_or(|authority| !matches_target(authority.view()))
+             });
+         if invalid_destination {
+             return Ok(MitmPolicyDecision::Block(text_response(
+@@ -368,7 +376,7 @@ async fn evaluate_mitm_policy(
+     let log_path = path_for_log(req.uri());
+     let client = req
+         .extensions()
+-        .get::<SocketInfo>()
++        .get_ref::<SocketInfo>()
+         .map(|info| info.peer_addr().to_string());
+ 
+     if let Some(request_host) = extract_request_host(req) {
+@@ -448,7 +456,7 @@ async fn evaluate_mitm_policy(
+         HookEvaluation::NoHooksForHost => None,
+     };
+ 
+-    let opaque_http_upgrade = policy.scheme == Scheme::HTTP
++    let opaque_http_upgrade = policy.scheme == Protocol::HTTP
+         && policy.mode == NetworkMode::Limited
+         && req.headers().contains_key(rama_http::header::UPGRADE);
+     if !policy.mode.allows_method(&method) || opaque_http_upgrade {
+@@ -604,12 +612,12 @@ fn extract_request_host(req: &Request) -> Option<String> {
+         .get(HOST)
+         .and_then(|v| v.to_str().ok())
+         .map(ToString::to_string)
+-        .or_else(|| req.uri().authority().map(|a| a.as_str().to_string()))
++        .or_else(|| req.uri().authority().map(|a| a.to_string()))
+ }
+ 
+-fn authority_header_value(host: &str, port: u16, scheme: &Scheme) -> String {
++fn authority_header_value(host: &str, port: u16, scheme: &Protocol) -> String {
+     // Host header / URI authority formatting.
+-    let default_port = if scheme == &Scheme::HTTP { 80 } else { 443 };
++    let default_port = if scheme == &Protocol::HTTP { 80 } else { 443 };
+     if host.contains(':') {
+         if port == default_port {
+             format!("[{host}]")
+@@ -624,14 +632,18 @@ fn authority_header_value(host: &str, port: u16, scheme: &Scheme) -> String {
+ }
+ 
+ fn path_and_query(uri: &Uri) -> String {
+-    uri.path_and_query()
+-        .map(rama_http::uri::PathAndQuery::as_str)
+-        .unwrap_or("/")
+-        .to_string()
++    if uri.is_asterisk() {
++        return "*".to_string();
++    }
++    let path = uri.path_ref_or_root().as_encoded_str();
++    match uri.query() {
++        Some(query) => format!("{path}?{}", query.as_encoded_str()),
++        None => path.into_owned(),
++    }
+ }
+ 
+ fn path_for_log(uri: &Uri) -> String {
+-    uri.path().to_string()
++    uri.path_ref_or_root().as_encoded_str().into_owned()
+ }
+ 
+ #[cfg(test)]
+diff --git a/codex-rs/network-proxy/src/mitm_hook.rs b/codex-rs/network-proxy/src/mitm_hook.rs
+index 6e2ee5c..5daa2e8 100644
+--- a/codex-rs/network-proxy/src/mitm_hook.rs
++++ b/codex-rs/network-proxy/src/mitm_hook.rs
+@@ -392,8 +392,10 @@ fn hook_matches(hook: &MitmHook, req: &Request) -> bool {
+         return false;
+     }
+ 
+-    let path = req.uri().path();
+-    if !is_safe_for_authorization(path) || !path_matches(&hook.matcher.path_prefixes, path) {
++    let path = req.uri().path_ref_or_root().as_encoded_str();
++    if !is_safe_for_authorization(path.as_ref())
++        || !path_matches(&hook.matcher.path_prefixes, path.as_ref())
++    {
+         return false;
+     }
+ 
+@@ -409,9 +411,13 @@ fn query_matches(query_constraints: &[QueryConstraint], req: &Request) -> bool {
+         return true;
+     }
+ 
+-    let actual_query = req.uri().query().unwrap_or_default();
++    let actual_query = req
++        .uri()
++        .query()
++        .map(rama_net::uri::QueryRef::as_encoded_str)
++        .unwrap_or_default();
+     let mut actual_values: BTreeMap<String, Vec<String>> = BTreeMap::new();
+-    for (name, value) in form_urlencoded::parse(actual_query.as_bytes()) {
++    for (name, value) in form_urlencoded::parse(actual_query.as_ref().as_bytes()) {
+         actual_values
+             .entry(name.into_owned())
+             .or_default()
+@@ -482,7 +488,11 @@ fn compile_path_matchers(path_prefixes: &[String]) -> Result<Vec<PathMatcher>> {
+                     if prefix.is_empty() {
+                         return Err(anyhow!("path_prefixes must not contain empty entries"));
+                     }
+-                    Ok(PathMatcher::Prefix(prefix.to_string()))
++                    Ok(PathMatcher::Prefix(
++                        rama_net::uri::PathRef::from_raw_str(prefix)
++                            .as_encoded_str()
++                            .into_owned(),
++                    ))
+                 }
+                 MatcherPattern::Glob(glob_pattern) => Ok(PathMatcher::Glob(compile_glob_matcher(
+                     glob_pattern,
+diff --git a/codex-rs/network-proxy/src/mitm_tests.rs b/codex-rs/network-proxy/src/mitm_tests.rs
+index ccbf006..e7d2a1d 100644
+--- a/codex-rs/network-proxy/src/mitm_tests.rs
++++ b/codex-rs/network-proxy/src/mitm_tests.rs
+@@ -45,7 +45,7 @@ fn policy_ctx(
+     MitmPolicyContext {
+         target_host: target_host.to_string(),
+         target_port,
+-        scheme: Scheme::HTTPS,
++        scheme: Protocol::HTTPS,
+         mode,
+         app_state,
+     }
+diff --git a/codex-rs/network-proxy/src/native_certs.rs b/codex-rs/network-proxy/src/native_certs.rs
+index 6c8d450..dc353b6 100644
+--- a/codex-rs/network-proxy/src/native_certs.rs
++++ b/codex-rs/network-proxy/src/native_certs.rs
+@@ -1,10 +1,10 @@
+-#[cfg(any(target_os = "macos", windows))]
+-use rama_tls_rustls::dep::pki_types::CertificateDer;
+ use rustls_native_certs::CertificateResult;
+ #[cfg(any(target_os = "macos", windows))]
+ use rustls_native_certs::Error;
+ #[cfg(any(target_os = "macos", windows))]
+ use rustls_native_certs::ErrorKind;
++#[cfg(any(target_os = "macos", windows))]
++use rustls_pki_types::CertificateDer;
+ 
+ // `rustls_native_certs::load_native_certs()` first consults SSL_CERT_FILE and
+ // SSL_CERT_DIR. Load platform roots directly so a startup custom CA can be
+diff --git a/codex-rs/network-proxy/src/runtime.rs b/codex-rs/network-proxy/src/runtime.rs
+index 10440e0..7d62191 100644
+--- a/codex-rs/network-proxy/src/runtime.rs
++++ b/codex-rs/network-proxy/src/runtime.rs
+@@ -296,6 +296,8 @@ impl std::fmt::Debug for NetworkProxyState {
+     }
+ }
+ 
++impl rama_core::extensions::Extension for NetworkProxyState {}
++
+ impl Clone for NetworkProxyState {
+     fn clone(&self) -> Self {
+         Self {
+diff --git a/codex-rs/network-proxy/src/socks5.rs b/codex-rs/network-proxy/src/socks5.rs
+index c8e7120..cfb00ab 100644
+--- a/codex-rs/network-proxy/src/socks5.rs
++++ b/codex-rs/network-proxy/src/socks5.rs
+@@ -2,6 +2,7 @@ use crate::attribution::BindConnectionAttribution;
+ use crate::config::NetworkMode;
+ use crate::connect_policy::TargetCheckedTcpConnector;
+ use crate::connection_lifecycle::CancelOnShutdown;
++use crate::connection_lifecycle::ConnectionExecutor;
+ use crate::mitm;
+ use crate::network_policy::BlockDecisionAuditEventArgs;
+ use crate::network_policy::NetworkDecision;
+@@ -25,19 +26,23 @@ use crate::state::BlockedRequestArgs;
+ use crate::state::NetworkProxyState;
+ use anyhow::Context as _;
+ use anyhow::Result;
++use rama_core::Layer;
+ use rama_core::Service;
+ use rama_core::error::BoxError;
+ use rama_core::extensions::Extensions;
+-use rama_core::extensions::ExtensionsMut;
+ use rama_core::extensions::ExtensionsRef;
+ use rama_core::graceful::ShutdownGuard;
++use rama_core::io::BridgeIo;
++use rama_core::layer::AddInputExtensionLayer;
++use rama_core::rt::Executor;
+ use rama_core::service::BoxService;
+ use rama_core::service::service_fn;
+ use rama_net::address::HostWithPort;
++use rama_net::address::SocketAddress;
++use rama_net::client::ConnectorTarget;
+ use rama_net::client::EstablishedClientConnection;
+-use rama_net::proxy::ProxyRequest;
+-use rama_net::proxy::ProxyTarget;
+-use rama_net::proxy::StreamForwardService;
++use rama_net::client::Request as TcpRequest;
++use rama_net::proxy::IoForwardService;
+ use rama_net::stream::Socket;
+ use rama_net::stream::SocketInfo;
+ use rama_socks5::Socks5Acceptor;
+@@ -46,7 +51,6 @@ use rama_socks5::server::DefaultUdpRelay;
+ use rama_socks5::server::udp::RelayRequest;
+ use rama_socks5::server::udp::RelayResponse;
+ use rama_tcp::TcpStream;
+-use rama_tcp::client::Request as TcpRequest;
+ use rama_tcp::server::TcpListener;
+ use std::io;
+ use std::net::SocketAddr;
+@@ -71,11 +75,11 @@ pub async fn run_socks5(
+     enable_socks5_udp: bool,
+     guard: ShutdownGuard,
+ ) -> Result<()> {
+-    let listener = TcpListener::build()
+-        .bind(addr)
++    let listener = TcpListener::build(Executor::graceful(guard.clone()))
++        .bind_address(addr)
+         .await
+         // See `http_proxy.rs` for details on why we wrap `BoxError` before converting to anyhow.
+-        .map_err(rama_core::error::OpaqueError::from)
++        .map_err(rama_core::error::ErrorExt::into_opaque_error)
+         .map_err(anyhow::Error::from)
+         .with_context(|| format!("bind SOCKS5 proxy: {addr}"))?;
+ 
+@@ -98,8 +102,8 @@ pub async fn run_socks5_with_std_listener(
+     enable_socks5_udp: bool,
+     guard: ShutdownGuard,
+ ) -> Result<()> {
+-    let listener =
+-        TcpListener::try_from(listener).context("convert std listener to SOCKS5 proxy listener")?;
++    let listener = TcpListener::try_from_std_tcp_listener(listener, Executor::graceful(guard.clone()))
++        .context("convert std listener to SOCKS5 proxy listener")?;
+     run_socks5_with_listener(
+         state,
+         listener,
+@@ -138,14 +142,14 @@ async fn run_socks5_with_listener(
+     }
+ 
+     listener
+-        .serve_graceful(
+-            guard,
+-            CancelOnShutdown::new(socks5_proxy_service(
+-                state,
+-                policy_decider,
+-                environment_id,
+-                enable_socks5_udp,
+-            )),
++        .serve(
++            AddInputExtensionLayer::new(ConnectionExecutor(Executor::graceful(guard)))
++                .into_layer(CancelOnShutdown::new(socks5_proxy_service(
++                    state,
++                    policy_decider,
++                    environment_id,
++                    enable_socks5_udp,
++                ))),
+         )
+         .await;
+     Ok(())
+@@ -173,7 +177,7 @@ pub(crate) fn socks5_proxy_service(
+     let socks_connector = DefaultConnector::default()
+         .with_connector(policy_tcp_connector)
+         .with_service(socks_proxy);
+-    let base = Socks5Acceptor::new().with_connector(socks_connector);
++    let base = Socks5Acceptor::new(Executor::default()).with_connector(socks_connector);
+ 
+     if enable_socks5_udp {
+         let udp_state = state.clone();
+@@ -205,8 +209,7 @@ async fn handle_socks5_tcp(
+ ) -> Result<EstablishedClientConnection<Socks5TcpConnection, TcpRequest>, BoxError> {
+     let app_state = req
+         .extensions()
+-        .get::<Arc<NetworkProxyState>>()
+-        .cloned()
++        .get_arc::<NetworkProxyState>()
+         .ok_or_else(|| io::Error::other("missing state"))?;
+ 
+     let host = normalize_host(&req.authority.host.to_string());
+@@ -218,7 +221,7 @@ async fn handle_socks5_tcp(
+ 
+     let client = req
+         .extensions()
+-        .get::<SocketInfo>()
++        .get_ref::<SocketInfo>()
+         .map(|info| info.peer_addr().to_string());
+ 
+     match app_state.enabled().await {
+@@ -547,20 +550,20 @@ impl AsyncWrite for Socks5TcpConnection {
+ }
+ 
+ impl Socket for Socks5TcpConnection {
+-    fn local_addr(&self) -> io::Result<SocketAddr> {
++    fn local_addr(&self) -> io::Result<SocketAddress> {
+         match self {
+             Self::Direct(stream) => stream.local_addr(),
+             Self::Mitm { .. } | Self::DetectProtocol { .. } => {
+-                Ok(SocketAddr::from(([0, 0, 0, 0], 0)))
++                Ok(SocketAddr::from(([0, 0, 0, 0], 0)).into())
+             }
+         }
+     }
+ 
+-    fn peer_addr(&self) -> io::Result<SocketAddr> {
++    fn peer_addr(&self) -> io::Result<SocketAddress> {
+         match self {
+             Self::Direct(stream) => stream.peer_addr(),
+             Self::Mitm { .. } | Self::DetectProtocol { .. } => {
+-                Ok(SocketAddr::from(([0, 0, 0, 0], 0)))
++                Ok(SocketAddr::from(([0, 0, 0, 0], 0)).into())
+             }
+         }
+     }
+@@ -575,31 +578,22 @@ impl ExtensionsRef for Socks5TcpConnection {
+     }
+ }
+ 
+-impl ExtensionsMut for Socks5TcpConnection {
+-    fn extensions_mut(&mut self) -> &mut Extensions {
+-        match self {
+-            Self::Direct(stream) => stream.extensions_mut(),
+-            Self::Mitm { extensions, .. } | Self::DetectProtocol { extensions, .. } => extensions,
+-        }
+-    }
+-}
+-
+ async fn proxy_socks5_tcp(
+-    request: ProxyRequest<TcpStream, Socks5TcpConnection>,
++    BridgeIo(source, target): BridgeIo<TcpStream, Socks5TcpConnection>,
+ ) -> Result<(), BoxError> {
+-    let ProxyRequest { mut source, target } = request;
+     match target {
+-        Socks5TcpConnection::Direct(target) => StreamForwardService::default()
+-            .serve(ProxyRequest { source, target })
+-            .await
+-            .map_err(Into::into),
++        Socks5TcpConnection::Direct(target) => {
++            IoForwardService::default()
++                .serve(BridgeIo(source, target))
++                .await
++        }
+         Socks5TcpConnection::Mitm {
+             target, mode, mitm, ..
+         } => {
+-            source.extensions_mut().insert(ProxyTarget(target));
+-            source.extensions_mut().insert(mode);
+-            source.extensions_mut().insert(mitm);
+-            mitm::mitm_stream(source, rama_http::uri::Scheme::HTTPS)
++            source.extensions().insert(ConnectorTarget(target));
++            source.extensions().insert(mode);
++            source.extensions().insert_arc(mitm);
++            mitm::mitm_stream(source, rama_net::Protocol::HTTPS)
+                 .await
+                 .map_err(Into::into)
+         }
+@@ -611,20 +605,20 @@ async fn proxy_socks5_tcp(
+             state,
+             ..
+         } => {
+-            source.extensions_mut().insert(ProxyTarget(target.clone()));
+-            source.extensions_mut().insert(mode);
+-            source.extensions_mut().insert(mitm);
++            source.extensions().insert(ConnectorTarget(target.clone()));
++            source.extensions().insert(mode);
++            source.extensions().insert_arc(mitm);
+             let (protocol, source) = crate::brokered_tunnel::peek_protocol(source, protocols)
+                 .await
+                 .map_err(|err| -> BoxError { err.into() })?;
+             match protocol {
+                 crate::brokered_tunnel::TunnelProtocol::Tls => {
+-                    mitm::mitm_stream(source, rama_http::uri::Scheme::HTTPS)
++                    mitm::mitm_stream(source, rama_net::Protocol::HTTPS)
+                         .await
+                         .map_err(Into::into)
+                 }
+                 crate::brokered_tunnel::TunnelProtocol::Http => {
+-                    mitm::mitm_stream(source, rama_http::uri::Scheme::HTTP)
++                    mitm::mitm_stream(source, rama_net::Protocol::HTTP)
+                         .await
+                         .map_err(Into::into)
+                 }
+@@ -646,13 +640,9 @@ async fn proxy_socks5_tcp(
+                         "SOCKS opaque upstream dial established (target={target}, elapsed_ms={})",
+                         connect_started_at.elapsed().as_millis()
+                     );
+-                    StreamForwardService::default()
+-                        .serve(ProxyRequest {
+-                            source,
+-                            target: upstream,
+-                        })
++                    IoForwardService::default()
++                        .serve(BridgeIo(source, upstream))
+                         .await
+-                        .map_err(Into::into)
+                 }
+             }
+         }
+@@ -679,7 +669,7 @@ async fn inspect_socks5_udp(
+     }
+ 
+     let client = extensions
+-        .get::<SocketInfo>()
++        .get_ref::<SocketInfo>()
+         .map(|info| info.peer_addr().to_string());
+ 
+     match state.enabled().await {
+@@ -866,7 +856,6 @@ mod tests {
+     use crate::state::build_config_state;
+     use pretty_assertions::assert_eq;
+     use rama_core::extensions::Extensions;
+-    use rama_core::extensions::ExtensionsMut;
+     use rama_net::address::HostWithPort;
+     use rama_net::address::SocketAddress;
+     use rama_socks5::server::udp::RelayDirection;
+@@ -921,9 +910,9 @@ mod tests {
+             mode: NetworkMode::Full,
+             ..NetworkProxyConfig::default()
+         });
+-        let mut request =
++        let request =
+             TcpRequest::new(HostWithPort::try_from("example.com:443").expect("valid authority"));
+-        request.extensions_mut().insert(state.clone());
++        request.extensions().insert_arc(state.clone());
+ 
+         let (result, events) = capture_events(|| async {
+             handle_socks5_tcp(
+@@ -966,9 +955,9 @@ mod tests {
+         };
+         settings.set_allowed_domains(vec!["example.com".to_string()]);
+         let state = state_for_settings(settings);
+-        let mut request =
++        let request =
+             TcpRequest::new(HostWithPort::try_from("example.com:443").expect("valid authority"));
+-        request.extensions_mut().insert(state.clone());
++        request.extensions().insert_arc(state.clone());
+ 
+         let result = handle_socks5_tcp(
+             request,
+@@ -991,9 +980,9 @@ mod tests {
+         };
+         settings.set_allowed_domains(vec!["example.com".to_string()]);
+         let state = state_for_settings(settings);
+-        let mut request =
++        let request =
+             TcpRequest::new(HostWithPort::try_from("example.com:80").expect("valid authority"));
+-        request.extensions_mut().insert(state.clone());
++        request.extensions().insert_arc(state.clone());
+ 
+         let (result, events) = capture_events(|| async {
+             handle_socks5_tcp(
+@@ -1042,10 +1031,10 @@ mod tests {
+         let state = state_for_settings(settings);
+         let mut env = HashMap::from([("OPENAI_API_KEY".to_string(), "sk-real".to_string())]);
+         state.virtualize_child_credentials(&mut env);
+-        let mut request = TcpRequest::new(
++        let request = TcpRequest::new(
+             HostWithPort::try_from("api.openai.com:8443").expect("valid authority"),
+         );
+-        request.extensions_mut().insert(state.clone());
++        request.extensions().insert_arc(state.clone());
+ 
+         let result = handle_socks5_tcp(
+             request,
+@@ -1071,9 +1060,9 @@ mod tests {
+         };
+         settings.set_allowed_domains(vec!["example.com".to_string()]);
+         let state = state_for_settings(settings);
+-        let mut request =
++        let request =
+             TcpRequest::new(HostWithPort::try_from("example.com:443").expect("valid authority"));
+-        request.extensions_mut().insert(state.clone());
++        request.extensions().insert_arc(state.clone());
+ 
+         let err = handle_socks5_tcp(
+             request,
+@@ -1109,9 +1098,9 @@ mod tests {
+         };
+         settings.set_allowed_domains(vec!["api.github.com".to_string()]);
+         let state = state_for_settings(settings);
+-        let mut request =
++        let request =
+             TcpRequest::new(HostWithPort::try_from("api.github.com:443").expect("valid authority"));
+-        request.extensions_mut().insert(state.clone());
++        request.extensions().insert_arc(state.clone());
+ 
+         let result = handle_socks5_tcp(
+             request,
+@@ -1144,9 +1133,9 @@ mod tests {
+         };
+         settings.set_allowed_domains(vec!["api.github.com".to_string()]);
+         let state = state_for_settings(settings);
+-        let mut request =
++        let request =
+             TcpRequest::new(HostWithPort::try_from("api.github.com:80").expect("valid authority"));
+-        request.extensions_mut().insert(state.clone());
++        request.extensions().insert_arc(state.clone());
+ 
+         let err = handle_socks5_tcp(
+             request,
+diff --git a/codex-rs/network-proxy/src/system_dns.rs b/codex-rs/network-proxy/src/system_dns.rs
+index 5149bcc..b65fd64 100644
+--- a/codex-rs/network-proxy/src/system_dns.rs
++++ b/codex-rs/network-proxy/src/system_dns.rs
+@@ -5,7 +5,13 @@
+ //! breaks Codex's ability to interact with network paths
+ //! that are provided by applications that modify / hook
+ //! into macOS DNS behavior (i.e. proxies, VPNs, etc)
+-use rama_dns::DnsResolver;
++use rama_core::bytes::Bytes;
++use rama_core::futures::Stream;
++use rama_core::futures::TryStreamExt as _;
++use rama_core::futures::stream;
++use rama_dns::client::resolver::DnsAddressResolver;
++use rama_dns::client::resolver::DnsResolver;
++use rama_dns::client::resolver::DnsTxtResolver;
+ use rama_net::address::Domain;
+ use std::io;
+ use std::net::IpAddr;
+@@ -18,39 +24,56 @@ use tokio::net::lookup_host;
+ #[derive(Clone)]
+ pub(crate) struct SystemDnsResolver;
+ 
+-impl DnsResolver for SystemDnsResolver {
++impl DnsAddressResolver for SystemDnsResolver {
+     type Error = io::Error;
+ 
+-    async fn ipv4_lookup(&self, domain: Domain) -> io::Result<Vec<Ipv4Addr>> {
+-        Ok(lookup_host((domain.as_str(), 0))
+-            .await?
+-            .filter_map(|addr| match addr.ip() {
+-                IpAddr::V4(ip) => Some(ip),
++    fn lookup_ipv4(
++        &self,
++        domain: Domain,
++    ) -> impl Stream<Item = io::Result<Ipv4Addr>> + Send + '_ {
++        stream::once(async move {
++            let addresses = lookup_host((domain.as_str().to_owned(), 0)).await?;
++            Ok::<_, io::Error>(stream::iter(addresses.filter_map(|addr| match addr.ip() {
++                IpAddr::V4(ip) => Some(Ok(ip)),
+                 IpAddr::V6(_) => None,
+-            })
+-            .collect())
++            })))
++        })
++        .try_flatten()
+     }
+ 
+-    async fn ipv6_lookup(&self, domain: Domain) -> io::Result<Vec<Ipv6Addr>> {
+-        Ok(lookup_host((domain.as_str(), 0))
+-            .await?
+-            .filter_map(|addr| match addr.ip() {
++    fn lookup_ipv6(
++        &self,
++        domain: Domain,
++    ) -> impl Stream<Item = io::Result<Ipv6Addr>> + Send + '_ {
++        stream::once(async move {
++            let addresses = lookup_host((domain.as_str().to_owned(), 0)).await?;
++            Ok::<_, io::Error>(stream::iter(addresses.filter_map(|addr| match addr.ip() {
+                 IpAddr::V4(_) => None,
+-                IpAddr::V6(ip) => Some(ip),
+-            })
+-            .collect())
++                IpAddr::V6(ip) => Some(Ok(ip)),
++            })))
++        })
++        .try_flatten()
+     }
++}
++
++impl DnsTxtResolver for SystemDnsResolver {
++    type Error = io::Error;
+ 
+-    async fn txt_lookup(&self, _domain: Domain) -> io::Result<Vec<Vec<u8>>> {
++    fn lookup_txt(
++        &self,
++        _domain: Domain,
++    ) -> impl Stream<Item = io::Result<Bytes>> + Send + '_ {
+         // TCP connectors only need address lookups. Do not silently fall back to
+         // a resolver with different DNS routing for unsupported record types.
+-        Err(io::Error::new(
++        stream::once(std::future::ready(Err(io::Error::new(
+             io::ErrorKind::Unsupported,
+             "the system address resolver does not support TXT lookups",
+-        ))
++        ))))
+     }
+ }
+ 
++impl DnsResolver for SystemDnsResolver {}
++
+ #[cfg(test)]
+ #[path = "system_dns_tests.rs"]
+ mod tests;
+diff --git a/codex-rs/network-proxy/src/system_dns_tests.rs b/codex-rs/network-proxy/src/system_dns_tests.rs
+index 9d74646..f5766e1 100644
+--- a/codex-rs/network-proxy/src/system_dns_tests.rs
++++ b/codex-rs/network-proxy/src/system_dns_tests.rs
+@@ -4,12 +4,12 @@ use crate::connect_policy::TargetCheckedTcpConnector;
+ use crate::state::network_proxy_state_for_policy;
+ use pretty_assertions::assert_eq;
+ use rama_core::Service;
+-use rama_core::extensions::ExtensionsMut;
++use rama_core::extensions::ExtensionsRef;
+ use rama_net::address::Host;
+ use rama_net::address::HostWithPort;
+ use rama_net::address::ProxyAddress;
+ use rama_net::stream::Socket;
+-use rama_tcp::client::Request;
++use rama_net::client::Request;
+ use std::sync::Arc;
+ use tokio::net::TcpListener;
+ 
+@@ -17,8 +17,8 @@ use tokio::net::TcpListener;
+ async fn native_resolution_supports_both_address_families() {
+     let domain: Domain = "localhost".parse().expect("valid domain");
+     let (ipv4, ipv6) = tokio::join!(
+-        SystemDnsResolver.ipv4_lookup(domain.clone()),
+-        SystemDnsResolver.ipv6_lookup(domain),
++        SystemDnsResolver.lookup_ipv4(domain.clone()).try_collect::<Vec<_>>(),
++        SystemDnsResolver.lookup_ipv6(domain).try_collect::<Vec<_>>(),
+     );
+ 
+     assert_eq!(
+@@ -82,9 +82,9 @@ async fn connector_resolves_upstream_proxy_instead_of_destination() {
+     let connector = TargetCheckedTcpConnector::new(Arc::new(network_proxy_state_for_policy(
+         NetworkProxyConfig::default(),
+     )));
+-    let mut request =
++    let request =
+         Request::new(HostWithPort::try_from("destination.invalid:80").expect("valid destination"));
+-    request.extensions_mut().insert(
++    request.extensions().insert(
+         ProxyAddress::try_from(format!("http://localhost:{}", target.port()))
+             .expect("valid upstream proxy"),
+     );
+diff --git a/codex-rs/network-proxy/src/upstream.rs b/codex-rs/network-proxy/src/upstream.rs
+index 2ad98e8..c1614af 100644
+--- a/codex-rs/network-proxy/src/upstream.rs
++++ b/codex-rs/network-proxy/src/upstream.rs
+@@ -5,11 +5,10 @@ use crate::state::NetworkProxyState;
+ use codex_utils_rustls_provider::ensure_rustls_crypto_provider;
+ use rama_core::Layer;
+ use rama_core::Service;
+-use rama_core::error::BoxError;
+ use rama_core::error::ErrorExt as _;
+-use rama_core::error::OpaqueError;
+-use rama_core::extensions::ExtensionsMut;
++use rama_core::error::extra::OpaqueError;
+ use rama_core::extensions::ExtensionsRef;
++use rama_core::rt::Executor;
+ use rama_core::service::BoxService;
+ use rama_http::Body;
+ use rama_http::Request;
+@@ -19,15 +18,17 @@ use rama_http::layer::version_adapter::RequestVersionAdapter;
+ use rama_http_backend::client::HttpClientService;
+ use rama_http_backend::client::HttpConnector;
+ use rama_http_backend::client::proxy::layer::HttpProxyConnectorLayer;
++use rama_net::ConnectorTargetInputExt;
++use rama_net::ProtocolInputExt;
+ use rama_net::address::Host;
+ use rama_net::address::HostWithPort;
+ use rama_net::address::ProxyAddress;
+ use rama_net::client::EstablishedClientConnection;
+-use rama_net::http::RequestContext;
+-use rama_tls_rustls::client::TlsConnectorDataBuilder;
++use rama_tls_rustls::client::RustlsClientConfigExt;
+ use rama_tls_rustls::client::TlsConnectorLayer;
+ use rama_tls_rustls::client::client_root_certs;
+ use rama_tls_rustls::dep::rustls;
++use rama_tls_rustls::types::client::TlsClientConfig;
+ use std::sync::Arc;
+ use std::time::Instant;
+ use tracing::info;
+@@ -120,7 +121,7 @@ pub(crate) struct UpstreamClient {
+     connector: BoxService<
+         Request<Body>,
+         EstablishedClientConnection<HttpClientService<Body>, Request<Body>>,
+-        BoxError,
++        OpaqueError,
+     >,
+     proxy_config: ProxyConfig,
+ }
+@@ -190,17 +191,21 @@ impl Service<Request<Body>> for UpstreamClient {
+     type Output = Response;
+     type Error = OpaqueError;
+ 
+-    async fn serve(&self, mut req: Request<Body>) -> Result<Self::Output, Self::Error> {
+-        let request_context = RequestContext::try_from(&req).ok();
+-        let authority = request_context
++    async fn serve(&self, req: Request<Body>) -> Result<Self::Output, Self::Error> {
++        let connector_target = req.connector_target();
++        let authority = connector_target
+             .as_ref()
+-            .map(|ctx| ctx.host_with_port().to_string())
++            .map(ToString::to_string)
+             .unwrap_or_else(|| "<unknown>".to_string());
+-        let proxy = request_context.as_ref().map_or_else(
++        let proxy = connector_target.as_ref().map_or_else(
+             || self.proxy_config.proxy_for_protocol(/*is_secure*/ false),
+-            |ctx| {
+-                self.proxy_config
+-                    .proxy_for_target(&ctx.host_with_port(), ctx.protocol.is_secure())
++            |target| {
++                self.proxy_config.proxy_for_target(
++                    target,
++                    req.protocol()
++                        .map(rama_net::Protocol::is_secure)
++                        .unwrap_or(false),
++                )
+             },
+         );
+         match proxy.as_ref() {
+@@ -211,12 +216,12 @@ impl Service<Request<Body>> for UpstreamClient {
+             None => info!("HTTP upstream route selected (target={authority}, route=direct)"),
+         }
+         if let Some(proxy) = proxy {
+-            req.extensions_mut().insert(proxy);
++            req.extensions().insert(proxy);
+         }
+ 
+         let connect_started_at = Instant::now();
+         let EstablishedClientConnection {
+-            input: mut req,
++            input: req,
+             conn: http_connection,
+         } = match self.connector.serve(req).await {
+             Ok(connection) => {
+@@ -231,12 +236,11 @@ impl Service<Request<Body>> for UpstreamClient {
+                     "HTTP upstream connection failed (target={authority}, elapsed_ms={})",
+                     connect_started_at.elapsed().as_millis()
+                 );
+-                return Err(OpaqueError::from_boxed(err));
++                return Err(err);
+             }
+         };
+ 
+-        req.extensions_mut()
+-            .extend(http_connection.extensions().clone());
++        req.extensions().extend(http_connection.extensions());
+ 
+         let request_started_at = Instant::now();
+         match http_connection.serve(req).await {
+@@ -252,7 +256,7 @@ impl Service<Request<Body>> for UpstreamClient {
+                     "HTTP upstream response headers failed (target={authority}, elapsed_ms={})",
+                     request_started_at.elapsed().as_millis()
+                 );
+-                Err(OpaqueError::from_boxed(err).context("HTTP upstream request failed"))
++                Err(err.context("HTTP upstream request failed").into_opaque_error())
+             }
+         }
+     }
+@@ -264,24 +268,30 @@ fn build_http_connector(
+ ) -> BoxService<
+     Request<Body>,
+     EstablishedClientConnection<HttpClientService<Body>, Request<Body>>,
+-    BoxError,
++    OpaqueError,
+ > {
+     ensure_rustls_crypto_provider();
+     let proxy = HttpProxyConnectorLayer::optional().into_layer(transport);
+-    let client_config = rustls::ClientConfig::builder_with_protocol_versions(rustls::ALL_VERSIONS)
+-        .with_root_certificates(tls_root_store)
+-        .with_no_client_auth();
+-    let tls_config = TlsConnectorDataBuilder::from(client_config)
+-        .with_alpn_protocols_http_auto()
+-        .build();
++    let tls_config = tls_client_config(tls_root_store);
+     let tls = TlsConnectorLayer::auto()
+-        .with_connector_data(tls_config)
++        .with_base_config(tls_config)
+         .into_layer(proxy);
+     let tls = RequestVersionAdapter::new(tls).with_default_version(Version::HTTP_11);
+-    let connector = HttpConnector::new(tls);
++    let connector = HttpConnector::new(tls, Executor::default());
+     connector.boxed()
+ }
+ 
++fn tls_client_config(tls_root_store: Arc<rustls::RootCertStore>) -> TlsClientConfig {
++    TlsClientConfig::new()
++        .with_alpn_http_auto()
++        .with_modify_rustls_config(move |mut config| {
++            let verifier =
++                rustls::client::WebPkiServerVerifier::builder(tls_root_store.clone()).build()?;
++            config.dangerous().set_certificate_verifier(verifier);
++            Ok(config)
++        })
++}
++
+ #[cfg(test)]
+ #[path = "upstream_tests.rs"]
+ mod tests;
+@@ -292,9 +302,9 @@ fn build_unix_connector(
+ ) -> BoxService<
+     Request<Body>,
+     EstablishedClientConnection<HttpClientService<Body>, Request<Body>>,
+-    BoxError,
++    OpaqueError,
+ > {
+     let transport = UnixConnector::fixed(path);
+-    let connector = HttpConnector::new(transport);
++    let connector = HttpConnector::new(transport, Executor::default());
+     connector.boxed()
+ }
+diff --git a/codex-rs/network-proxy/src/upstream_tests.rs b/codex-rs/network-proxy/src/upstream_tests.rs
+index f2c8ea2..82741eb 100644
+--- a/codex-rs/network-proxy/src/upstream_tests.rs
++++ b/codex-rs/network-proxy/src/upstream_tests.rs
+@@ -6,20 +6,20 @@ use rama_http::StatusCode;
+ use rama_http::Version;
+ use rama_net::address::Host;
+ use rama_net::address::HostWithPort;
+-use rama_tls_rustls::dep::pki_types::CertificateDer;
+-use rama_tls_rustls::dep::pki_types::PrivateKeyDer;
+-use rama_tls_rustls::dep::pki_types::pem::PemObject;
+-use rama_tls_rustls::dep::rcgen::BasicConstraints;
+-use rama_tls_rustls::dep::rcgen::CertificateParams;
+-use rama_tls_rustls::dep::rcgen::DistinguishedName;
+-use rama_tls_rustls::dep::rcgen::DnType;
+-use rama_tls_rustls::dep::rcgen::ExtendedKeyUsagePurpose;
+-use rama_tls_rustls::dep::rcgen::IsCa;
+-use rama_tls_rustls::dep::rcgen::Issuer;
+-use rama_tls_rustls::dep::rcgen::KeyPair;
+-use rama_tls_rustls::dep::rcgen::KeyUsagePurpose;
+-use rama_tls_rustls::dep::rcgen::PKCS_ECDSA_P256_SHA256;
+ use rama_tls_rustls::dep::tokio_rustls::TlsAcceptor;
++use rcgen::BasicConstraints;
++use rcgen::CertificateParams;
++use rcgen::DistinguishedName;
++use rcgen::DnType;
++use rcgen::ExtendedKeyUsagePurpose;
++use rcgen::IsCa;
++use rcgen::Issuer;
++use rcgen::KeyPair;
++use rcgen::KeyUsagePurpose;
++use rcgen::PKCS_ECDSA_P256_SHA256;
++use rustls_pki_types::CertificateDer;
++use rustls_pki_types::PrivateKeyDer;
++use rustls_pki_types::pem::PemObject;
+ use std::collections::HashMap;
+ use std::fs;
+ use std::sync::Arc;
+@@ -28,7 +28,7 @@ use tokio::io::AsyncReadExt;
+ use tokio::io::AsyncWriteExt;
+ use tokio::net::TcpListener;
+ 
+-fn generate_ca(common_name: &str) -> (String, KeyPair) {
++fn generate_ca(common_name: &str) -> (String, Issuer<'static, KeyPair>) {
+     let mut params = CertificateParams::default();
+     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
+     params.key_usages = vec![
+@@ -41,7 +41,7 @@ fn generate_ca(common_name: &str) -> (String, KeyPair) {
+     params.distinguished_name = distinguished_name;
+     let key_pair = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).unwrap();
+     let cert = params.self_signed(&key_pair).unwrap();
+-    (cert.pem(), key_pair)
++    (cert.pem(), Issuer::new(params, key_pair))
+ }
+ 
+ #[tokio::test]
+@@ -50,12 +50,11 @@ async fn mitm_upstream_client_trusts_startup_custom_ca() {
+     let temp_dir = tempdir().unwrap();
+     let startup_ca_path = temp_dir.path().join("startup-ca.pem");
+     let managed_ca_path = temp_dir.path().join("managed-ca.pem");
+-    let (startup_ca_pem, startup_ca_key) = generate_ca("startup CA");
++    let (startup_ca_pem, issuer) = generate_ca("startup CA");
+     let (managed_ca_pem, _) = generate_ca("managed MITM CA");
+     fs::write(&startup_ca_path, &startup_ca_pem).unwrap();
+     fs::write(&managed_ca_path, managed_ca_pem).unwrap();
+ 
+-    let issuer = Issuer::from_ca_cert_pem(&startup_ca_pem, startup_ca_key).unwrap();
+     let mut server_params = CertificateParams::new(vec!["localhost".to_string()]).unwrap();
+     server_params.extended_key_usages = vec![ExtendedKeyUsagePurpose::ServerAuth];
+     server_params.key_usages = vec![
+diff --git a/codex-rs/network-proxy/src/windows_proxy_ingress.rs b/codex-rs/network-proxy/src/windows_proxy_ingress.rs
+index a1b7891..f6c8cd1 100644
+--- a/codex-rs/network-proxy/src/windows_proxy_ingress.rs
++++ b/codex-rs/network-proxy/src/windows_proxy_ingress.rs
+@@ -6,6 +6,7 @@ use anyhow::Context;
+ use anyhow::Result;
+ use rama_core::Service;
+ use rama_core::error::BoxError;
++use rama_core::rt::Executor;
+ use rama_core::service::BoxService;
+ use rama_net::stream::Socket;
+ use rama_tcp::TcpStream;
+@@ -61,7 +62,8 @@ impl Service<TcpStream> for IngressDispatcher {
+     async fn serve(&self, stream: TcpStream) -> Result<(), BoxError> {
+         let local_addr = stream.local_addr()?;
+         let peer_addr = stream.peer_addr()?;
+-        let restricting_sids = restricting_sids_for_tcp_connection(local_addr, peer_addr)?;
++        let restricting_sids =
++            restricting_sids_for_tcp_connection(local_addr.into(), peer_addr.into())?;
+         let route = {
+             let routes = self
+                 .routes
+@@ -137,9 +139,10 @@ impl WindowsProxyIngress {
+         let socks_addr = listeners.socks_addr(requested_socks_addr)?;
+         let (http_listener, socks_listener) = listeners.into_listeners();
+         let http_listener =
+-            TcpListener::try_from(http_listener).context("convert shared HTTP ingress listener")?;
++            TcpListener::try_from_std_tcp_listener(http_listener, Executor::default())
++                .context("convert shared HTTP ingress listener")?;
+         let socks_listener = socks_listener
+-            .map(TcpListener::try_from)
++            .map(|listener| TcpListener::try_from_std_tcp_listener(listener, Executor::default()))
+             .transpose()
+             .context("convert shared SOCKS5 ingress listener")?;
+         let runtime =
+@@ -255,7 +258,7 @@ impl WindowsProxyIngress {
+             .context("read shared managed Windows SOCKS5 ingress address")?;
+         let listener = {
+             let _runtime = self.runtime.enter();
+-            TcpListener::try_from(listener)
++            TcpListener::try_from_std_tcp_listener(listener, Executor::default())
+         }
+         .context("convert shared SOCKS5 ingress listener")?;
+         let task = spawn_socks_listener(&self.runtime, &self.routes, listener, addr);
+diff --git a/codex-rs/rust-toolchain.toml b/codex-rs/rust-toolchain.toml
+index 910c651..67e3d88 100644
+--- a/codex-rs/rust-toolchain.toml
++++ b/codex-rs/rust-toolchain.toml
+@@ -1,3 +1,3 @@
+ [toolchain]
+-channel = "1.95.0"
++channel = "stable"
+ components = ["clippy", "rustfmt", "rust-src"]
+diff --git a/codex-rs/thread-manager-sample/src/main.rs b/codex-rs/thread-manager-sample/src/main.rs
+index 1259a62..58cac74 100644
+--- a/codex-rs/thread-manager-sample/src/main.rs
++++ b/codex-rs/thread-manager-sample/src/main.rs
+@@ -282,6 +282,7 @@ async fn new_config(
+         compact_prompt: None,
+         notify: None,
+         tui_notifications: TuiNotificationSettings::default(),
++        tui_peer_message_approval_mode: None,
+         animations: true,
+         tui_effects: Default::default(),
+         tui_rendering: Default::default(),
+diff --git a/codex-rs/tui/src/app/tests/session_lifecycle_requests.rs b/codex-rs/tui/src/app/tests/session_lifecycle_requests.rs
+index 0961865..5814908 100644
+--- a/codex-rs/tui/src/app/tests/session_lifecycle_requests.rs
++++ b/codex-rs/tui/src/app/tests/session_lifecycle_requests.rs
+@@ -19,6 +19,7 @@ use codex_app_server_protocol::ThreadItemsListCursor;
+ use codex_app_server_protocol::ThreadItemsListParams;
+ use codex_app_server_protocol::ThreadItemsListResponse;
+ use codex_app_server_protocol::ThreadStatus;
++use codex_config::types::AppToolApproval;
+ use codex_protocol::AgentPath;
+ use codex_protocol::items::AgentMessageContent;
+ use codex_protocol::items::AgentMessageItem;
+@@ -1288,14 +1289,35 @@ async fn archive_current_thread_returns_shared_servers_to_agents() -> Result<()>
+ 
+ #[tokio::test]
+ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths() -> Result<()> {
++    Box::pin(check_local_daemon_mcp_approval_lifecycle("", AppToolApproval::Prompt)).await
++}
++
++#[tokio::test]
++async fn local_daemon_approves_peer_messages_without_approving_new_tasks() -> Result<()> {
++    Box::pin(check_local_daemon_mcp_approval_lifecycle(
++        "[tui]\npeer_message_approval_mode = \"approve\"\n",
++        AppToolApproval::Approve,
++    ))
++    .await
++}
++
++async fn check_local_daemon_mcp_approval_lifecycle(
++    config_suffix: &str,
++    expected_peer_message_approval: AppToolApproval,
++) -> Result<()> {
+     let (mut app, events, _ops) = Box::pin(make_test_app_with_channels()).await;
+     let codex_home = tempdir()?;
+     app.config.codex_home = codex_home.path().to_path_buf().abs();
+     app.config.sqlite = SqliteConfig::new_for_testing(codex_home.path().abs());
+     std::fs::write(
+         codex_home.path().join("config.toml"),
+-        "web_search = \"disabled\"\n",
++        format!("web_search = \"disabled\"\n{config_suffix}"),
+     )?;
++    app.config.tui_peer_message_approval_mode = ConfigBuilder::default()
++        .codex_home(codex_home.path().to_path_buf())
++        .build()
++        .await?
++        .tui_peer_message_approval_mode;
+     // Keep the large lifecycle futures off the Windows test thread's stack.
+     let (mut app_server, mut requests, mut proxy) = Box::pin(start_recording_app_server(
+         &app.config,
+@@ -1374,9 +1396,14 @@ async fn local_daemon_registers_approval_gated_mcp_tools_for_both_start_paths()
+                 .is_some_and(|header| header.starts_with("Bearer "))
+         );
+         assert_eq!(server["default_tools_approval_mode"], "approve");
+-        for tool in crate::dynamic_tools::DELEGATION_TOOLS {
+-            assert_eq!(server["tools"][tool]["approval_mode"], "prompt");
+-        }
++        assert_eq!(
++            server["tools"],
++            serde_json::json!({
++                "create_thread": {"approval_mode": "prompt"},
++                "send_message_to_thread": {"approval_mode": expected_peer_message_approval},
++                "fork_thread": {"approval_mode": "prompt"}
++            })
++        );
+     }
+ 
+     let mcp_url = starts[0]["config"]["mcp_servers.codex_tui"]["url"]
+diff --git a/codex-rs/tui/src/app_server_session.rs b/codex-rs/tui/src/app_server_session.rs
+index d2c3249..b243c78 100644
+--- a/codex-rs/tui/src/app_server_session.rs
++++ b/codex-rs/tui/src/app_server_session.rs
+@@ -131,6 +131,7 @@ use codex_app_server_protocol::TurnSteerParams;
+ use codex_app_server_protocol::TurnSteerResponse;
+ use codex_app_server_protocol::UserInput;
+ use codex_config::ConfigLayerSource;
++use codex_config::types::AppToolApproval;
+ use codex_otel::TelemetryAuthMode;
+ use codex_protocol::ThreadId;
+ use codex_protocol::approvals::GuardianAssessmentEvent;
+@@ -504,6 +505,9 @@ impl AppServerSession {
+                 app_event_tx,
+                 status_updates,
+                 managed_requirement,
++                config
++                    .tui_peer_message_approval_mode
++                    .unwrap_or(AppToolApproval::Prompt),
+             )
+             .await?,
+         ));
+diff --git a/codex-rs/tui/src/dynamic_tools_mcp.rs b/codex-rs/tui/src/dynamic_tools_mcp.rs
+index 1ce13f7..2d8db9f 100644
+--- a/codex-rs/tui/src/dynamic_tools_mcp.rs
++++ b/codex-rs/tui/src/dynamic_tools_mcp.rs
+@@ -21,6 +21,7 @@ use codex_app_server_protocol::ThreadStatusChangedNotification;
+ use codex_config::McpServerConfig;
+ use codex_config::McpServerRequirement;
+ use codex_config::RawMcpServerConfig;
++use codex_config::types::AppToolApproval;
+ use codex_features::Features;
+ use rmcp::ErrorData as McpError;
+ use rmcp::handler::server::ServerHandler;
+@@ -112,6 +113,7 @@ impl DynamicToolMcpServer {
+         app_event_tx: AppEventSender,
+         status_updates: broadcast::Sender<ThreadStatusChangedNotification>,
+         managed_requirement: Option<&McpServerRequirement>,
++        peer_message_approval_mode: AppToolApproval,
+     ) -> std::io::Result<Self> {
+         let listener = TcpListener::bind("127.0.0.1:0").await?;
+         let address = listener.local_addr()?;
+@@ -122,7 +124,7 @@ impl DynamicToolMcpServer {
+             "default_tools_approval_mode": "approve",
+             "tools": {
+                 "create_thread": {"approval_mode": "prompt"},
+-                "send_message_to_thread": {"approval_mode": "prompt"},
++                "send_message_to_thread": {"approval_mode": peer_message_approval_mode},
+                 "fork_thread": {"approval_mode": "prompt"}
+             }
+         });
+diff --git a/codex-rs/tui/src/local_settings.rs b/codex-rs/tui/src/local_settings.rs
+index 949e6f9..b89d6e6 100644
+--- a/codex-rs/tui/src/local_settings.rs
++++ b/codex-rs/tui/src/local_settings.rs
+@@ -56,6 +56,7 @@ impl LocalSettings {
+             ),
+             tui: Tui {
+                 notification_settings: config.tui_notifications.clone(),
++                peer_message_approval_mode: config.tui_peer_message_approval_mode,
+                 animations: config.animations,
+                 screen_reader_detection_done: None,
+                 effects: config.tui_effects,
+diff --git a/codex-rs/utils/image/Cargo.toml b/codex-rs/utils/image/Cargo.toml
+index 3ac43b6..b4a3997 100644
+--- a/codex-rs/utils/image/Cargo.toml
++++ b/codex-rs/utils/image/Cargo.toml
+@@ -25,6 +25,9 @@ tokio = { workspace = true, features = ["fs", "rt", "rt-multi-thread", "macros"]
+ divan = { workspace = true }
+ image = { workspace = true, features = ["jpeg", "png", "gif", "webp"] }
+ 
++[target.'cfg(false)'.dependencies]
++zune-core = { workspace = true }
++
+ [lib]
+ doctest = false
+ 
+diff --git a/codex-rs/utils/rustls-provider/Cargo.toml b/codex-rs/utils/rustls-provider/Cargo.toml
+index af79eff..2b4f0dc 100644
+--- a/codex-rs/utils/rustls-provider/Cargo.toml
++++ b/codex-rs/utils/rustls-provider/Cargo.toml
+@@ -10,6 +10,10 @@ workspace = true
+ [dependencies]
+ rustls = { workspace = true }
+ 
++[build-dependencies]
++# Keep aws-lc-sys's jitter entropy CFLAGS guard effective before cc captures the environment.
++cc = "=1.2.55"
++
+ [lib]
+ test = false
+ doctest = false
+diff --git a/codex-rs/vendor/bubblewrap/bubblewrap.c b/codex-rs/vendor/bubblewrap/bubblewrap.c
+index 9039ddf..ed1dac2 100644
+--- a/codex-rs/vendor/bubblewrap/bubblewrap.c
++++ b/codex-rs/vendor/bubblewrap/bubblewrap.c
+@@ -1110,6 +1110,9 @@ privileged_op (int         privileged_op_socket,
+       break;
+ 
+     case PRIV_SEP_OP_REMOUNT_RO_NO_RECURSIVE:
++      if (arg2 == NULL)
++        die ("Remount destination is NULL");
++
+       bind_result = bind_mount (proc_fd, NULL, arg2, BIND_READONLY, &failing_path);
+ 
+       if (bind_result != BIND_MOUNT_SUCCESS)
+@@ -1120,6 +1123,9 @@ privileged_op (int         privileged_op_socket,
+       break;
+ 
+     case PRIV_SEP_OP_BIND_MOUNT:
++      if (arg2 == NULL)
++        die ("Bind mount destination is NULL");
++
+       /* We always bind directories recursively, otherwise this would let us
+          access files that are otherwise covered on the host */
+       bind_result = bind_mount (proc_fd, arg1, arg2, BIND_RECURSIVE | flags, &failing_path);
+@@ -1170,6 +1176,9 @@ privileged_op (int         privileged_op_socket,
+     case PRIV_SEP_OP_OVERLAY_MOUNT:
+       if (is_privileged)
+         die ("Overlay mounts are not supported in setuid mode");
++      if (arg2 == NULL)
++        die ("Overlay mount destination is NULL");
++
+       if (mount ("overlay", arg2, "overlay", MS_MGC_VAL | MS_NOSUID | MS_NODEV, arg1) != 0)
+         {
+           /* The standard message for ELOOP, "Too many levels of symbolic
+diff --git a/justfile b/justfile
+index 3614939..c256135 100644
+--- a/justfile
++++ b/justfile
+@@ -1,5 +1,9 @@
+ set working-directory := "codex-rs"
+ set positional-arguments
++
++# Shared source-package installer; override the canonical checkout location in the environment.
++import? x'${AGENTIC_SKILLS_REPO:-~/agentic-skills}/upgrade-codex-patch/justfile'
++
+ export CODEX_REPO_ROOT := justfile_directory()
+ export JUST_SHELL := justfile_directory() / "scripts/just-shell.py"
+ set shell := ["python3", "-c", 'import os, runpy; runpy.run_path(os.environ["JUST_SHELL"], run_name="__main__")']
