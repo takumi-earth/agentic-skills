@@ -36,6 +36,8 @@ read [check-oracles.md](references/check-oracles.md). Verify the predicate again
 the accepted semantic requirement; a failed assertion does not establish that
 the asserted requirement is valid or authorize changes to healthy tool behavior.
 
+When actual agent behavioral evaluation is authorized, use [the evaluation tooling](references/agent-evaluations.md). Its real `Codex` traces and independently graded fixture effects remain separate from helper tests. Ordinary skill edits do not automatically authorize a model run.
+
 ## Keep claims precise
 
 Keep planned, written, compiled, executed, assertion outcomes, process exit, canonical gate status, and user acceptance separate. A successful build does not prove a test body ran; exit `0` alone does not prove behavioral or canonical acceptance. Successful inner assertions with a nonzero process status are not a passing gate. A focused success cannot replace the required canonical gate.

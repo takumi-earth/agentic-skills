@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "network": { "kind": "unrestricted" },
+  "network_tools": ["WebSearch", "web", "web.run", "web__run"],
+  "destructive_git_grants": [],
+  "require_literal_shell": false,
+  "require_normal_git_refresh": false
+}

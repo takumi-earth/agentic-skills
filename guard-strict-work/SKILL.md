@@ -22,6 +22,8 @@ Existing user grants, including standing repository workflows and repair authori
 
 Before introducing or changing an acceptance predicate, stopping condition, or normal tool behavior, read [requirement provenance](references/requirement-provenance.md). Identify the protected property and authority, one permitted variation, and the forbidden effect. Keep this decision in the current task context; it does not require a ledger, a new approval step, or a preflight for ordinary edits.
 
+When the user selects mechanical execution controls, read [the native tool guard](references/tool-guard.md). Use trusted scope grants and the pre-execution boundary; distinguish supported inspection, actual activation, and containment.
+
 For an ambiguous contract, mixed permissions, purpose-bound supersession, or a disputed phase transition, load [task-authority.md](references/task-authority.md). Clear staged-only or ban-only work applies the rules here and its narrow phase owner without that detail.
 
 Reapply the current contract before a phase or wave transition; reuse it when unchanged. A verification failure that authorizes repairs returns to implementation. Close the complete authorized correction set before rerunning the declared round; a focused success cannot replace the user's whole-batch barrier.
