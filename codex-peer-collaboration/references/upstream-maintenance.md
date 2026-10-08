@@ -2,7 +2,9 @@
 
 Recorded: `2026-10-02`, `Asia/Hong_Kong`.
 
-The user requested the minimum practical overhead for pulling newer upstream Codex changes and applying this feature. The shared-fork, runtime-owned architecture remains selected. This reference proposes an integration and maintenance design; no semantic peer integrator, CI pipeline, or new upgrade command has been implemented.
+Last materially updated: `2026-10-09`, `Asia/Hong_Kong`.
+
+The user requested the minimum practical overhead for pulling newer upstream Codex changes and applying this feature. On `2026-10-09`, the user explicitly selected the five requirements in this reference and requested their incorporation by the existing `codex-bun` peer alongside its reusable integration work. The shared-fork, runtime-owned architecture remains selected. Semantic peer integration, a CI pipeline, and a new updater remain unimplemented; selected requirements are separate from evidence of implementation. [The maintained plan](plan.md#codex-bun-peer-handoff-and-consumer-lane) owns the concrete peer handoff and current disposition.
 
 ## Optimize the recurring work
 
@@ -16,7 +18,7 @@ The intended routine update has zero manual source porting when upstream preserv
 
 ## Keep product code owned and the upstream seam small
 
-Put substantive peer behavior in a focused runtime component with its own modules and behavior tests. Preserve runtime ownership; this is not a return to an independently configured external peer service.
+Put the registry, message protocol, delivery state, authenticated cross-host connection, and peer policy in one focused runtime component with its own modules and behavior tests. Initialize it with the app-server's lifetime and preserve runtime ownership; an internal adapter must not transfer ownership to an independently configured external peer service.
 
 The candidate upstream integration families are:
 
@@ -27,7 +29,7 @@ The candidate upstream integration families are:
 | Model tool contribution | Expose peer operations consistently to desktop, TUI, and phone-controlled sessions |
 | Configuration/protocol projection | Carry the peer policy, host/session identities, and delivery results through their proper owners |
 
-These are design families, not a verified file count. Choose the actual seams after reading their owners and checking available factories/contribution interfaces.
+These are candidate integration families, not a verified file or edit count. Choose the actual seams after reading their owners and checking available factories/contribution interfaces. Measure the number of upstream-owned interfaces depended on and how frequently their contracts change. A small edit inside a frequently rewritten upstream function can cost more to maintain than a larger owned component.
 
 Prefer a narrow existing extension/factory seam when it preserves the architecture. Keep necessary adaptations in small typed adapters. Avoid copying complete upstream algorithms, scattering peer logic through large core/TUI modules, or broadening subagent-tree authority to reduce diff size.
 
@@ -39,7 +41,7 @@ Use `$design-semantic-source-transforms` for the integration declarations and `$
 
 Each declaration needs a stable identity, semantic owner, complete permitted search scope, resolved query, relevant precondition, minimal rewrite, semantic postcondition, and required cardinality.
 
-For example, discover the app-server lifecycle constructor and tool-contribution owner by their load-bearing types/relationships, then add the owned peer contribution. Preserve unrelated initialization, fields, instrumentation, and upstream behavior.
+For example, discover the app-server lifecycle constructor and tool-contribution owner by their load-bearing types/relationships, then add the owned peer contribution and verify that it is registered exactly once. Preserve unrelated initialization, fields, instrumentation, and upstream behavior. Formatting, line shifts, unrelated fields, and file movement must not require manual porting. A genuine incompatibility must identify the affected integration point and the actual failed semantic condition.
 
 Paths and prior source locations may accelerate discovery; they must not decide identity or suppress the full query. Do not use complete-body replacements, exact source fragments, token fingerprints, regex matching, first-match mutation, or package-version gates as adaptive target identity.
 
@@ -51,13 +53,13 @@ Exact copying of the peer component's entirely owned files can be an ownership-s
 
 ## Reuse existing integration infrastructure carefully
 
-The complete README and applicable root guidance were inspected in `~/rust-forks/codex/codex-rs/bun`. Its README describes the existing `patch-engine/` primitives for `VirtualRoot`, Rust Analyzer indexing, typed `FileEdit` ownership, phase planning, atomic publication, and replay checks.
+The complete README and applicable root guidance were inspected in `~/rust-forks/codex/codex-rs/bun` at the original documentation checkpoint. Its README describes the existing `patch-engine/` primitives for `VirtualRoot`, Rust Analyzer indexing, typed `FileEdit` ownership, phase planning, atomic publication, and replay checks. On `2026-10-09`, the user confirmed that the existing `codex-bun` peer already has reusable application infrastructure without patch files.
 
-Those primitives are a candidate to investigate before building another generic engine. Their current implementation and fitness for peer declarations have not been audited in this task; documentation is not proof of semantic discovery or behavioral completeness.
+Have that peer assess and incorporate the peer consumer through the actual owners before building another generic engine. Its existing machinery is the first reuse candidate; compatibility with these peer declarations still needs a concrete owner/capability mapping and behavioral evidence. Record reusable operations, genuine gaps, permitted source scopes, typed outcomes, publication boundaries, and replay results. Documentation and the existence of an engine do not establish peer declaration fitness.
 
 Keep upgrade-time machinery out of the shipped peer runtime's dependency graph. Reusing an indexing/planning component does not select Bun as this feature's execution backend.
 
-The public Bun `apply` workflow also changes toolchains/dependencies, repairs source, installs integration seams, and enforces its Bun execution contract. Do not invoke that full workflow as a peer-only updater or bypass its ownership rules. Select any reuse through the actual owner and a bounded integration contract.
+The public Bun `apply` workflow also changes toolchains/dependencies, repairs source, installs integration seams, and enforces its Bun execution contract. Select bounded peer-only reuse through the actual owner without importing those broader effects. The peer's already-authorized full Bun work keeps its own scope and ordering; this consumer request does not bypass that workflow's ownership rules or verification gates.
 
 ## Proposed routine update
 
@@ -72,18 +74,9 @@ The public Bun `apply` workflow also changes toolchains/dependencies, repairs so
 
 The current upgrade workflow assumes the target Codex release/base was selected separately and does not authorize Codex fetches or base switching. A future single-command updater needs an explicitly defined source-fetch/target-preparation lane, preferably isolated from the user's working checkout. Do not silently turn the current patch workflow into `git pull` or a rebase of that checkout.
 
-The versioned Git patch remains a useful distribution/audit artifact. It is not a fallback for a failed semantic target query. Adopting semantic application as the production owner requires an explicit update to the current upgrade procedure; this design does not silently replace it.
+The selected production design applies owned code and semantic declarations without patch-file input, then produces a versioned Git patch as a reproducible release/provenance/audit artifact for the accepted upstream base. Preserve predecessor artifacts and the existing provenance/audit checks. A patch file is not a fallback for a failed semantic target query. The user has authorized the existing peer to incorporate this capability into its reusable work; adapting the release-upgrade owner remains a separately scoped effect rather than an implicit change to its active commands.
 
-The current `$upgrade-codex-patch` contract permits these Cargo commands in order:
-
-```bash
-cargo upgrade --recursive --verbose
-cargo update --recursive
-cargo install --path cli
-cargo install --path code-mode-host
-```
-
-It prohibits `git apply --3way` and mutation of the Codex base/index/history, and it does not permit extra formatting, test, lint, generator, or substitute build commands during that upgrade phase. Preserve that contract unless the user explicitly changes it; do not solicit extra gates from this design.
+Use the complete current `$upgrade-codex-patch` contract for each authorized release/build/install run instead of freezing an old command list in this reference. Preserve its exact dependency/build/package sequence, base/staged-entry/history protections, audit requirements, command lifetime, and recovery rules. The selected production design keeps artifact generation after semantic application and validation, and activation within the authority of the invoking workflow. Do not add tests, generators, substitute build commands, source fetches, or activation effects to an invocation merely because this design mentions them.
 
 ## Build and release overhead
 
@@ -91,7 +84,7 @@ It prohibits `git apply --3way` and mutation of the Codex base/index/history, an
 - Recognize that changed upstream workspace versions, dependencies, toolchains, or build inputs can still cause substantial rebuilds.
 - Produce each platform package once per accepted build revision, with source/patch provenance, target, toolchain/resolution information, and artifact identity. Reusing already built packages for installation avoids compiling again on every consuming machine.
 - A future CI build/cache/distribution lane can automate platform builds, but it is a separate proposed workflow. The current user's source-build capability remains supported.
-- The mandatory dependency refresh in the current four-command sequence can add rebuild cost. Changing its frequency or build profile is a separate workflow decision; semantic porting automation does not silently make that change.
+- Dependency refresh required by the active upgrade workflow can add rebuild cost. Changing its frequency or build profile is a separate workflow decision; semantic porting automation does not silently make that change.
 
 ## Evidence and long-term reduction
 

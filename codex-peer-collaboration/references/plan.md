@@ -1,6 +1,6 @@
 # Codex peer collaboration: living plan
 
-Last materially updated: `2026-10-08`, `Asia/Hong_Kong`.
+Last materially updated: `2026-10-09`, `Asia/Hong_Kong`.
 
 This is the maintained project record requested by the user, outside the Codex checkout. Keep this file current rather than creating parallel plans. [Runtime investigation](runtime-investigation.md) owns the detailed source findings.
 
@@ -25,6 +25,7 @@ Authority provenance is the actual user statements in session `01a0f6cc-3471-74b
 - The user stated that the desktop app has no such UI configuration and explicitly directed source investigation.
 - The user requested durable documentation outside the Codex repo, then explicitly requested a new skill with the plan in its references.
 - The user requested an approach with the minimum practical overhead for updating upstream Codex and reapplying the changes.
+- On `2026-10-09`, the user explicitly requested notifying the existing `codex-bun` peer, having it incorporate this capability alongside its reusable integration work, and retaining all five maintenance enhancements described below. The user confirmed that this peer already has reusable patching infrastructure that applies changes without patch files.
 
 These decisions are protected project requirements. Reopen them only when the user changes the requirement or a concrete incompatibility needs their decision. Assistant proposals and status do not create new authority.
 
@@ -58,7 +59,7 @@ The similarly named checkout `~/rust-forks/codex/codex-rs/bun` belongs to separa
 | --- | --- |
 | Standing peer permission and subagent distinction | Added to `~/.codex/AGENTS.md` in the earlier work; user supplied the policy again in this conversation |
 | TUI peer-message approval setting | Carried, compiled, installed, and retained for `0.161.0`, preserving upstream feature propagation, bootstrap preferences, and boxed lifecycle futures; Rust tests were not executed in this phase |
-| TUI bridge after daemon recovery | Absent from the earlier automatic recovery-turn inventory; advertised again in normal TUI turns, with successful peer discovery on `2026-10-08`. Source recovery omits the TUI MCP override; exact per-restart reconnect ordering remains unverified |
+| TUI bridge after daemon recovery | Absent from the earlier automatic recovery-turn inventory; advertised again in normal TUI turns, with successful peer discovery on `2026-10-08`. The current harness exposes native `codex_tui` list/read/send/wait tools, and list/read/send succeeded for the `codex-bun` coordination on `2026-10-09`. This bridge evidence does not implement app-server-owned peer tools; exact per-restart reconnect ordering remains unverified |
 | Shared-runtime local peer tools | Not implemented; current `collaboration` tools expose only the current agent tree |
 | Package selection and pinning | Confirmed in source; complete local packages can be selected with `update --from-cli` |
 | Ubuntu runtime selection and client boundary | Managed source daemon and matching running Code Mode host verified at `0.161.0` on `2026-10-07`; desktop attachment was observed at the older `0.159.2` checkpoint, and the full desktop/Mac/phone acceptance matrix remains unverified |
@@ -66,7 +67,8 @@ The similarly named checkout `~/rust-forks/codex/codex-rs/bun` belongs to separa
 | Mac-Ubuntu peer routing | Not implemented |
 | Phone use of native peer tools | Not verified; current phone access to both hosts is user-reported existing behavior |
 | Durable skill and plan | Created in canonical source; the Codex skill projection resolves there; prior structural validation and Ubuntu synchronization are recorded, with release retention and publication owned by the current upgrade workflow |
-| Low-overhead upstream maintenance | Objective requested by the user; the strategy in `upstream-maintenance.md` is proposed and has not been implemented |
+| Low-overhead upstream maintenance | All five requirements in `upstream-maintenance.md` selected by the user on `2026-10-09`; semantic peer declarations, reproducible release generation, and the package reuse lane remain unimplemented |
+| Codex-Bun reusable integration consumer | Existing peer `01a0f378-ec34-7657-ac19-f22a04282c55` contacted on `2026-10-09`; no canonical skill-file overlap reported. Concrete consumer mapping and incorporation into its existing work remain awaiting its implementation assessment |
 
 ## Completed patch checkpoint
 
@@ -154,6 +156,28 @@ Counterfactual regressions to prevent:
 - Treating plugin/helper paths as the desktop backend selector claims activation without evidence.
 - Retrying an ambiguous send without receiver duplicate protection can repeat an assignment.
 
+## Selected upstream maintenance requirements
+
+The user's `2026-10-09` request selects these requirements. [Upstream maintenance](upstream-maintenance.md) owns their detailed contract; this selection does not claim that the updater or runtime capability is implemented.
+
+1. Keep the registry, message protocol, delivery state, authenticated cross-host connection, and peer policy together in a focused app-server-owned runtime component. Connect it through actual workspace/build, runtime construction/lifetime, tool registration, and configuration/protocol owners. Record verified integration points and their change frequency; candidate families and line counts do not establish maintenance cost.
+2. Locate and apply integration points by their types and relationships across complete permitted scopes. Preserve formatting-independent and location-independent discovery, unrelated behavior, exact contribution cardinality, recognized pre-state and post-state, validated outcomes, and replay without further changes. Ambiguous or incompatible targets and failed validation leave authoritative source unchanged and identify the affected integration point.
+3. Have the existing `codex-bun` peer inspect and reuse its actual integration owners before introducing another engine. Use bounded capability crates, virtual-source transactions, semantic indexing, explicit edit ownership, and replay where they satisfy the peer declarations. Keep upgrade tooling outside the shipped peer runtime's dependency graph; broader Bun dependency/runtime changes retain their own workflow scope.
+4. Generate reproducible versioned patches as release and audit artifacts from owned peer code plus semantic integration declarations for each accepted upstream base. Peer source application uses reusable declarations rather than patch-file input. Preserve the causal sequence: resolve upstream revision, prepare target, restore owned code, apply and validate integration points, run the authorized build sequence, assemble platform packages, audit and retain artifacts, and activate within the applicable authority. Compatible interfaces should require zero manual porting; actual API or ownership drift requires a bounded repair.
+5. Build once per platform and accepted build revision, preserve normal caches, and assemble/install packages from the successful binaries. Account for rebuilds caused by upstream workspace, dependency, and toolchain changes. Keep local compilation supported; a later CI build/distribution lane remains separate proposed work.
+
+## Codex-Bun peer handoff and consumer lane
+
+The target is the existing independent `codex-bun` session `01a0f378-ec34-7657-ac19-f22a04282c55`, working in `~/rust-forks/codex/codex-rs/bun`. This request assigns bounded work to that monitored peer; it does not create or fork a session, authorize new subagents, or replace the peer's exact active goal.
+
+The peer reported no edits to canonical skill files or enclosing assets. It also reported that its own human has selected `S46` and instructed it to finish all eight remaining implementation items. Preserve its current source-closure-before-apply ordering, existing ownership decisions, whole verification rounds, formatting/checkpoint contract, and conditional publication boundary. The earlier truncated status report describing `S46` as pending is superseded for coordination by this newer peer report; the recipient's actual human instructions govern its work.
+
+This session owns the canonical plan and maintenance-reference update. The peer owns the bounded consumer assessment and incorporation through its actual Bun runtime/integrator owners. It should load `$codex-peer-collaboration`, retain the selected shared app-server architecture, map reusable primitives and any genuine gaps to the four candidate integration families, and place the peer consumer in the appropriate lane of its existing work. Assess peer-only application separately from the broader Bun workflow; do not hand-edit upstream owners or broaden a release-upgrade command contract to satisfy the consumer.
+
+The expected handoff identifies the chosen consumer/runtime owner, reused declaration/transaction/indexing APIs, missing capabilities, semantic preconditions and postconditions, cardinality and replay evidence, remaining runtime/client acceptance, and whether the consumer is integrated, planned, or outside the recipient's current authorized phase. A scope conflict needs a concrete report; a peer message must not silently override the recipient's user-selected work or turn into a new human instruction.
+
+Acceptance of this coordination request requires confirmed delivery of the canonical skill/plan and the peer's concrete disposition of the consumer lane. Source integration, compilation, executed behavior, platform package production, activation, and the desktop/Mac/Ubuntu/phone acceptance matrix remain distinct evidence states.
+
 ## Next unfinished work
 
 Mac attachment investigation and the native peer boundary/local implementation can progress independently within the current phase's authority. Do not make a missing Mac probe or UI control a prerequisite for source work that does not depend on it.
@@ -161,7 +185,7 @@ Mac attachment investigation and the native peer boundary/local implementation c
 Design the peer boundary using [the upstream maintenance strategy](upstream-maintenance.md): keep substantive behavior in owned code, maintain a small inventory of upstream integration points, and evaluate semantic reapplication before creating another patch engine. Minimal maintenance effort cannot justify moving the feature out of runtime ownership or weakening delivery and authorization behavior.
 
 1. **Establish Mac attachment through source-defined runtime interfaces.** Trace or observe which executable, package, socket, and transport the Mac desktop app actually uses. Exercise the selected managed-daemon/package path with proportionate authority. Verify whether desktop startup reuses it or creates a separate backend. Use process/socket evidence, not a requested UI selector or an invented config key.
-2. **Finalize the native local peer boundary.** Choose the focused runtime component and thin integration with the session registry and tool pipeline. Keep peer operations separate from child control. Define eligible-session discovery, bounded reads/waits, sender attribution, approval policy, delivery receipts, and duplicate handling.
+2. **Finalize the native local peer boundary and reusable consumer.** Coordinate the bounded consumer lane with the existing `codex-bun` peer, then choose the focused runtime component and thin integration with the session registry and tool pipeline. Keep peer operations separate from child control. Define eligible-session discovery, bounded reads/waits, sender attribution, approval policy, delivery receipts, and duplicate handling.
 3. **Implement and prove local peer collaboration.** Establish runtime-owned model tools for desktop and TUI sessions, including an Ubuntu-to-Ubuntu desktop exchange with no TUI listener dependency.
 4. **Build and select matching Mac/Ubuntu runtime packages.** Record source/build provenance, complete-package validation, matching Code Mode host, running daemon identity, and actual desktop attachment. Preserve the app's existing integration-resource ownership.
 5. **Add cross-host collaboration.** Introduce authenticated host enrollment and qualified session identities over the existing SSH route or another explicitly selected transport. Define disconnected and uncertain-delivery outcomes.
@@ -180,6 +204,8 @@ These are planned actions. Continue only the next effect authorized by the curre
 - A peer message remains tool-originated context in model input and persisted history.
 - The same operations are available while the user controls the desktop sessions from the phone.
 - Report written, compiled, executed, and end-to-end evidence separately.
+- Exercise the selected semantic declarations against formatting, line shifts, unrelated extension, movement, recognized post-state, replay, ambiguity, and incompatible upstream ownership/API changes. Prove exactly-once integration and unchanged authoritative source on rejected application; patch-text matching or compilation alone does not establish these properties.
+- Establish reproducible release-artifact generation and package reuse per accepted platform/build revision without making patch files the production application mechanism.
 
 ## Open questions
 
@@ -194,4 +220,6 @@ These remain evidence questions, not reasons to reconsider the selected shared-f
 
 The package consists of `SKILL.md`, `agents/openai.yaml`, this plan, `runtime-investigation.md`, and the conditional `upstream-maintenance.md` design reference. It is ordinary canonical skill source, so it can be versioned and transferred with the skill repository rather than depending on an ignored task report.
 
-Both structural validators exited successfully on `2026-10-02`. On `2026-10-03`, `skills-ref validate ./codex-peer-collaboration` and `skills-ref validate ./upgrade-codex-patch` exited `0` after the release patch was retained and this checkpoint was added. The canonical pull was already up to date; existing documentation/workflow commits `a7c4505` and `feaf409` are preserved. The current `$manage-agentic-skills-repo` contract owns the complete repository commit, and the invoked upgrade workflow requires publication. Runtime activation and harness synchronization keep their separate authority. Structural validity does not establish correct activation or end-to-end peer behavior.
+Both structural validators exited successfully on `2026-10-02`. On `2026-10-03`, `skills-ref validate ./codex-peer-collaboration` and `skills-ref validate ./upgrade-codex-patch` exited `0` after the release patch was retained and this checkpoint was added. The canonical pull was already up to date at that checkpoint; existing documentation/workflow commits `a7c4505` and `feaf409` are preserved. The current `$manage-agentic-skills-repo` contract owns the complete repository commit and publication; the invoked release-upgrade workflow retains its separate artifact obligations. Runtime activation and harness synchronization keep their separate authority. Structural validity does not establish correct activation or end-to-end peer behavior.
+
+On `2026-10-09`, the explicit user request selected all five maintenance requirements and authorized the bounded existing-peer assignment. The canonical repository refresh fast-forwarded successfully. The Codex, Claude, and Copilot package links resolve to this same canonical source, so the updated references are exposed through the existing projections. Both `skills-ref validate ./codex-peer-collaboration` and the harness `quick_validate.py` exited `0`. These are documentation/package checks; the peer consumer assessment and runtime/client implementation evidence remain separate.
