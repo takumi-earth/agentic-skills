@@ -1,6 +1,6 @@
 # Codex peer collaboration: living plan
 
-Last materially updated: `2026-10-07`, `Asia/Hong_Kong`.
+Last materially updated: `2026-10-08`, `Asia/Hong_Kong`.
 
 This is the maintained project record requested by the user, outside the Codex checkout. Keep this file current rather than creating parallel plans. [Runtime investigation](runtime-investigation.md) owns the detailed source findings.
 
@@ -34,7 +34,7 @@ These decisions are protected project requirements. Reopen them only when the us
 - Spawning, creating, or forking sessions and delegating to subagents require explicit user requests.
 - Peer assignments retain the recipient's objective, ownership, verification restrictions, model selection, and approval boundaries.
 - Peer messages carry authenticated sender provenance and remain tool-originated context rather than human instructions.
-- Approve peer exchanges separately from other actions. The recorded global policy is `approval_policy = "on-request"` with `approvals_reviewer = "user"`.
+- Apply the user's standing authorization for relevant existing-peer communication and bounded delegation through the configured peer approval policy. The selected TUI peer-send policy is `"approve"`; it does not approve creating/forking sessions or unrelated actions. The recorded global policy remains `approval_policy = "on-request"` with `approvals_reviewer = "user"`. Do not turn that global policy into a new permission question for an already-authorized peer exchange.
 - Source changes, builds, verification, installation, service restarts, runtime activation, staging, commits, and pushes follow the authority for the current phase. This document does not authorize them.
 - Earlier suggestions for a separately configured peer MCP service were planning alternatives. The user subsequently selected runtime ownership in the shared Codex fork; do not silently restore the earlier architecture.
 
@@ -58,6 +58,7 @@ The similarly named checkout `~/rust-forks/codex/codex-rs/bun` belongs to separa
 | --- | --- |
 | Standing peer permission and subagent distinction | Added to `~/.codex/AGENTS.md` in the earlier work; user supplied the policy again in this conversation |
 | TUI peer-message approval setting | Carried, compiled, installed, and retained for `0.161.0`, preserving upstream feature propagation, bootstrap preferences, and boxed lifecycle futures; Rust tests were not executed in this phase |
+| TUI bridge after daemon recovery | Absent from the earlier automatic recovery-turn inventory; advertised again in normal TUI turns, with successful peer discovery on `2026-10-08`. Source recovery omits the TUI MCP override; exact per-restart reconnect ordering remains unverified |
 | Shared-runtime local peer tools | Not implemented; current `collaboration` tools expose only the current agent tree |
 | Package selection and pinning | Confirmed in source; complete local packages can be selected with `update --from-cli` |
 | Ubuntu runtime selection and client boundary | Managed source daemon and matching running Code Mode host verified at `0.161.0` on `2026-10-07`; desktop attachment was observed at the older `0.159.2` checkpoint, and the full desktop/Mac/phone acceptance matrix remains unverified |
@@ -93,13 +94,23 @@ The user invoked `$upgrade-codex-patch $codex-peer-collaboration` on `2026-10-07
 - Preparation and Cargo: `just i --prepare-v8` exits `0` in `0.387` seconds; `cargo upgrade --recursive --verbose` exits `0` in `40.390` seconds; `cargo update --recursive` exits `0` in `5.064` seconds; `cargo install --path cli` exits `0` in `1142.940` seconds and installs `codex` plus `logs_client`; `cargo install --path code-mode-host` exits `0` in `118.699` seconds. No build remediation or new pins were needed. Retain workspace pins `blake3 = "=1.8.2"`, `time = "=0.3.47"`, `zune-core = "=0.5.1"`, and the `cc = "=1.2.55"` build dependency in `utils/rustls-provider/Cargo.toml`.
 - Complete installation: `just i` reuses all three prebuilt binaries, validates the official Linux package with source-built `bwrap`, publishes CLI aliases, and selects the native source daemon. Two daemon restarts interrupted installer processes owned by the old command session. A third invocation in an independent process completed with exit `0` in `74.110` seconds and wrote the final receipt; the Rust installations were not repeated.
 - Runtime provenance: complete CLI package `~/.codex/packages/standalone/releases/local-0.161.0-x86_64-unknown-linux-gnu-34f4a207-b3bd-4353-952a-45eff0350963`; selected daemon package `~/.codex/packages/app-server-daemon/releases/local-421231a21cd28fd56163bcf9b38327f1a2f9d538db0162aed3c79d1953affe0b-x86_64-unknown-linux-gnu`. CLI, managed daemon, and running app-server versions are all `0.161.0`. The running app-server and Code Mode host executable hashes match the installed CLI package's respective binaries. The daemon's production-update marker is absent, preserving the native local pin. This is runtime/package evidence, not acceptance of native peer tools or the complete client matrix.
-- Tool visibility after recovery: the recovered turn's available-tool inventory contains no `codex_tui` list/read/send/wait tools, and `collaboration.list_agents` exposes only the current root. Earlier TUI MCP peer-tool availability must not be carried forward as a verified current client handoff. The cause and the native runtime peer boundary remain unfinished project work; no listener or client-configuration workaround was applied.
+- Tool visibility at the upgrade checkpoint: the automatic recovery turns omitted `codex_tui` list/read/send/wait tools, while `collaboration.list_agents` exposed only the current root. This was a turn-scoped observation, not a permanent capability-loss verdict. Normal TUI turns later advertised the tools again and peer discovery succeeded; the follow-up below owns the updated findings. No listener or client-configuration workaround was applied.
 - Audit and worktree: cached applicability and applicability against a private filesystem view of the target base both pass. The original-baseline audit fails only the physical index check; the final audit passes against the separately recorded user-accepted exception. Predecessor bytes, `HEAD`, staged entries, and exact reviewed-export bytes are preserved. The `64` modified Codex paths remain unstaged and uncommitted; automatic version fields and `Cargo.lock` are excluded from the `47`-path artifact. The audit records the `16` additional manifest paths touched by Cargo as mutation bounds, not selected export content.
 - Index exception: `HEAD` and staged entries remain identical to the original baseline, but the physical index digest changed between the baseline and post-application snapshots. The user explicitly accepted: `Accept the metadata exception; preserve the unchanged staged entries`. Preserve the original baseline and record this run's exception separately; no index restoration or rewrite is authorized.
 - Diagnostics and evidence boundaries: the CLI retains a future compatibility warning from `proc-macro-error2 v2.0.1` re-exporting private `proc_macro`; the host-only graph reports the unused workspace `crossterm` patch, which the CLI uses. Both installers report the configured stable-toolchain notice. Source inspection, artifact checks, compilation, installation, and runtime provenance are verified separately; Rust tests, linting, formatting, generators, and end-to-end peer/client checks were not run under this upgrade contract.
 - Intrinsic evidence: `~/agentic-skills/.scratchpad/upgrade-codex-patch/20261007T115114Z-v0.161.0-peer/`.
 
 The retained patch and this checkpoint follow the invoked upgrade's complete canonical repository commit and publication workflow. The next unfinished project actions remain native local peer implementation and Mac attachment investigation; preserve the selected runtime ownership and acceptance matrix below.
+
+## Recovery and guidance follow-up
+
+On `2026-10-08`, the user supplied the daemon feature-mismatch screen and reported completing its restart. The selected source confirms an upstream `api_key_model_discovery` default change from `false` in `0.160.0` to `true` in `0.161.0`. Ubuntu readback confirmed the running source version and saved overrides, and `codex_tui.list_threads` worked again. [Runtime investigation](runtime-investigation.md#recovery-and-feature-compatibility-follow-up) records the source mechanism and its evidence limits.
+
+Keep native package replacement, shared feature-policy changes, and client MCP reattachment distinct. The authorized upgrade's default installation already owns native daemon selection/restart; the TUI compatibility action changes all displayed persisted feature values under the user's separate selection. A screenshot does not authorize either effect on another host. The installation invocation and recorder must survive the daemon being replaced, and recovery must check the original invocation/receipt before repeating completed commands.
+
+The earlier raw-index exception is historical run evidence. The refreshed upgrade contract protects staged entries and the staging split while permitting normal Git index-cache refreshes. Its current helper does not use serialized index bytes as an acceptance criterion. Do not reintroduce the obsolete byte check, restore index bytes, or request another metadata exception from this checkpoint.
+
+The temporary inventory gap and later successful TUI discovery do not satisfy the native runtime or desktop/Mac/phone acceptance requirements. Native peer lifetime/registration and Mac attachment remain unfinished; exact reconnect ordering for the upgrade interruptions is still an evidence question.
 
 ## Previous release upgrade checkpoint
 

@@ -86,6 +86,7 @@
 - Keep worker assignments single-purpose. Reuse a worker only for clarification, correction, or continuation of the same slice; use a fresh worker for an unrelated topic.
 - Keep final ownership, cross-package consistency, and acceptance decisions with the primary agent.
 - Preserve proper Markdown backticks around literal commands, paths, identifiers, configuration, prompts, and technical wording in all repository-facing responses and artifacts.
+- Do not hardwrap content. Keep prose paragraphs, list items, and literal commands on one logical line; use line breaks for actual document or code structure.
 
 ## Commit convention
 
