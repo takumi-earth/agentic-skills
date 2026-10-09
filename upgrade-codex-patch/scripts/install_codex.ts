@@ -41,6 +41,22 @@ type PythonRuntime = {
 		openssl_capath: string;
 	};
 };
+type RuntimeProcess = { pid: number; parent: number; created: string; executable: string };
+type DaemonState = {
+	backend?: string;
+	pid?: number;
+	managedCodexPath: string;
+	cliVersion?: string;
+	managedCodexVersion?: string;
+	appServerVersion?: string;
+};
+type RuntimeOutcome = {
+	stopped: { status: string; processes: RuntimeProcess[]; remaining: RuntimeProcess[] };
+	launched: DaemonState;
+	state: DaemonState;
+	processes: RuntimeProcess[];
+	executables: { source: string; selected: string; sha256: string }[];
+};
 export type Context = {
 	env: Environment;
 	execute: (command: Command, env: Environment) => Promise<Result>;
@@ -129,6 +145,7 @@ function options(args: string[]): Options {
 				"--entrypoint-bin",
 				"--code-mode-host-bin",
 				"--logs-client-bin",
+				"--bwrap-bin",
 			].includes(arg)
 		) {
 			required(args[i + 1], `${arg} argument`, "executable path", "missing");
@@ -470,11 +487,14 @@ export async function install(ctx: Context, args: string[] = []) {
 						"assemble and validate platform package",
 						"include logs_client",
 						"verify compiled CLI version",
-						"publish immutable package and recoverable CLI aliases",
+						"retain immutable validated package",
+						...(selected.daemon ? ["stop previous runtime and helpers"] : []),
+						"publish recoverable CLI aliases",
 						...(selected.daemon
 							? [
 									"select and pin source daemon package",
-									"verify runtime versions",
+									"start selected app-server with saved settings",
+									"verify process exit, executable provenance and runtime versions",
 								]
 							: []),
 					],
@@ -563,7 +583,7 @@ export async function install(ctx: Context, args: string[] = []) {
 			"--package-dir",
 			stage,
 		];
-		for (const flag of ["--entrypoint-bin", "--code-mode-host-bin"])
+		for (const flag of ["--entrypoint-bin", "--code-mode-host-bin", "--bwrap-bin"])
 			if (selected.prebuilt[flag])
 				buildArgs.push(flag, selected.prebuilt[flag]);
 		await run(ctx, plan, "build and validate complete package", buildArgs);
@@ -624,23 +644,41 @@ export async function install(ctx: Context, args: string[] = []) {
 		await rename(stage, packageDir);
 		stage = undefined;
 		ctx.say(`installing ${metadata.version} from ${display(packageDir)}`);
-		links = await installLinks(ctx, plan, packageDir);
 		const codex = join(packageDir, metadata.entrypoint);
+		let runtime: RuntimeOutcome | undefined;
+		const roots = [
+			join(plan.runtime_root, "packages"), plan.cargo_bin,
+			childEnv.CARGO_TARGET_DIR
+				? resolve(plan.repository_root, "codex-rs", childEnv.CARGO_TARGET_DIR)
+				: join(plan.repository_root, "codex-rs", "target"),
+		];
+		let stopped: RuntimeOutcome["stopped"] | undefined;
 		if (selected.daemon) {
-			await run(ctx, plan, "start managed app-server", [
-				codex,
-				"app-server",
-				"daemon",
-				"start",
-			]);
-			await run(ctx, plan, "select and pin source daemon package", [
-				codex,
-				"app-server",
-				"daemon",
-				"update",
-				"--from-cli",
-				"--yes",
-			]);
+			for (const name of ["codex", "codex-code-mode-host", "logs_client"]) {
+				const alias = join(plan.cargo_bin, `${name}${extension}`);
+				required(!(await exists(alias))?.isDirectory(), "installed executable alias path", "file, symlink, or absent", alias);
+			}
+			stopped = JSON.parse(await run(ctx, plan, "stop previous runtime and helpers", [
+				plan.python, join(plan.skill_root, "scripts", "source_install.py"), "stop", ...roots,
+			], plan.repository_root, "stdout")) as RuntimeOutcome["stopped"];
+			required(stopped.status === "stopped" && Array.isArray(stopped.remaining) && stopped.remaining.length === 0,
+				"previous runtime exit", "no remaining processes", stopped);
+		}
+		// Running loose binaries must exit before their alias files are renamed.
+		links = await installLinks(ctx, plan, packageDir);
+		if (selected.daemon) {
+			const stateDir = join(plan.runtime_root, "app-server-daemon");
+			const legacy = await Promise.all(["app-server.pid", "app-server.stderr.log", "app-server-updater.pid", "app-server-updater.stderr.log"].map(name => exists(join(stateDir, name))));
+			if (await exists(join(plan.runtime_root, "packages", "app-server-daemon", "current")) || legacy.some(Boolean)) {
+				await run(ctx, plan, "select and pin source daemon package", [
+					codex, "app-server", "daemon", "update", "--from-cli", "--yes",
+				]);
+			}
+			// Restart also starts a stopped or fresh daemon, retaining saved settings.
+			// On a fresh home its native preparation installs this complete package.
+			const launched = JSON.parse(await run(ctx, plan, "start selected app-server with saved settings", [
+				codex, "app-server", "daemon", "restart",
+			], plan.repository_root, "stdout")) as DaemonState;
 			const state = JSON.parse(
 				await run(
 					ctx,
@@ -650,15 +688,45 @@ export async function install(ctx: Context, args: string[] = []) {
 					plan.repository_root,
 					"stdout",
 				),
-			);
+			) as DaemonState;
 			required(
-				state.cliVersion === metadata.version &&
+				state.backend === "pid" && launched.backend === "pid" &&
+					state.cliVersion === metadata.version &&
 					state.managedCodexVersion === metadata.version &&
 					state.appServerVersion === metadata.version,
 				"installed runtime versions",
 				metadata.version,
 				state,
 			);
+			const managed = expand(state.managedCodexPath);
+			const identities = [];
+			for (const name of ["codex", "codex-code-mode-host", "logs_client"]) {
+				const source = join(packageDir, "bin", `${name}${extension}`);
+				const selectedPath = join(dirname(managed), `${name}${extension}`);
+				const hash = async (path: string) => {
+					const hasher = new Bun.CryptoHasher("sha256");
+					for await (const chunk of Bun.file(path).stream()) hasher.update(chunk);
+					return hasher.digest("hex");
+				};
+				const expected = await hash(source);
+				const received = await hash(selectedPath);
+				required(expected === received, "selected runtime executable", { source, sha256: expected }, { selected: selectedPath, sha256: received });
+				identities.push({ source, selected: selectedPath, sha256: received });
+			}
+			const observed = JSON.parse(await run(ctx, plan, "verify running executable provenance", [
+				plan.python, join(plan.skill_root, "scripts", "source_install.py"), "inspect", ...roots,
+			], plan.repository_root, "stdout")) as { processes: RuntimeProcess[] };
+			const allowed = await Promise.all(identities.flatMap(identity => [identity.source, identity.selected]).map(path => realpath(path)));
+			const server = observed.processes.find(item => item.pid === launched.pid);
+			required(server && await realpath(expand(server.executable)) === await realpath(managed),
+				"running app-server executable", { pid: launched.pid, executable: managed }, server);
+			for (const item of observed.processes) {
+				if (["codex", "codex-code-mode-host", "logs_client"].map(name => `${name}${extension}`).includes(basename(item.executable))) {
+					required(allowed.includes(await realpath(expand(item.executable))), "running runtime generation", allowed, item);
+				}
+			}
+			required(stopped, "previous runtime handoff", "completed shutdown observation", stopped);
+			runtime = { stopped, launched, state, processes: observed.processes, executables: identities };
 		}
 		const receipt = {
 			...plan,
@@ -666,6 +734,7 @@ export async function install(ctx: Context, args: string[] = []) {
 			status: "installed" as const,
 			package: packageDir,
 			daemon: selected.daemon ? "selected-and-verified" : "not-requested",
+			runtime,
 			links,
 			side_effects: [standalone, plan.cargo_bin],
 		};
@@ -689,11 +758,65 @@ export async function install(ctx: Context, args: string[] = []) {
 	}
 }
 
+async function independentInstall(args: string[]) {
+	required(process.env.CODEX_REPO_ROOT, "Codex repository authority", "CODEX_REPO_ROOT", "missing");
+	const runtime = expand(process.env.CODEX_HOME || join(home, ".codex"));
+	const attempts = join(runtime, "packages", "standalone", "source-install-attempts");
+	await mkdir(attempts, { recursive: true });
+	const attempt = await mkdtemp(join(attempts, "install-"));
+	const manifest = join(attempt, "invocation.json");
+	await writeFile(manifest, JSON.stringify({
+		nonce: crypto.randomUUID(), command: [process.execPath, "--no-env-file", import.meta.path, ...args],
+		cwd: process.cwd(),
+	}, (_key, value) => typeof value === "string" ? display(value) : value, 2) + "\n");
+	const python = process.env.CODEX_INSTALL_PYTHON || (process.platform === "win32" ? "python" : "python3");
+	const launcher = Bun.spawn([python, join(dirname(import.meta.path), "source_install.py"), "launch", manifest], {
+		stdin: "ignore", stdout: "pipe", stderr: "pipe",
+	});
+	const [stdout, stderr] = await Promise.all([
+		new Response(launcher.stdout).text(), new Response(launcher.stderr).text(),
+	]);
+	required(await launcher.exited === 0, "independent installation lifetime", "detached supervisor", { stdout, stderr });
+	const supervisor = JSON.parse(stdout);
+	console.error(`[just i +${elapsed()}s] independent installation: PID ${supervisor.supervisor_pid}; outcome ${display(join(attempt, "result.json"))}`);
+	const offsets = new Map<string, number>();
+	const decoders = new Map<string, TextDecoder>();
+	const relay = async (name: string, output: NodeJS.WriteStream) => {
+		const file = Bun.file(join(attempt, name));
+		if (!await file.exists()) return;
+		const offset = offsets.get(name) || 0;
+		const bytes = await file.slice(offset).arrayBuffer();
+		if (!bytes.byteLength) return;
+		offsets.set(name, offset + bytes.byteLength);
+		const decoder = decoders.get(name) || new TextDecoder();
+		decoders.set(name, decoder);
+		output.write(decoder.decode(bytes, { stream: true }));
+	};
+	const cancel = () => { void writeFile(join(attempt, "cancel"), "cancel\n"); };
+	process.on("SIGINT", cancel);
+	try {
+		while (!await Bun.file(join(attempt, "result.json")).exists()) {
+			await relay("stdout.log", process.stdout);
+			await relay("stderr.log", process.stderr);
+			await Bun.sleep(200);
+		}
+		await relay("stdout.log", process.stdout);
+		await relay("stderr.log", process.stderr);
+		for (const [name, decoder] of decoders) (name === "stdout.log" ? process.stdout : process.stderr).write(decoder.decode());
+		const result = await Bun.file(join(attempt, "result.json")).json();
+		process.exitCode = result.exit_status;
+		console.error(`[just i +${elapsed()}s] independent installation: exit ${result.exit_status}; ${display(join(attempt, "result.json"))}`);
+		if (result.error) console.error(display(result.error));
+	} finally {
+		process.off("SIGINT", cancel);
+	}
+}
+
 export async function main(args = process.argv.slice(2)) {
 	if (args[0] === "i") args = args.slice(1);
 	if (args.includes("--help")) {
 		console.log(
-			"just i [--plan] [--prepare-v8] [--no-daemon] [--entrypoint-bin PATH] [--code-mode-host-bin PATH] [--logs-client-bin PATH]\nLocations: AGENTIC_SKILLS_REPO (import), CODEX_REPO_ROOT, CODEX_V8_REPO, CODEX_HOME, CARGO_HOME. Optional interpreter: CODEX_INSTALL_PYTHON.",
+			"just i [--plan] [--prepare-v8] [--no-daemon] [--entrypoint-bin PATH] [--code-mode-host-bin PATH] [--logs-client-bin PATH] [--bwrap-bin PATH]\nLocations: AGENTIC_SKILLS_REPO (import), CODEX_REPO_ROOT, CODEX_V8_REPO, CODEX_HOME, CARGO_HOME. Optional interpreter: CODEX_INSTALL_PYTHON.",
 		);
 		return;
 	}
@@ -712,6 +835,13 @@ export async function main(args = process.argv.slice(2)) {
 				process.exitCode = await child.exited;
 				return;
 			}
+		}
+		const selectedOptions = options(args);
+		if (process.env.CODEX_SOURCE_INSTALL_WORKER) {
+			delete process.env.CODEX_SOURCE_INSTALL_WORKER;
+		} else if (selectedOptions.daemon && !selectedOptions.plan && !selectedOptions.prepareV8) {
+			await independentInstall(args);
+			return;
 		}
 		const quiet = args.includes("--plan");
 		const ctx: Context = {

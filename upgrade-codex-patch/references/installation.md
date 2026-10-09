@@ -34,7 +34,7 @@ just i
 
 ## Installation chain
 
-`selected checkouts -> native V8 setup -> official platform package build and validation -> logs_client -> compiled CLI version check -> immutable local package -> recoverable CLI aliases -> native daemon selection/pinning -> version verification`.
+`independent installer lifetime -> selected checkouts -> native V8 setup -> official platform package build and validation -> logs_client -> compiled CLI version check -> immutable local package -> stop old runtime and helpers -> confirm process exit -> recoverable CLI aliases -> select/pin source package -> restart with saved settings -> verify executable provenance and versions -> durable receipt`.
 
 The compiler's host triple selects the package ABI. Linux packages include the source-built `bwrap`; Windows packages include `codex-command-runner.exe` and `codex-windows-sandbox-setup.exe`. The supported builder supplies verified `rg` and the patched `zsh` where available. The installer retains `logs_client` in the package in addition to its required runtime executables.
 
@@ -42,7 +42,13 @@ The published package lives beneath `CODEX_HOME/packages/standalone/releases/loc
 
 A SQLite transaction serializes publication. Build or identity failures leave installed aliases untouched and clean only the installer's staging directory. An alias-publication failure restores its prior aliases. Once a package has been published, later failures retain it and report the observed installation state. The final receipt is outside the immutable package, at `CODEX_HOME/packages/standalone/source-install.json`.
 
-By default, `just i` starts the managed app-server when necessary, then invokes `update --from-cli --yes` and verifies the CLI, selected daemon and running daemon versions. This can restart a managed daemon. The native daemon owner decides whether the existing server is managed; the installer never kills an unmanaged server or substitutes a production release for the source build.
+By default, `just i` builds and validates the new complete package before shutting down the previous runtime. Its external process controller stops same-user Codex executables in the selected runtime's package directory, Cargo binary directory, and selected checkout's build directory, including code-mode hosts, updater/client processes, and their descendants. It excludes the independent installer's ancestry, retains captured process identities across reparenting, rechecks identities before signalling, and escalates an incomplete Unix shutdown after five seconds. It requires an empty remaining-process set before selecting or starting anything. Other users' processes and unrelated executable locations remain outside that scope; an unknown server that still owns the control endpoint remains a native lifecycle error.
+
+Shutdown precedes alias publication: renaming a running loose binary to its backup name can change the executable path reported by the OS, and running Windows executables can obstruct replacement. Validate alias locations before shutdown, then stop the old processes while their original executable identities are available.
+
+For an existing selection, the installer invokes `update --from-cli --yes` while the old runtime is stopped. The native command selects and pins the complete source package without launching a server in that state. It then invokes `daemon restart`, which also starts a stopped daemon while retaining saved launch settings. A fresh installation uses that same restart command's native missing-package preparation; it does not start a previous selection first. The installer does not edit native PID-registration or process-admission policy, add runtime recovery APIs, or substitute a production package.
+
+Verification requires managed ownership, matching CLI/selected/running versions, a live process executing the selected daemon binary, and identical CLI, code-mode-host, and `logs_client` bytes in the source and selected packages. Any remaining Codex process in scope must execute the new source or selected package. Helpers start when the runtime needs them; the installer removes old helpers and verifies the new helper artifacts without requiring a new helper `--version` API. The receipt retains shutdown observations, startup identity, running process observations, and executable digests.
 
 This native package selection and its managed restart belong to the authorized default installation. A companion project skill does not require another permission request for the same effects. Editing guidance or building a package without installation authority keeps its separate boundary.
 
@@ -50,7 +56,11 @@ Use `just i --no-daemon` to install the complete CLI package without starting or
 
 ## Execution through the daemon being replaced
 
-Before launching the default installation from an agent hosted by the target daemon, arrange an independent process lifetime and durable stdout, stderr, exit-status, and duration capture. Use an external terminal or a child process whose lifetime and stdio do not depend on that daemon's command session. Preserve the selected repository locations and the same supported `just i` arguments.
+The default `just i` entrypoint automatically starts an independent Python supervisor before installation. On Unix it owns a separate session; on Windows it requests a detached process outside the caller's job. Failure to establish that lifetime stops the invocation before its child installer runs. The supervisor owns the Bun installer, independent output pipes, and final result. The foreground command relays progress while attached; termination of the old Codex daemon or TUI leaves installation running.
+
+The process controller uses Linux process metadata, macOS process enumeration and `proc_pidpath`, or Windows CIM owner information and held native process handles. Windows compares creation time at [CIM's microsecond precision](https://learn.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime) when reading the native [100-nanosecond `FILETIME`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes); it checks the executable through the held handle before termination. Keep these adapters compatible with the native host rather than assuming Linux `/proc` exists everywhere.
+
+Each invocation reports an attempt directory under `CODEX_HOME/packages/standalone/source-install-attempts/`. It contains `invocation.json`, `stdout.log`, `stderr.log`, `supervisor.log`, and an atomically published `result.json` with native exit status and elapsed time. `--plan`, `--prepare-v8`, and `--no-daemon` keep their direct process lifetime because they do not replace the running daemon. A failed attempt retains its logs and any already-published package; the final `source-install.json` receipt is written only after full verification.
 
 A daemon-recovery prompt records an interruption, not command success or failure. Check whether the original installer is still running, then inspect its captured exit and `source-install.json`. A daemon running the target release can coexist with an unfinished installer and an older receipt. Continue observing a live installer; retry only when the invocation ended without completing the required installation. Correct the process lifetime before that retry, reuse the successful prebuilt binaries, and report interrupted attempts separately. Do not repeat Cargo installs or another attached `just i` merely because a tool response was lost.
 
@@ -72,3 +82,13 @@ just i --entrypoint-bin "$codex_cargo_bin/codex" --code-mode-host-bin "$codex_ca
 ```
 
 Required platform resources are still built or fetched by the official package builder. No formatter, fixer, test suite, Bazel lock update, Git operation, or dependency upgrade is part of `just i`. Record its exit separately from the initial Cargo commands. A successful Cargo binary install alone does not prove a complete local CLI package or a selected source daemon.
+
+When a Linux `bwrap` has already been built for the selected package, pass `--bwrap-bin <executable>` as well. The official builder still validates the complete package. Reuse only binaries with established provenance for the accepted source; do not reuse a rejected implementation's binaries merely because their version strings match.
+
+## Installer repair acceptance
+
+Keep installation orchestration in this package. Before expanding the carried Codex patch, trace whether its existing native commands already meet the requirement when called in the correct order and from an independent process. A managed-start shortcut, a changed admission rule, or a helper API added solely for installer assertions creates avoidable fork maintenance.
+
+Run the existing Bun installer tests and `python3 upgrade-codex-patch/scripts/test_source_install.py` from the canonical skills repository when changing these scripts. The latter exercises independent outcome capture, launching-session exit, scoped native process shutdown, unrelated-process preservation, and reparented identity. These are installer tests, separate from the Codex repository's prohibited test commands.
+
+For real workflow evidence, run `test_install_runtime.py` with complete accepted old and new packages and the actual selected checkout. It invokes the imported `just i` recipe against isolated runtime and Cargo homes. Require an older registered runtime and an older runtime with missing PID registration, each with an active old code-mode host, to be stopped and replaced without a manual kill or `/daemon`. Include a fresh-home case that preserves saved feature settings and a foreign endpoint owner that remains alive and rejected. Record process exits, selected/live executable provenance, helper artifacts, command exit, and durable outcome. Code must target macOS, Linux, and Windows; native macOS/Windows verification may be performed in the user's sessions on those hosts.

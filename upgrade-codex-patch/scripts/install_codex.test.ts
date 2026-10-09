@@ -83,6 +83,7 @@ async function fixture() {
 	const env = {
 		...process.env,
 		CODEX_REPO_ROOT: repository,
+		CODEX_V8_REPO: v8,
 		CODEX_HOME: runtime,
 		CARGO_HOME: cargoHome,
 	};
@@ -93,8 +94,12 @@ async function fixture() {
 		failBuilder: false,
 		badTarget: false,
 		daemonVersion: "1.2.3",
+		backend: "pid" as string | undefined,
+		remaining: [] as number[],
+		corruptHost: false,
 		hold: undefined as Promise<void> | undefined,
 	};
+	await mkdir(join(runtime, "packages", "app-server-daemon", "current"), { recursive: true });
 	const ctx: Context = {
 		env,
 		say: () => {},
@@ -188,12 +193,24 @@ async function fixture() {
 				);
 			} else if (command.phase === "verify package CLI version")
 				stdout = `codex-cli ${behavior.builderVersion}\n`;
-			else if (command.phase === "verify selected daemon")
+		else if (command.phase === "stop previous runtime and helpers")
+			stdout = JSON.stringify({ status: "stopped", processes: [{ pid: 10 }], remaining: behavior.remaining });
+		else if (command.phase === "start selected app-server with saved settings") {
+			const packageDir = dirname(dirname(command.argv[0]));
+			const selected = join(runtime, "packages", "app-server-daemon", "current");
+			await cp(packageDir, selected, { recursive: true });
+			if (behavior.corruptHost) await writeFile(join(selected, "bin", `codex-code-mode-host${extension}`), "stale host");
+			stdout = JSON.stringify({ backend: behavior.backend, pid: 11 });
+		} else if (command.phase === "verify selected daemon")
 				stdout = JSON.stringify({
+					backend: behavior.backend,
+					managedCodexPath: join(runtime, "packages", "app-server-daemon", "current", "bin", `codex${extension}`),
 					cliVersion: behavior.builderVersion,
 					managedCodexVersion: behavior.daemonVersion,
 					appServerVersion: behavior.daemonVersion,
 				});
+		else if (command.phase === "verify running executable provenance")
+			stdout = JSON.stringify({ processes: [{ pid: 11, executable: join(runtime, "packages", "app-server-daemon", "current", "bin", `codex${extension}`) }] });
 			return { command, exitCode: 0, stdout };
 		},
 	};
@@ -207,6 +224,14 @@ test("installs the complete prepared package, retains old binaries, and pins mat
 	const sourceBefore = await readFile(
 		join(f.repository, "codex-rs", ".cargo", "config.toml"),
 	);
+	const execute = f.ctx.execute;
+	f.ctx.execute = async (command, env) => {
+		if (command.phase === "stop previous runtime and helpers") {
+			expect((await lstat(old)).isSymbolicLink()).toBe(false);
+			expect(await readFile(old, "utf8")).toBe('#!/usr/bin/env bun\nconsole.log("old source CLI");\n');
+		}
+		return execute(command, env);
+	};
 	const result = installed(await install(f.ctx));
 	expect(result.status).toBe("installed");
 	expect(result.daemon).toBe("selected-and-verified");
@@ -247,9 +272,11 @@ test("installs the complete prepared package, retains old binaries, and pins mat
 		"build and validate complete package",
 		"build logs_client",
 		"verify package CLI version",
-		"start managed app-server",
+		"stop previous runtime and helpers",
 		"select and pin source daemon package",
+		"start selected app-server with saved settings",
 		"verify selected daemon",
+		"verify running executable provenance",
 	]);
 	expect(
 		f.commands.find(
@@ -487,7 +514,7 @@ test("builder failure leaves the existing CLI intact and removes only its stagin
 	expect(await readFile(old)).toEqual(before);
 	expect((await lstat(old)).isFile()).toBe(true);
 	expect(
-		f.commands.some((command) => command.phase === "start managed app-server"),
+		f.commands.some((command) => command.phase === "stop previous runtime and helpers"),
 	).toBe(false);
 	expect([
 		...new Bun.Glob(".source-build-*").scanSync({
@@ -541,6 +568,43 @@ test("daemon mismatch reports the retained package and does not claim installati
 			join(f.runtime, "packages", "standalone", "source-install.json"),
 		).exists(),
 	).toBe(false);
+});
+
+test("fresh installation starts the new package without first launching an old selection", async () => {
+	const f = await fixture();
+	await rm(join(f.runtime, "packages", "app-server-daemon", "current"), { recursive: true });
+	installed(await install(f.ctx));
+	expect(f.commands.filter(command => command.argv.includes("daemon")).map(command => command.argv.slice(3))).toEqual([
+		["restart"], ["version"],
+	]);
+});
+
+test("surviving old processes block package selection and restart", async () => {
+	const f = await fixture();
+	f.behavior.remaining = [10];
+	await expect(install(f.ctx)).rejects.toThrow("previous runtime exit");
+	expect(f.commands.some(command => command.argv.includes("daemon"))).toBe(false);
+});
+
+test("matching versions without managed ownership cannot complete installation", async () => {
+	const f = await fixture();
+	f.behavior.backend = undefined;
+	await expect(install(f.ctx)).rejects.toThrow("installed runtime versions");
+});
+
+test("a stale selected code-mode host fails executable provenance despite matching versions", async () => {
+	const f = await fixture();
+	f.behavior.corruptHost = true;
+	await expect(install(f.ctx)).rejects.toThrow("selected runtime executable");
+	expect(await Bun.file(join(f.runtime, "packages", "standalone", "source-install.json")).exists()).toBe(false);
+});
+
+test("the official builder receives the previously built Linux sandbox helper", async () => {
+	const f = await fixture();
+	const bwrap = join(f.root, "prebuilt bwrap");
+	await program(bwrap, 'console.log("prebuilt sandbox");');
+	installed(await install(f.ctx, ["--no-daemon", "--bwrap-bin", bwrap]));
+	expect(f.commands.find(command => command.phase === "build and validate complete package")!.argv.slice(-2)).toEqual(["--bwrap-bin", bwrap]);
 });
 
 test("prebuilt symlinks avoid rebuilding logs and no-daemon leaves service controls unused", async () => {

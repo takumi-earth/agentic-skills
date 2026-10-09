@@ -9,6 +9,15 @@ Carry the previous release patch forward without losing upstream behavior, then 
 
 For source installation or launcher preparation without a release-patch upgrade, read [complete source-package installation](references/installation.md) and use the imported `just i` recipe. Report the installer's actual result. The patch-rebase, dependency-upgrade, export and publication steps below belong to the release-upgrade mode; an installation-only request does not authorize those effects.
 
+## Repair the supported workflow at its owner
+
+- A reported failure leaves the authorized workflow unfinished. Diagnose and repair the normal entrypoint until it performs its intended installation and runtime replacement. Manual recovery, matching version strings, and a successful receipt from an already-repaired environment do not establish that a subsequent upgrade will work.
+- Trace the existing build, package selection, process shutdown, startup, and helper ownership before choosing an implementation. Installation orchestration belongs in this package's installer. Use existing native lifecycle commands before proposing additional Codex runtime APIs, process-admission policy, or source patches. Add a Codex source change only when a concrete requirement cannot be met at the installer owner; explain that necessity before expanding the carried patch.
+- Treat replacement as an external handoff: prepare and validate the complete new package first, stop the old runtime and its helpers, prove they exited, select and pin the new package, and start it with the user's saved settings. The handoff must survive termination of the session that initiated it. Keep progress and a durable outcome available after reconnecting.
+- Write the implementation for macOS, Linux, and Windows. Keep platform process operations in the installer; do not turn one host's API into a shared assumption. Native verification on the other platforms may occur in the user's respective sessions.
+- Verify an upgrade from an older running package, including the reported missing-registration state, through the supported `just i` entrypoint. Verify old process exit and new executable/package provenance as well as version readback. Keep build failure before shutdown and unrelated-process preservation covered. Do not call the repair resolved from mocks, manual kills, `/daemon`, or a same-version checkpoint alone.
+- Continue remediation within existing authority. Ask only when a concrete necessary effect conflicts with another instruction. Preserve the Codex command restrictions below; installer tests and skill validation do not authorize Codex tests or extra Cargo commands.
+
 ## Refresh the canonical skill repository at launch
 
 - Read [the repository lifecycle](references/repository-lifecycle.md) before changing the Codex checkout. Use `$manage-agentic-skills-repo` to pull the canonical `agentic-skills` source and integrate incoming commits under its standing authorization and preservation rules. Complete that refresh before patch application or Cargo; do not add a separate fast-forward-only restriction or Git permission request.
@@ -69,7 +78,7 @@ cargo install --path code-mode-host
 
 Cargo installs produce loose binaries. After they succeed, run `just i` with the three prebuilt-binary arguments in [the installation reference](references/installation.md). It uses the official platform package builder, retains `logs_client`, publishes complete CLI aliases, and selects/pins the source daemon through its native lifecycle commands. Record a snapshot before and after this installation and report its result separately. Do not claim complete installation from Cargo output alone. Direct `just i` installation does not itself upgrade dependencies, apply/export patches, or grant Git authority.
 
-When the invoking agent uses the daemon that installation will replace, follow the installation reference's process-lifetime and recovery procedure before launching `just i`. Its already-authorized native package selection may restart that daemon; keep the command and its recorder able to finish independently. After recovery, inspect the original invocation and receipt before retrying. Distinguish installed versions, shared feature compatibility, client attachment, and model-visible tools in the report.
+The default `just i` entrypoint owns an independent installer lifetime and durable outcome capture, including when it replaces the invoking agent's daemon. Read the installation reference's recovery procedure before the handoff. After reconnecting, inspect that original invocation and receipt before retrying. Distinguish installed versions, process and package provenance, shared feature compatibility, client attachment, and model-visible tools in the report.
 
 ## Remediate build failures
 
