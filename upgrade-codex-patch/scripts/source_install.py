@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
@@ -277,6 +278,40 @@ def stop_runtime(roots):
     return {"status": "stopped", "processes": list(captured.values()), "remaining": []}
 
 
+@contextmanager
+def startup_gate(home):
+    lock_path = Path(home).expanduser() / "app-server-control" / "app-server-startup.lock"
+    lock_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    with os.fdopen(os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o600), "r+b") as lock:
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            print(json.dumps(display({"phase": "startup-gate", "status": "held", "path": str(lock_path)})), file=sys.stderr, flush=True)
+            yield
+        finally:
+            if os.name == "nt":
+                lock.seek(0)
+                msvcrt.locking(lock.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def select_package(home, codex, roots):
+    # App-server itself takes this existing gate before opening the endpoint.
+    # Keep reconnecting clients outside package selection, including raw starts
+    # that do not participate in the native manager's daemon operation lock.
+    with startup_gate(home):
+        stop_runtime(roots)
+        print(json.dumps({"phase": "package-selection", "status": "begin"}), file=sys.stderr, flush=True)
+        result = subprocess.run([codex, "app-server", "daemon", "update", "--from-cli", "--yes"])
+        stop_runtime(roots)
+        return result.returncode
+
+
 def main():
     mode, *arguments = sys.argv[1:]
     if mode == "launch":
@@ -291,6 +326,8 @@ def main():
         print(json.dumps(display(stop_runtime(arguments))))
     elif mode == "inspect":
         print(json.dumps(display({"processes": selected_processes(processes(), arguments, set())})))
+    elif mode == "select":
+        sys.exit(select_package(arguments[0], arguments[1], arguments[2:]))
     else:
         raise RuntimeError(f"unknown source installer operation: {mode}")
 

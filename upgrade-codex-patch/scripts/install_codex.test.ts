@@ -283,13 +283,42 @@ test("installs the complete prepared package, retains old binaries, and pins mat
 			(command) => command.phase === "select and pin source daemon package",
 		)!.argv,
 	).toEqual([
-		join(published, "bin", "codex"),
-		"app-server",
-		"daemon",
-		"update",
-		"--from-cli",
-		"--yes",
+		process.platform === "win32" ? "python" : "python3",
+		join(skill, "scripts", "source_install.py"),
+		"select", f.runtime, join(published, "bin", "codex"),
+		join(f.runtime, "packages"), join(f.cargoHome, "bin"), join(f.repository, "codex-rs", "target"),
 	]);
+});
+
+test("package preparation returns the handoff without changing aliases or controlling services", async () => {
+	const f = await fixture();
+	const old = join(f.cargoHome, "bin", "codex");
+	await program(old, 'console.log("keep running source");');
+	const before = await readFile(old);
+	const result = await install(f.ctx, ["--prepare-package"]);
+	if (!("status" in result) || result.status !== "prepared") throw new Error("Expected a prepared package");
+	expect(result.daemon).toBe("user-reserved");
+	expect(await readFile(old)).toEqual(before);
+	expect(await Bun.file(join(f.runtime, "packages", "standalone", "source-install.json")).exists()).toBe(false);
+	expect(f.commands.some(command => command.phase.includes("runtime") || command.argv.includes("daemon"))).toBe(false);
+	expect({ cwd: result.handoff.cwd, argv: result.handoff.argv }).toEqual({ cwd: f.repository, argv: ["just", "i",
+		"--entrypoint-bin", join(result.package, "bin", "codex"),
+		"--code-mode-host-bin", join(result.package, "bin", "codex-code-mode-host"),
+		"--logs-client-bin", join(result.package, "bin", "logs_client"),
+		"--bwrap-bin", join(result.package, "codex-resources", "bwrap")] });
+	await writeFile(join(f.repository, "justfile"), "import x'${AGENTIC_SKILLS_REPO}/upgrade-codex-patch/justfile'\nexport CODEX_REPO_ROOT := justfile_directory()\n");
+	const command = result.handoff.command + " --plan";
+	const child = Bun.spawn(process.platform === "win32"
+		? ["powershell.exe", "-NoProfile", "-Command", command]
+		: ["/bin/sh", "-c", command], {
+		cwd: f.repository, env: { ...f.ctx.env, AGENTIC_SKILLS_REPO: dirname(skill) }, stdout: "pipe", stderr: "pipe",
+	});
+	const [stdout, stderr] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text()]);
+	expect({ exit: await child.exited, stderr }).toEqual({ exit: 0, stderr: "" });
+	const plan = JSON.parse(stdout);
+	const executable = plan.prebuilt["--entrypoint-bin"].replace(/^~\//, homedir() + "/");
+	expect(executable).toBe(join(result.package, "bin", "codex"));
+	expect(await readFile(old)).toEqual(before);
 });
 
 test("expanded location authorities govern the native setup, build and daemon commands", async () => {

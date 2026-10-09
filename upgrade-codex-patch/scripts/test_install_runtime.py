@@ -10,6 +10,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 
@@ -41,15 +42,29 @@ def retain_file(source, destination):
         return shutil.copy2(source, destination)
 
 
-def command(argv, env, cwd, log, expected=0):
+def command(argv, env, cwd, log, expected=0, during=None):
     print(f"native installer fixture: {runtime.display(argv)}", flush=True)
     started = time.monotonic()
-    child = subprocess.run(argv, env=env, cwd=cwd, capture_output=True, text=True)
-    log.write(runtime.display(child.stdout + child.stderr))
+    child = subprocess.Popen(argv, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    errors = []
+    def intervene():
+        try:
+            during(child)
+        except Exception as error:
+            errors.append(error)
+    intervention = threading.Thread(target=intervene) if during else None
+    if intervention:
+        intervention.start()
+    stdout, stderr = child.communicate()
+    if intervention:
+        intervention.join()
+    log.write(runtime.display(stdout + stderr))
     log.flush()
     if child.returncode != expected:
-        raise AssertionError(f"expected exit {expected}, received {child.returncode}: {runtime.display(child.stderr)}")
-    return child, round(time.monotonic() - started, 3)
+        raise AssertionError(f"expected exit {expected}, received {child.returncode}: {runtime.display(stderr)}")
+    if errors:
+        raise errors[0]
+    return subprocess.CompletedProcess(argv, child.returncode, stdout, stderr), round(time.monotonic() - started, 3)
 
 
 def probe(codex, env, repository, timeout=15):
@@ -87,13 +102,14 @@ def case(name, args, scratch):
             link_directory(old, old.parent.parent / "current", args.bun)
         raw = None
         host = None
+        reconnects = []
         log_path = scratch / f"native-{name}.log"
         with log_path.open("w", encoding="utf-8") as log:
             try:
                 old_codex = old / "bin" / f"codex{extension}"
                 if name == "registered":
                     command([str(old_codex), "app-server", "daemon", "restart"], environment, args.repository, log)
-                elif name in ("missing-registration", "foreign"):
+                elif name in ("missing-registration", "foreign", "concurrent-start"):
                     executable = old_codex
                     if name == "foreign":
                         foreign = root / "foreign package"
@@ -126,7 +142,26 @@ def case(name, args, scratch):
                         "--logs-client-bin", str(args.new_package / "bin" / f"logs_client{extension}")]
                 if sys.platform == "linux":
                     argv += ["--bwrap-bin", str(args.new_package / "codex-resources" / "bwrap")]
-                installed, duration = command(argv, environment, args.repository, log, expected=1 if name == "foreign" else 0)
+                def reconnect_during_selection(installer):
+                    deadline = time.monotonic() + 30
+                    attempts = home / "packages" / "standalone" / "source-install-attempts"
+                    while time.monotonic() < deadline and installer.poll() is None:
+                        for output in attempts.glob("*/stderr.log"):
+                            for line in output.read_text().splitlines():
+                                try:
+                                    event = json.loads(line)
+                                except ValueError:
+                                    continue
+                                if event.get("phase") == "package-selection" and event.get("status") == "begin":
+                                    current_codex = home / "packages" / "standalone" / "current" / "bin" / f"codex{extension}"
+                                    reconnects.append(subprocess.Popen([str(current_codex), "app-server", "--listen", "unix://"],
+                                        env=environment, cwd=args.repository, stdin=subprocess.DEVNULL,
+                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+                                    return
+                        time.sleep(0.02)
+                    raise AssertionError("package-selection event was not observed for the reconnect fixture")
+                installed, duration = command(argv, environment, args.repository, log, expected=1 if name == "foreign" else 0,
+                                              during=reconnect_during_selection if name == "concurrent-start" else None)
                 attempts = home / "packages" / "standalone" / "source-install-attempts"
                 result = json.loads(next(attempts.glob("*/result.json")).read_text())
                 assert result["exit_status"] == installed.returncode, result
@@ -147,15 +182,18 @@ def case(name, args, scratch):
                     raw.wait(timeout=5)
                 if host is not None:
                     host.wait(timeout=5)
+                for reconnect in reconnects:
+                    reconnect.wait(timeout=5)
                 assert receipt["runtime"]["executables"] and receipt["runtime"]["processes"]
                 return {"case": name, "exit_status": 0, "duration_seconds": duration,
                         "before": before, "after": after, "old_processes": old_processes,
                         "old_processes_exited": True, "saved_settings_preserved": True,
                         "forced_shutdown": name == "missing-registration" and sys.platform == "linux",
+                        "concurrent_start_exited": bool(reconnects),
                         "runtime": receipt["runtime"], "outcome": result}
             finally:
                 runtime.stop_runtime([home / "packages", cargo / "bin"])
-                for child in (raw, host):
+                for child in (raw, host, *reconnects):
                     if child is not None:
                         if child.poll() is None:
                             child.kill()
@@ -175,7 +213,7 @@ def main():
     args = parser.parse_args()
     scratch = SCRIPT.parents[2] / ".scratchpad" / "upgrade-codex-patch" / "native-installer-repair"
     scratch.mkdir(parents=True, exist_ok=True)
-    results = [case(name, args, scratch) for name in ("registered", "missing-registration", "fresh", "foreign")]
+    results = [case(name, args, scratch) for name in ("registered", "missing-registration", "fresh", "concurrent-start", "foreign")]
     args.output.parent.mkdir(parents=True, exist_ok=True)
     runtime.atomic_json(args.output, {"platform": sys.platform, "cases": results})
     print(json.dumps({"status": "passed", "cases": [result["case"] for result in results], "evidence": runtime.display(str(args.output))}))

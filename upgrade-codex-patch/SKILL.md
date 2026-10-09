@@ -1,13 +1,17 @@
 ---
 name: upgrade-codex-patch
-description: Refresh canonical `agentic-skills`, rebase and audit a versioned Codex patch, and install a complete source-built platform package through the shared `just i` recipe. Retain and publish successor patches under the upgrade workflow's authority. Use for carried Codex release patches or this package's source installation workflow, not general Rust dependency modernization or read-only patch inspection.
+description: Refresh canonical `agentic-skills`, rebase and audit a versioned Codex patch, prepare a complete platform package, and publish the successor with a user-run runtime handoff. Execute the final `just i` handoff only when explicitly requested. Use for carried Codex release patches or this package's source installation workflow, not general Rust dependency modernization or read-only patch inspection.
 ---
 
 # Upgrade Codex Patch
 
 Carry the previous release patch forward without losing upstream behavior, then prove the provenance of every difference in the successor patch.
 
-For source installation or launcher preparation without a release-patch upgrade, read [complete source-package installation](references/installation.md) and use the imported `just i` recipe. Report the installer's actual result. The patch-rebase, dependency-upgrade, export and publication steps below belong to the release-upgrade mode; an installation-only request does not authorize those effects.
+For source installation or launcher preparation without a release-patch upgrade, read [complete source-package installation](references/installation.md) and use the imported `just i` recipe. Default to package preparation and return the final command for the user. Run the runtime-replacing handoff only when the user explicitly asks to execute it. The patch-rebase, dependency-upgrade, export and publication steps below belong to the release-upgrade mode; an installation-only request does not authorize those effects.
+
+## Reserve the final handoff for the user
+
+A skill invocation or a request to finish an upgrade authorizes preparation, validation, artifact retention, and this repository's publication workflow. It does not authorize choosing when to stop or restart the user's live Codex processes. Prepare the complete package with `just i --prepare-package`, finish the audit and publication, then stop and report readiness with the exact returned handoff command. The user chooses when to run it. Do not execute that command, launch a delayed or detached replacement, use `--no-daemon` to publish live aliases as a preparation substitute, or restart services unless the user explicitly requests that handoff. Isolated installer fixtures retain their separate verification scope.
 
 ## Repair the supported workflow at its owner
 
@@ -76,7 +80,7 @@ cargo install --path code-mode-host
 - After each Cargo command, take another helper snapshot and compare it with the immediately preceding snapshot. Classify manifest and lockfile changes separately from source changes or pre-existing work. Do not invoke an extra repository mutator to reconcile them.
 - Keep the pre-Cargo curated selection independent of these snapshots. Review any build remediation at field/hunk granularity; automatic manifest bumps are not additions to patch intent.
 
-Cargo installs produce loose binaries. After they succeed, run `just i` with the three prebuilt-binary arguments in [the installation reference](references/installation.md). It uses the official platform package builder, retains `logs_client`, publishes complete CLI aliases, and selects/pins the source daemon through its native lifecycle commands. Record a snapshot before and after this installation and report its result separately. Do not claim complete installation from Cargo output alone. Direct `just i` installation does not itself upgrade dependencies, apply/export patches, or grant Git authority.
+Cargo installs produce loose binaries. After they succeed, run `just i --prepare-package` with the three prebuilt-binary arguments in [the installation reference](references/installation.md). It uses the official platform package builder and retains `logs_client`, leaving live aliases, package selection, and running services untouched. Record the prepared package and its exact returned handoff command. Publish the audited patch and guidance, then report ready for the user to run that command. Do not claim live installation from Cargo or package preparation. Direct `just i` does not itself upgrade dependencies, apply/export patches, or grant Git authority.
 
 The default `just i` entrypoint owns an independent installer lifetime and durable outcome capture, including when it replaces the invoking agent's daemon. Read the installation reference's recovery procedure before the handoff. After reconnecting, inspect that original invocation and receipt before retrying. Distinguish installed versions, process and package provenance, shared feature compatibility, client attachment, and model-visible tools in the report.
 
@@ -103,9 +107,9 @@ Trace each build failure to the dependency and API boundary that introduced it b
    - contained build remediation;
    - dependency pin;
    - explicit release-specific addition.
-5. After the audit passes, follow [the repository lifecycle](references/repository-lifecycle.md) to retain a byte-identical versioned copy in `upgrade-codex-patch/assets/patches/`, keeping the local successor as well. Then stage, commit, and push everything in the canonical `agentic-skills` repository, including pre-existing changes and deletions. Require verified upstream publication before reporting the upgrade as finished.
-6. Report the target release and base commit; local and packaged successor paths, SHA-256, byte size, line count, path count, and hunk count; comparison classifications and separate applicability results; successful installation results for `codex`, `logs_client`, and `codex-code-mode-host`; retained or new pins; excluded command fallout; Codex index/worktree disposition; repository refresh result; and the `agentic-skills` commit hash, scope, push destination and result, and remaining unpublished commits. Use the helper's workspace-aware pin records instead of assuming which manifest owns a version.
-7. Report the initial four Cargo commands, V8 preparation, and complete `just i` installation separately, including native daemon selection and version verification. Do not ask permission for omitted repository commands or present their omission as incomplete verification.
+5. After the audit and complete package preparation pass, follow [the repository lifecycle](references/repository-lifecycle.md) to retain a byte-identical versioned copy in `upgrade-codex-patch/assets/patches/`, keeping the local successor as well. Then stage, commit, and push everything in the canonical `agentic-skills` repository, including pre-existing changes and deletions. Require verified upstream publication before reporting the upgrade ready for its user-run handoff.
+6. Report the target release and base commit; local and packaged successor paths, SHA-256, byte size, line count, path count, and hunk count; comparison classifications and separate applicability results; successful Cargo build/install results and the prepared package; retained or new pins; excluded command fallout; Codex index/worktree disposition; repository refresh result; and the `agentic-skills` commit hash, scope, push destination and result, and remaining unpublished commits. Include the exact final handoff command and identify live activation as reserved for the user. Use the helper's workspace-aware pin records instead of assuming which manifest owns a version.
+7. Report the initial four Cargo commands, V8 preparation, and complete package preparation separately. Report native daemon selection, restart, and live verification only when an explicitly requested handoff was actually executed. Do not ask permission for omitted repository commands or present their omission as incomplete verification.
 8. Leave the Codex worktree unstaged and uncommitted unless the user separately authorizes those effects. The required final commit belongs to `agentic-skills`.
 
 ## Patch comparison helper

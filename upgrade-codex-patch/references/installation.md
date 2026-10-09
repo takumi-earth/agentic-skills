@@ -32,6 +32,14 @@ just i
 
 `--plan` reads the selected inputs and compiler host and prints their normalized JSON without installing, building the launcher, or starting services.
 
+## Preparation and the user's handoff
+
+An upgrade-skill invocation prepares the package and stops before live replacement. Run `just i --prepare-package` with the accepted prebuilt binaries after the Cargo sequence. It assembles and validates an immutable platform package and returns `status: "prepared"` with `handoff.cwd`, `handoff.argv`, and a quoted `handoff.command`. Its `record` points to the saved preparation result under `CODEX_HOME/packages/standalone/prepared/`. It does not publish aliases, change the native daemon selection, stop processes, start services, or replace the installation receipt. Retain and publish the audited patch and guidance, then give the user that exact command. They choose when to run it; execute the handoff only on an explicit request to do so.
+
+Directly running `just i` remains the live installation command. `--no-daemon` still publishes CLI aliases and is not a preparation substitute. Package preparation is distinct from installed or running state; do not describe it as live deployment.
+
+On another machine, pulling `agentic-skills` obtains the installer and saved patch resources. `just i` uses the Codex source already in the selected checkout; it does not apply a patch, select an upstream tag, or upgrade dependencies. If that checkout already carries the matching release patch, use the updated installer. Otherwise complete the patch-upgrade workflow against the matching release base before running the final command.
+
 ## Installation chain
 
 `independent installer lifetime -> selected checkouts -> native V8 setup -> official platform package build and validation -> logs_client -> compiled CLI version check -> immutable local package -> stop old runtime and helpers -> confirm process exit -> recoverable CLI aliases -> select/pin source package -> restart with saved settings -> verify executable provenance and versions -> durable receipt`.
@@ -48,9 +56,11 @@ Shutdown precedes alias publication: renaming a running loose binary to its back
 
 For an existing selection, the installer invokes `update --from-cli --yes` while the old runtime is stopped. The native command selects and pins the complete source package without launching a server in that state. It then invokes `daemon restart`, which also starts a stopped daemon while retaining saved launch settings. A fresh installation uses that same restart command's native missing-package preparation; it does not start a previous selection first. The installer does not edit native PID-registration or process-admission policy, add runtime recovery APIs, or substitute a production package.
 
+The external selector holds Codex's existing `app-server-control/app-server-startup.lock` during package selection. Every local Unix-socket app-server takes that gate before listening, including a raw start without daemon PID registration. The selector quiesces known runtime processes while holding the gate and clears pending known starts before releasing it. This keeps a reconnecting client from reopening the endpoint during the native package copy. Unknown endpoint owners remain rejected and untouched.
+
 Verification requires managed ownership, matching CLI/selected/running versions, a live process executing the selected daemon binary, and identical CLI, code-mode-host, and `logs_client` bytes in the source and selected packages. Any remaining Codex process in scope must execute the new source or selected package. Helpers start when the runtime needs them; the installer removes old helpers and verifies the new helper artifacts without requiring a new helper `--version` API. The receipt retains shutdown observations, startup identity, running process observations, and executable digests.
 
-This native package selection and its managed restart belong to the authorized default installation. A companion project skill does not require another permission request for the same effects. Editing guidance or building a package without installation authority keeps its separate boundary.
+This native package selection and its restart occur when the user runs the final command, or explicitly instructs the agent to run that handoff. Preparation, skill invocation, successful validation, and publication do not grant that timing decision. Editing guidance or building a package without installation authority keeps its separate boundary.
 
 Use `just i --no-daemon` to install the complete CLI package without starting or selecting a daemon. Use `just i --prepare-v8` to build only the V8 launcher before the upgrade's Cargo sequence.
 
@@ -60,7 +70,7 @@ The default `just i` entrypoint automatically starts an independent Python super
 
 The process controller uses Linux process metadata, macOS process enumeration and `proc_pidpath`, or Windows CIM owner information and held native process handles. Windows compares creation time at [CIM's microsecond precision](https://learn.microsoft.com/en-us/windows/win32/wmisdk/cim-datetime) when reading the native [100-nanosecond `FILETIME`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesstimes); it checks the executable through the held handle before termination. Keep these adapters compatible with the native host rather than assuming Linux `/proc` exists everywhere.
 
-Each invocation reports an attempt directory under `CODEX_HOME/packages/standalone/source-install-attempts/`. It contains `invocation.json`, `stdout.log`, `stderr.log`, `supervisor.log`, and an atomically published `result.json` with native exit status and elapsed time. `--plan`, `--prepare-v8`, and `--no-daemon` keep their direct process lifetime because they do not replace the running daemon. A failed attempt retains its logs and any already-published package; the final `source-install.json` receipt is written only after full verification.
+Each invocation reports an attempt directory under `CODEX_HOME/packages/standalone/source-install-attempts/`. It contains `invocation.json`, `stdout.log`, `stderr.log`, `supervisor.log`, and an atomically published `result.json` with native exit status and elapsed time. `--plan`, `--prepare-v8`, `--prepare-package`, and `--no-daemon` keep their direct process lifetime because they do not replace the running daemon. A failed attempt retains its logs and any already-published package; the final `source-install.json` receipt is written only after full verification.
 
 A daemon-recovery prompt records an interruption, not command success or failure. Check whether the original installer is still running, then inspect its captured exit and `source-install.json`. A daemon running the target release can coexist with an unfinished installer and an older receipt. Continue observing a live installer; retry only when the invocation ended without completing the required installation. Correct the process lifetime before that retry, reuse the successful prebuilt binaries, and report interrupted attempts separately. Do not repeat Cargo installs or another attached `just i` merely because a tool response was lost.
 
@@ -78,7 +88,7 @@ After both Cargo installs have succeeded, pass all three existing binaries to av
 
 ```bash
 codex_cargo_bin="${CARGO_HOME:-$HOME/.cargo}/bin"
-just i --entrypoint-bin "$codex_cargo_bin/codex" --code-mode-host-bin "$codex_cargo_bin/codex-code-mode-host" --logs-client-bin "$codex_cargo_bin/logs_client"
+just i --prepare-package --entrypoint-bin "$codex_cargo_bin/codex" --code-mode-host-bin "$codex_cargo_bin/codex-code-mode-host" --logs-client-bin "$codex_cargo_bin/logs_client"
 ```
 
 Required platform resources are still built or fetched by the official package builder. No formatter, fixer, test suite, Bazel lock update, Git operation, or dependency upgrade is part of `just i`. Record its exit separately from the initial Cargo commands. A successful Cargo binary install alone does not prove a complete local CLI package or a selected source daemon.

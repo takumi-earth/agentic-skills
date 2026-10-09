@@ -20,6 +20,7 @@ type Environment = Record<string, string | undefined>;
 type Options = {
 	plan: boolean;
 	prepareV8: boolean;
+	preparePackage: boolean;
 	daemon: boolean;
 	prebuilt: Record<string, string>;
 };
@@ -131,6 +132,7 @@ function options(args: string[]): Options {
 	const result: Options = {
 		plan: false,
 		prepareV8: false,
+		preparePackage: false,
 		daemon: true,
 		prebuilt: {},
 	};
@@ -139,6 +141,7 @@ function options(args: string[]): Options {
 		const arg = args[i];
 		if (arg === "--plan") result.plan = true;
 		else if (arg === "--prepare-v8") result.prepareV8 = true;
+		else if (arg === "--prepare-package") result.preparePackage = true;
 		else if (arg === "--no-daemon") result.daemon = false;
 		else if (
 			[
@@ -476,8 +479,8 @@ export async function install(ctx: Context, args: string[] = []) {
 	if (selected.plan)
 		return {
 			...plan,
-			mode: selected.prepareV8 ? "prepare-v8" : "install",
-			daemon: selected.daemon,
+			mode: selected.prepareV8 ? "prepare-v8" : selected.preparePackage ? "prepare-package" : "install",
+			daemon: selected.daemon && !selected.preparePackage,
 			prebuilt: selected.prebuilt,
 			operations: selected.prepareV8
 				? ["prepare native V8 launcher"]
@@ -488,9 +491,11 @@ export async function install(ctx: Context, args: string[] = []) {
 						"include logs_client",
 						"verify compiled CLI version",
 						"retain immutable validated package",
-						...(selected.daemon ? ["stop previous runtime and helpers"] : []),
-						"publish recoverable CLI aliases",
-						...(selected.daemon
+						...(selected.preparePackage ? ["return user-run handoff command"] : [
+							...(selected.daemon ? ["stop previous runtime and helpers"] : []),
+							"publish recoverable CLI aliases",
+						]),
+						...(selected.daemon && !selected.preparePackage
 							? [
 									"select and pin source daemon package",
 									"start selected app-server with saved settings",
@@ -643,6 +648,23 @@ export async function install(ctx: Context, args: string[] = []) {
 		);
 		await rename(stage, packageDir);
 		stage = undefined;
+		if (selected.preparePackage) {
+			const handoff = ["just", "i"];
+			for (const [flag, name] of [["--entrypoint-bin", "codex"], ["--code-mode-host-bin", "codex-code-mode-host"], ["--logs-client-bin", "logs_client"]]) {
+				handoff.push(flag, join(packageDir, "bin", `${name}${extension}`));
+			}
+			if (plan.target.includes("linux")) handoff.push("--bwrap-bin", join(packageDir, "codex-resources", "bwrap"));
+			const quote = (value: string) => `'${display(value).replaceAll("'", process.platform === "win32" ? "''" : "'\\''")}'`;
+			const command = (process.platform === "win32" ? "& " : "") + handoff.map(quote).join(" ");
+			ctx.say(`package prepared; final handoff is reserved for the user: ${command}`);
+			const record = join(standalone, "prepared", `${basename(packageDir)}.json`);
+			const prepared = { ...plan, version: metadata.version, status: "prepared" as const, package: packageDir, daemon: "user-reserved" as const,
+				handoff: { cwd: plan.repository_root, argv: handoff, command }, record, side_effects: [releases, dirname(record)] };
+			await mkdir(dirname(record), { recursive: true });
+			await writeFile(record, JSON.stringify(prepared, (_key, value) => typeof value === "string" ? display(value) : value, 2) + "\n");
+			ctx.say(`prepared package record: ${display(record)}`);
+			return prepared;
+		}
 		ctx.say(`installing ${metadata.version} from ${display(packageDir)}`);
 		const codex = join(packageDir, metadata.entrypoint);
 		let runtime: RuntimeOutcome | undefined;
@@ -671,7 +693,7 @@ export async function install(ctx: Context, args: string[] = []) {
 			const legacy = await Promise.all(["app-server.pid", "app-server.stderr.log", "app-server-updater.pid", "app-server-updater.stderr.log"].map(name => exists(join(stateDir, name))));
 			if (await exists(join(plan.runtime_root, "packages", "app-server-daemon", "current")) || legacy.some(Boolean)) {
 				await run(ctx, plan, "select and pin source daemon package", [
-					codex, "app-server", "daemon", "update", "--from-cli", "--yes",
+					plan.python, join(plan.skill_root, "scripts", "source_install.py"), "select", plan.runtime_root, codex, ...roots,
 				]);
 			}
 			// Restart also starts a stopped or fresh daemon, retaining saved settings.
@@ -816,7 +838,7 @@ export async function main(args = process.argv.slice(2)) {
 	if (args[0] === "i") args = args.slice(1);
 	if (args.includes("--help")) {
 		console.log(
-			"just i [--plan] [--prepare-v8] [--no-daemon] [--entrypoint-bin PATH] [--code-mode-host-bin PATH] [--logs-client-bin PATH] [--bwrap-bin PATH]\nLocations: AGENTIC_SKILLS_REPO (import), CODEX_REPO_ROOT, CODEX_V8_REPO, CODEX_HOME, CARGO_HOME. Optional interpreter: CODEX_INSTALL_PYTHON.",
+			"just i [--plan] [--prepare-v8] [--prepare-package] [--no-daemon] [--entrypoint-bin PATH] [--code-mode-host-bin PATH] [--logs-client-bin PATH] [--bwrap-bin PATH]\nLocations: AGENTIC_SKILLS_REPO (import), CODEX_REPO_ROOT, CODEX_V8_REPO, CODEX_HOME, CARGO_HOME. Optional interpreter: CODEX_INSTALL_PYTHON.",
 		);
 		return;
 	}
@@ -839,7 +861,7 @@ export async function main(args = process.argv.slice(2)) {
 		const selectedOptions = options(args);
 		if (process.env.CODEX_SOURCE_INSTALL_WORKER) {
 			delete process.env.CODEX_SOURCE_INSTALL_WORKER;
-		} else if (selectedOptions.daemon && !selectedOptions.plan && !selectedOptions.prepareV8) {
+		} else if (selectedOptions.daemon && !selectedOptions.plan && !selectedOptions.prepareV8 && !selectedOptions.preparePackage) {
 			await independentInstall(args);
 			return;
 		}

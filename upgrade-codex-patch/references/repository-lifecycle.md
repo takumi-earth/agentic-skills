@@ -12,7 +12,7 @@ Use an explicitly named predecessor when supplied; that selection settles differ
 
 ## Retain the audited successor
 
-Keep the external successor at its selected local destination and retain an additional versioned copy at `upgrade-codex-patch/assets/patches/codex-v<target-release>.patch`. Copy only after the final audit and installations succeed. Use the audit's SHA-256 so a source change between audit and retention is rejected:
+Keep the external successor at its selected local destination and retain an additional versioned copy at `upgrade-codex-patch/assets/patches/codex-v<target-release>.patch`. Copy only after the final audit, authorized Cargo sequence, and complete package preparation succeed. The user's final runtime handoff is separately reserved; finish retention and publication before presenting that command, without waiting for or initiating live replacement. Use the audit's SHA-256 so a source change between audit and retention is rejected:
 
 ```bash
 python3 "<skills-repo>/upgrade-codex-patch/scripts/retain_patch.py" \
