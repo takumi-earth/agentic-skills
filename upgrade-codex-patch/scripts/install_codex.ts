@@ -15,6 +15,7 @@ import {
 } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, delimiter, dirname, join, resolve } from "node:path";
+import { fileDigest, reusablePackage, sourceIdentity } from "./prepared_package.ts";
 
 type Environment = Record<string, string | undefined>;
 type Options = {
@@ -71,6 +72,7 @@ type Plan = {
 	cargo_bin: string;
 	version: string;
 	target: string;
+	compiler: string;
 	python: string;
 	launcher: string;
 	side_effects: string[];
@@ -264,6 +266,7 @@ export async function resolvePlan(ctx: Context): Promise<Plan> {
 		cargo_bin: join(cargoHome, "bin"),
 		version: cargo.workspace.package.version,
 		target: "",
+		compiler: "",
 		python,
 		launcher: "",
 		side_effects: [],
@@ -291,6 +294,7 @@ export async function resolvePlan(ctx: Context): Promise<Plan> {
 		target,
 	);
 	plan.target = target;
+	plan.compiler = compiler.trim();
 	plan.launcher = join(v8, "bin", `rustc-wrapper${suffix(target)}`);
 	return plan;
 }
@@ -487,6 +491,7 @@ export async function install(ctx: Context, args: string[] = []) {
 				: [
 						"prepare native V8 launcher",
 						"resolve package builder interpreter and TLS trust",
+						"reuse a package for this exact checkout or refresh dependencies and build",
 						"assemble and validate platform package",
 						"include logs_client",
 						"verify compiled CLI version",
@@ -575,6 +580,21 @@ export async function install(ctx: Context, args: string[] = []) {
 	let links: LinkChange[] = [];
 	try {
 		await mkdir(releases, { recursive: true });
+		if (!Object.keys(selected.prebuilt).length) {
+			const source = await sourceIdentity(plan.repository_root, plan.launcher, plan.compiler, ctx.env);
+			const reused = await reusablePackage(join(standalone, "prepared"), source, plan.target, plan.version);
+			if (reused) {
+				ctx.say(`reusing prepared binaries for this checkout: ${display(reused)}`);
+				const extension = suffix(plan.target);
+				for (const [flag, name] of [["--entrypoint-bin", "codex"], ["--code-mode-host-bin", "codex-code-mode-host"], ["--logs-client-bin", "logs_client"]]) selected.prebuilt[flag] = join(reused, "bin", `${name}${extension}`);
+				if (plan.target.includes("linux")) selected.prebuilt["--bwrap-bin"] = join(reused, "codex-resources", "bwrap");
+			}
+		}
+		if (!selected.prebuilt["--entrypoint-bin"] || !selected.prebuilt["--code-mode-host-bin"]) {
+			const workspace = join(plan.repository_root, "codex-rs");
+			await run(ctx, plan, "upgrade source dependencies", ["cargo", "upgrade", "--recursive", "--verbose"], workspace);
+			await run(ctx, plan, "resolve source dependencies", ["cargo", "update", "--recursive"], workspace);
+		}
 		stage = await mkdtemp(join(releases, ".source-build-"));
 		const buildArgs = [
 			plan.python,
@@ -650,16 +670,18 @@ export async function install(ctx: Context, args: string[] = []) {
 		stage = undefined;
 		if (selected.preparePackage) {
 			const handoff = ["just", "i"];
-			for (const [flag, name] of [["--entrypoint-bin", "codex"], ["--code-mode-host-bin", "codex-code-mode-host"], ["--logs-client-bin", "logs_client"]]) {
-				handoff.push(flag, join(packageDir, "bin", `${name}${extension}`));
-			}
-			if (plan.target.includes("linux")) handoff.push("--bwrap-bin", join(packageDir, "codex-resources", "bwrap"));
-			const quote = (value: string) => `'${display(value).replaceAll("'", process.platform === "win32" ? "''" : "'\\''")}'`;
-			const command = (process.platform === "win32" ? "& " : "") + handoff.map(quote).join(" ");
+			const command = "just i";
 			ctx.say(`package prepared; final handoff is reserved for the user: ${command}`);
 			const record = join(standalone, "prepared", `${basename(packageDir)}.json`);
+			const source = await sourceIdentity(plan.repository_root, plan.launcher, plan.compiler, ctx.env);
+			const artifacts = [];
+			for (const name of ["codex", "codex-code-mode-host", "logs_client"]) {
+				const path = `bin/${name}${extension}`;
+				artifacts.push({ path, sha256: await fileDigest(join(packageDir, path)) });
+			}
+			if (plan.target.includes("linux")) artifacts.push({ path: "codex-resources/bwrap", sha256: await fileDigest(join(packageDir, "codex-resources", "bwrap")) });
 			const prepared = { ...plan, version: metadata.version, status: "prepared" as const, package: packageDir, daemon: "user-reserved" as const,
-				handoff: { cwd: plan.repository_root, argv: handoff, command }, record, side_effects: [releases, dirname(record)] };
+				handoff: { cwd: plan.repository_root, argv: handoff, command }, source, artifacts, record, side_effects: [releases, dirname(record)] };
 			await mkdir(dirname(record), { recursive: true });
 			await writeFile(record, JSON.stringify(prepared, (_key, value) => typeof value === "string" ? display(value) : value, 2) + "\n");
 			ctx.say(`prepared package record: ${display(record)}`);
@@ -725,13 +747,8 @@ export async function install(ctx: Context, args: string[] = []) {
 			for (const name of ["codex", "codex-code-mode-host", "logs_client"]) {
 				const source = join(packageDir, "bin", `${name}${extension}`);
 				const selectedPath = join(dirname(managed), `${name}${extension}`);
-				const hash = async (path: string) => {
-					const hasher = new Bun.CryptoHasher("sha256");
-					for await (const chunk of Bun.file(path).stream()) hasher.update(chunk);
-					return hasher.digest("hex");
-				};
-				const expected = await hash(source);
-				const received = await hash(selectedPath);
+				const expected = await fileDigest(source);
+				const received = await fileDigest(selectedPath);
 				required(expected === received, "selected runtime executable", { source, sha256: expected }, { selected: selectedPath, sha256: received });
 				identities.push({ source, selected: selectedPath, sha256: received });
 			}

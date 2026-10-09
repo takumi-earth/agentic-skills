@@ -217,6 +217,14 @@ async function fixture() {
 	return { root, repository, v8, runtime, cargoHome, commands, behavior, ctx };
 }
 
+async function ownGit(repository: string) {
+	for (const args of [["init"], ["add", "."], ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "-c", "core.hooksPath=", "commit", "-m", "fixture source"]]) {
+		const child = Bun.spawn(["git", "-C", repository, ...args], { stdout: "pipe", stderr: "pipe" });
+		const [stdout, stderr] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text()]);
+		if (await child.exited !== 0) throw new Error(`Fixture Git command failed: ${stdout}${stderr}`);
+	}
+}
+
 test("installs the complete prepared package, retains old binaries, and pins matching daemon", async () => {
 	const f = await fixture();
 	const old = join(f.cargoHome, "bin", "codex");
@@ -269,6 +277,8 @@ test("installs the complete prepared package, retains old binaries, and pins mat
 		"compiler host",
 		"prepare V8 launcher",
 		"package builder interpreter",
+		"upgrade source dependencies",
+		"resolve source dependencies",
 		"build and validate complete package",
 		"build logs_client",
 		"verify package CLI version",
@@ -301,11 +311,7 @@ test("package preparation returns the handoff without changing aliases or contro
 	expect(await readFile(old)).toEqual(before);
 	expect(await Bun.file(join(f.runtime, "packages", "standalone", "source-install.json")).exists()).toBe(false);
 	expect(f.commands.some(command => command.phase.includes("runtime") || command.argv.includes("daemon"))).toBe(false);
-	expect({ cwd: result.handoff.cwd, argv: result.handoff.argv }).toEqual({ cwd: f.repository, argv: ["just", "i",
-		"--entrypoint-bin", join(result.package, "bin", "codex"),
-		"--code-mode-host-bin", join(result.package, "bin", "codex-code-mode-host"),
-		"--logs-client-bin", join(result.package, "bin", "logs_client"),
-		"--bwrap-bin", join(result.package, "codex-resources", "bwrap")] });
+	expect(result.handoff).toEqual({ cwd: f.repository, argv: ["just", "i"], command: "just i" });
 	await writeFile(join(f.repository, "justfile"), "import x'${AGENTIC_SKILLS_REPO}/upgrade-codex-patch/justfile'\nexport CODEX_REPO_ROOT := justfile_directory()\n");
 	const command = result.handoff.command + " --plan";
 	const child = Bun.spawn(process.platform === "win32"
@@ -316,9 +322,52 @@ test("package preparation returns the handoff without changing aliases or contro
 	const [stdout, stderr] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text()]);
 	expect({ exit: await child.exited, stderr }).toEqual({ exit: 0, stderr: "" });
 	const plan = JSON.parse(stdout);
-	const executable = plan.prebuilt["--entrypoint-bin"].replace(/^~\//, homedir() + "/");
-	expect(executable).toBe(join(result.package, "bin", "codex"));
+	expect(plan.prebuilt).toEqual({});
 	expect(await readFile(old)).toEqual(before);
+});
+
+test("plain just i reuses the prepared package from the exact checkout without binary path arguments", async () => {
+	const f = await fixture();
+	await ownGit(f.repository);
+	const prepared = await install(f.ctx, ["--prepare-package"]);
+	if (!("status" in prepared) || prepared.status !== "prepared") throw new Error("Expected preparation");
+	f.commands.splice(0);
+	const result = installed(await install(f.ctx));
+	expect(f.commands.some(command => command.phase === "upgrade source dependencies" || command.phase === "resolve source dependencies" || command.phase === "build logs_client")).toBe(false);
+	const builder = f.commands.find(command => command.phase === "build and validate complete package")!;
+	expect(builder.argv[builder.argv.indexOf("--entrypoint-bin") + 1]).toBe(join(prepared.package, "bin", "codex"));
+	expect(await readFile(join(result.package!, "bin", "codex-code-mode-host"))).toEqual(await readFile(join(prepared.package, "bin", "codex-code-mode-host")));
+});
+
+test("a new checkout builds its own package even when the previous checkout has the same release", async () => {
+	const previous = await fixture();
+	await ownGit(previous.repository);
+	await install(previous.ctx, ["--prepare-package"]);
+	const next = await fixture();
+	await ownGit(next.repository);
+	next.ctx.env.CODEX_HOME = previous.runtime;
+	await install(next.ctx, ["--prepare-package"]);
+	const builder = next.commands.find(command => command.phase === "build and validate complete package")!;
+	expect(builder.argv.includes("--entrypoint-bin")).toBe(false);
+	expect(next.commands.filter(command => command.phase.includes("source dependencies")).map(command => command.argv)).toEqual([
+		["cargo", "upgrade", "--recursive", "--verbose"], ["cargo", "update", "--recursive"],
+	]);
+});
+
+test("changed source and modified prepared binaries invalidate automatic reuse", async () => {
+	const f = await fixture();
+	await ownGit(f.repository);
+	const first = await install(f.ctx, ["--prepare-package"]);
+	if (!("status" in first) || first.status !== "prepared") throw new Error("Expected preparation");
+	await writeFile(join(f.repository, "codex-rs", "new-module.rs"), "pub fn changed_source() {}\n");
+	f.commands.splice(0);
+	const changed = await install(f.ctx, ["--prepare-package"]);
+	if (!("status" in changed) || changed.status !== "prepared") throw new Error("Expected preparation");
+	expect(f.commands.find(command => command.phase === "build and validate complete package")!.argv.includes("--entrypoint-bin")).toBe(false);
+	await writeFile(join(changed.package, "bin", "codex-code-mode-host"), "changed artifact");
+	f.commands.splice(0);
+	await install(f.ctx, ["--prepare-package"]);
+	expect(f.commands.find(command => command.phase === "build and validate complete package")!.argv.includes("--entrypoint-bin")).toBe(false);
 });
 
 test("expanded location authorities govern the native setup, build and daemon commands", async () => {
@@ -564,6 +613,8 @@ test("wrong prepared target fails before exposing any new executable", async () 
 		"compiler host",
 		"prepare V8 launcher",
 		"package builder interpreter",
+		"upgrade source dependencies",
+		"resolve source dependencies",
 		"build and validate complete package",
 	]);
 });
@@ -653,6 +704,8 @@ test("prebuilt symlinks avoid rebuilding logs and no-daemon leaves service contr
 		"compiler host",
 		"prepare V8 launcher",
 		"package builder interpreter",
+		"upgrade source dependencies",
+		"resolve source dependencies",
 		"build and validate complete package",
 		"verify package CLI version",
 	]);

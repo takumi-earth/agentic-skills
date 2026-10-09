@@ -142,6 +142,13 @@ def case(name, args, scratch):
                         "--logs-client-bin", str(args.new_package / "bin" / f"logs_client{extension}")]
                 if sys.platform == "linux":
                     argv += ["--bwrap-bin", str(args.new_package / "codex-resources" / "bwrap")]
+                # Agent preparation is optional; when present the user's exact
+                # command must stay plain just i and discover this package.
+                command(argv + ["--prepare-package"], environment, args.repository, log)
+                ready = json.loads(next((home / "packages" / "standalone" / "prepared").glob("*.json")).read_text())
+                assert ready["handoff"]["argv"] == ["just", "i"] and ready["handoff"]["command"] == "just i"
+                assert settings_file.read_bytes() == settings_before
+                argv = ["just", "--justfile", str(args.repository / "justfile"), "i"]
                 def reconnect_during_selection(installer):
                     deadline = time.monotonic() + 30
                     attempts = home / "packages" / "standalone" / "source-install-attempts"
