@@ -22,7 +22,7 @@ Continue the shared-fork integration from its durable record. Preserve the user'
 - Keep the peer registry, policy, delivery state, and connection lifetime independent of a TUI-owned listener. An internal transport adapter does not transfer ownership to a separately configured peer service.
 - Use a focused component and thin integration with existing session and tool services. Preserve the repository's crate ownership guidance instead of growing central modules merely because they are convenient.
 - Keep peer operations distinct from the existing subagent-tree API. A running child remains a child. Peer assignments target existing independent sessions and retain the recipient's user-selected task and constraints.
-- Preserve explicit-user-request requirements for spawning, creating, or forking sessions. Apply the user's standing permission to existing-peer discovery, communication, replies, and bounded delegation within its actual scope.
+- Preserve explicit-user-request requirements for spawning, creating, or forking sessions. The user identifies the peer and authorizes the communication purpose; necessary exchanges remain within that scope. Ask before contacting another agent or expanding the purpose. Sharing a plan authorizes delivery and acknowledgment of awareness, not implementation delegation or oversight of the recipient's priorities.
 - Derive sender identity from runtime context and authenticated host identity. Preserve peer messages as attributed tool-originated context; do not turn them into new human instructions or silently override recipient settings.
 
 ## Source and client integration
