@@ -1,18 +1,20 @@
 # Interruptible worker waits
 
-Use this reference after explicitly authorized workers have started, when long interruptible waits or restrained polling matter to the task. The current harness owns tool names, accepted timeout values, interruption behavior, and returned state.
+Use this reference when explicitly authorized workers are running and the root needs to wait for a reply, decision, dependency, or handoff. Long, interruptible native mailbox waits are the default when no independent required root work is ready. The current harness owns tool names, accepted timeout values, interruption behavior, and returned state.
 
 ## Select the permitted wait
 
-Read the live wait-tool contract. Choose the longest supported interruptible wait consistent with the user's preference and all stricter active requirements, including any blocking-duration or communication limit. Do not preserve a numerical maximum from an older harness or divide a permitted long wait into repeated checks merely to demonstrate activity.
+Read the live wait-tool contract. Honor the user's selected timeout; otherwise choose a long supported interruptible wait consistent with stricter active requirements. Prefer a deadline measured in minutes when the tool supports it. A fifteen-minute deadline can be appropriate, but neither that example nor a previous harness's maximum is a portable limit. Distinguish an interruptible mailbox wait from a blocking sleep that prevents the root from responding to input.
 
-Send a concise progress update before waiting when needed. A timeout budget belongs in the existing task context; waiting does not require a new persisted ledger or status audit.
+The timeout is a deadline for the current wait, not a polling interval or a required sleep. Where the live tool supports it, agent messages or new user input end the wait early. Workers communicate concrete blockers, needed decisions, and completed handoffs directly; the root does not need recurring status requests to discover them. Do not divide a permitted long wait into short checks merely to demonstrate activity.
+
+Send a concise user update when a material finding, decision, failure, or barrier changes the task state. Do not send minute-by-minute waiting updates or run routine agent-status, Git, or filesystem checks to fill the wait. Each inspection needs a concrete preservation, integration, handoff, or changed-state purpose. A timeout budget belongs in the existing task context; waiting does not require a new persisted ledger or status audit.
 
 ## Handle the returned event
 
 | Event | Interpretation and next action |
 |---|---|
-| Timeout without an update | Only the deadline elapsed. Use delivered updates and known task state to decide whether to wait again. Do not claim the wait result confirms current worker status unless the tool actually returns it; consult native status only when unresolved state affects the next decision. |
+| Timeout without an update | Only the deadline elapsed. Use delivered updates and known task state to decide whether to wait again. Do not manufacture a progress update, Git check, or status audit. Consult native status only when a specific unresolved state affects the next decision. |
 | Worker update | Consume the message and perform only required, authorized integration. Wait again if work remains pending. An intermediate message does not close an implementation wave or authorize dependent verification. |
 | User status question | Answer briefly and resume the authorized work unless the user pauses, cancels, or changes it. No renewed instruction to continue is required. |
 | User steering | Use `$reconcile-live-steering` before the parent's next task effect. Interrupt any worker whose continuing effects are no longer authorized; interruption of the parent's wait does not itself stop workers. |

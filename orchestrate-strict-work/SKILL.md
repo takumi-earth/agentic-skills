@@ -63,7 +63,11 @@ The parent cannot grant a worker authority it does not hold.
 
 At compaction or resume, restate the current wave, completed boundary, active workers, exact next event, and hard prohibitions from source artifacts.
 
-When authorized workers are running and the task calls for long interruptible waits or restrained polling, read [interruptible worker waits](references/interruptible-worker-waits.md). Keep this optional guidance within the existing delegation scope and wave boundaries.
+While authorized workers run, default to long, interruptible native mailbox waits when no independent required root work is ready. Workers send concrete blockers, needed decisions, and completed handoffs directly; the root does not need to poll them for routine progress. Read [interruptible worker waits](references/interruptible-worker-waits.md) when choosing the live timeout or handling a wait event.
+
+- Prefer waits measured in minutes, honoring the user's selected timeout and the current tool's interruption behavior and limits.
+- Do not shorten waits into recurring status polls, routine Git or filesystem checks, or minute-by-minute progress updates. Run those inspections only for a concrete preservation, integration, handoff, or changed-state question.
+- Send user updates for material findings, decisions, failures, or completed barriers. A waiting deadline does not create a reporting schedule or evidence that a worker progressed.
 
 ## Verify only closed snapshots
 
