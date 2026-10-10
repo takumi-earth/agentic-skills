@@ -1,15 +1,17 @@
 ---
 name: manage-ripwire-skills
-description: "Compare committed upstream ripwire skill changes with archived bases and canonical customized ports after a pull or update request. Reconcile authorized changes without overwriting local policy or reference splits. Compare-only requests do not authorize edits, Git pulls, installation, links, or hooks."
+description: "Use in addition to `$manage-ripwire-repo` only for Ripwire skill enhancements, changes, or review of proposed skill changes. Compare committed upstream definitions with archived bases and canonical customized ports, and reconcile authorized changes without losing local policy or reference splits. A general pull, build, compiler repair, or binary installation does not trigger this skill."
 ---
 
 # Manage Canonical Ripwire Skills
 
 `~/agentic-skills` owns the ported definitions. The tool checkout supplies upstream input; its installer and installed copies are not the skill source of truth. Preserve local permission boundaries, compact entrypoints, conditional references, and harness-neutral behavior.
 
+Apply `$manage-ripwire-repo` for repository context and this skill as the additional owner of the requested skill work. When editing the canonical source, `$manage-agentic-skills-repo` owns that repository's Git workflow. Merely pulling, building, or installing Ripwire does not request a skill comparison or update.
+
 ## Choose the requested effect
 
-- After the user pulls upstream or asks for comparison, check the committed revision. Do not run `git pull`, fetch, reset, install the binary, synchronize links, or register hooks merely because this skill activates.
+- For a requested comparison of skill enhancements, check the committed revision, including the revision produced by an already-completed pull or installation. Do not run `git pull`, fetch, reset, install the binary, synchronize links, or register hooks merely because this skill activates.
 - A compare-only request returns drift and review leads without source edits or baseline advancement.
 - A request to update the ports authorizes compatible reconciliation of existing canonical definitions. New skill adoption, capability retirement, distribution, configuration, commits, and publication remain separate effects.
 

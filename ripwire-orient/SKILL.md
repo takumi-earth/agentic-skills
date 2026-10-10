@@ -8,7 +8,7 @@ description: >
 allowed-tools: Bash, Read
 ---
 
-> Modified canonical port: compact instructions and conditional references are maintained in `~/agentic-skills`; upstream refreshes use `$manage-ripwire-skills`.
+> Modified canonical port: compact instructions and conditional references are maintained in `~/agentic-skills`; upstream skill-definition enhancements use `$manage-ripwire-skills`.
 # Orient only as far as the current question needs
 
 Choose the cheapest query that can answer. A known symbol belongs to `ripwire-navigate`; a symptom to `ripwire-find-bug`. Do not load the whole routing/quality/test portfolio for future phases or reread this unchanged contract for each query.

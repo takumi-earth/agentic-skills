@@ -1,0 +1,6 @@
+interface:
+  display_name: "Manage Ripwire Repository"
+  short_description: "Apply Ripwire repository workflow to every task"
+  default_prompt: "Use `$manage-ripwire-repo` for this Ripwire repository task, adding `$manage-ripwire-skills` only when skill enhancements or changes are in scope."
+policy:
+  allow_implicit_invocation: true

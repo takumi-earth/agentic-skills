@@ -7,10 +7,12 @@ description: >
 allowed-tools: Bash, Read
 ---
 
-> Modified canonical port: local ownership, interface, and workflow adaptations are maintained in `~/agentic-skills`; upstream refreshes use `$manage-ripwire-skills`.
+> Modified canonical port: local ownership, interface, and workflow adaptations are maintained in `~/agentic-skills`; upstream skill-definition enhancements use `$manage-ripwire-skills`.
 # Route the current question once
 
 A known destination needs no router. When unsure, `ripwire <dir> --help-task="<task>"` recommends one command with evidence or abstains; it does not execute or authorize the recommendation. Choose the present authorized phase, not every activity the overall project will eventually require.
+
+For every task involving Ripwire's own source checkout, apply `$manage-ripwire-repo` before the task owner below. Add `$manage-ripwire-skills` only for skill enhancements, changes, or review of proposed skill changes. A generic pull, build, or binary installation does not start that skill workflow. Using `ripwire` on another repository does not trigger the repository manager.
 
 | Current need | Owner |
 | --- | --- |
@@ -32,4 +34,4 @@ For an uncommon verb, boundary, or routing ambiguity, consult the relevant row o
 
 The two code-change reflexes remain: reuse before writing a symbol and an authorized one-shot quality delta before declaring it done. A clean leaf result stops; later drill-down, tests, acknowledgements, notes, baselines, exports, and hooks require their conditions and task authority. Structural metrics are not runtime measurements, and a served body does not override a whole-file reading requirement.
 
-These definitions are maintained in `~/agentic-skills`. Use `$manage-ripwire-skills` after upstream changes and `$link-agentic-skills` for separately authorized distribution. Do not run the upstream `skills/install.sh` to replace this family. Hook and MCP registration remain separate effects.
+These definitions are maintained in `~/agentic-skills`. Use `$manage-ripwire-repo` for Ripwire repository work, add `$manage-ripwire-skills` for requested skill enhancements or changes, and use `$link-agentic-skills` for separately authorized distribution. Do not run the upstream `skills/install.sh` to replace this family. Hook and MCP registration remain separate effects.

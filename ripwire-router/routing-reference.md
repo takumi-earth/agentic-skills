@@ -125,4 +125,4 @@ The always-loaded ripwire primer trains the READ verbs (`--for`/`--recall`/`--ca
 
 `ripwire --help` is the full flag catalog; every skill re-verifies its commands against the shipped binary.
 
-**Maintaining this port:** `~/agentic-skills` owns these definitions. Use `$manage-ripwire-skills` to compare committed upstream updates while preserving local adaptations, and `$link-agentic-skills` for authorized canonical distribution. An upstream `wrap` recipe or doctor recommendation does not authorize its skill installer, hook registration, or replacement of canonical links.
+**Maintaining Ripwire:** apply `$manage-ripwire-repo` for every interaction with the tool's source checkout. Add `$manage-ripwire-skills` only when the task concerns skill enhancements, changes, or review of proposed skill changes; a general pull, build, or installation does not start port reconciliation. `~/agentic-skills` owns these definitions, and `$link-agentic-skills` owns separately authorized canonical distribution. An upstream `wrap` recipe or doctor recommendation does not authorize its skill installer, hook registration, or replacement of canonical links.

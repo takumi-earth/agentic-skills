@@ -7,7 +7,7 @@ description: >
 allowed-tools: Bash, Read
 ---
 
-> Modified canonical port: local ownership, interface, and workflow adaptations are maintained in `~/agentic-skills`; upstream refreshes use `$manage-ripwire-skills`.
+> Modified canonical port: local ownership, interface, and workflow adaptations are maintained in `~/agentic-skills`; upstream skill-definition enhancements use `$manage-ripwire-skills`.
 # ripwire as an MCP server
 
 > Auditing somebody's `.mcp.json` for safety instead → **ripwire-security-scan**.
@@ -42,7 +42,7 @@ verbs (`connect`/`explore`/`from_trace`/`edit_check` and the cross-branch pair `
 
 ## Wiring — `ripwire wrap <agent>` prints the recipe
 
-The skill definitions are owned by `~/agentic-skills`; compare updates through `$manage-ripwire-skills` and distribute through `$link-agentic-skills` only when authorized. A generated `wrap` or doctor recipe may name the upstream skill installer: skip that skill-installation part. MCP/server and hook configuration are independent effects and do not transfer skill ownership back to the tool checkout.
+The skill definitions are owned by `~/agentic-skills`. Apply `$manage-ripwire-repo` when interacting with the tool's source checkout, and add `$manage-ripwire-skills` only for requested skill enhancements, changes, or review of proposed skill changes. A binary update or MCP setup alone does not start port reconciliation. Distribute through `$link-agentic-skills` only when authorized. A generated `wrap` or doctor recipe may name the upstream skill installer: skip that skill-installation part. MCP/server and hook configuration are independent effects and do not transfer skill ownership back to the tool checkout.
 
 ```
 ripwire wrap claude      # → claude mcp add ripwire -- ripwire --mcp

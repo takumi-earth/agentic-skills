@@ -7,7 +7,7 @@ description: >
 allowed-tools: Bash, Read
 ---
 
-> Modified canonical port: compact instructions and conditional references are maintained in `~/agentic-skills`; upstream refreshes use `$manage-ripwire-skills`.
+> Modified canonical port: compact instructions and conditional references are maintained in `~/agentic-skills`; upstream skill-definition enhancements use `$manage-ripwire-skills`.
 # Check the change once, then disclose the needed mode
 
 Use only within the current code-change and verification authority. A verification ban excludes this check and substitute source audits. Another symbol or retained-context continuation does not require rereading the skill.

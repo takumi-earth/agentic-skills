@@ -11,10 +11,12 @@ metadata:
   audience: contributor
 ---
 
-> Modified canonical port: local ownership, interface, and workflow adaptations are maintained in `~/agentic-skills`; upstream refreshes use `$manage-ripwire-skills`.
+> Modified canonical port: local ownership, interface, and workflow adaptations are maintained in `~/agentic-skills`; upstream skill-definition enhancements use `$manage-ripwire-skills`.
 # Triaging clang optimization remarks in the ripwire source checkout
 
 Run the build, `scripts/`, `test/`, `bench/`, and `docs/` commands below in the selected ripwire contributor checkout. They are tool-repository facilities, not resources bundled in this canonical skill package. This definition is preserved for contributor work; creating the port does not enable it in a harness.
+
+Apply `$manage-ripwire-repo` for that checkout's repository workflow; this contributor skill adds only the optimization-remark procedure for the current task.
 
 > Nearest neighbours:
 > • A measured slow operation, any codebase → **ripwire-perf-target**. Do that FIRST; remarks are the
