@@ -11,6 +11,8 @@ Apply this owner before work involving the Ripwire checkout, normally `~/github-
 
 Resolve the selected checkout and apply its cumulative `AGENTS.md` guidance and the full guide it designates, currently `CLAUDE.md`. Read the relevant contributor guidance before changing C++ or gates. The current checkout owns build commands, compiler requirements, install behavior, and verification; this skill does not freeze release numbers, gate counts, or old command behavior.
 
+Keep local skill selection and workflow policy in `~/agentic-skills` and its authorized harness projections. Do not add local skill-routing rules to the Ripwire checkout's tracked `AGENTS.md`, `CLAUDE.md`, or other upstream-owned guidance. Use skill descriptions and canonical routing owners for selection so upstream pulls do not require reapplying or resetting a local guidance patch.
+
 Preserve the user's requested phase and existing work. Applying this skill does not by itself authorize a pull, build, installation, commit, push, skill comparison, or harness change. Perform those effects when the task or an applicable standing workflow authorizes them. The canonical skill repository's Git workflow does not extend to the Ripwire checkout.
 
 ## Compose the skill owners
